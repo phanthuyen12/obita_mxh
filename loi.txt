@@ -1,35 +1,13 @@
-  Illuminate\Database\QueryException 
-
-  SQLSTATE[42000]: Syntax error or access violation: 1072 Key column 'external_id' doesn't exist in table (Connection: mysql, Host: 127.0.0.1, Port: 3306, Database: trypost, SQL: alter table `omnichat_conversations` add unique `omnichat_conversations_channel_id_external_id_unique`(`channel_id`, `external_id`))
-
-  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:857
-    853▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
-    854▕                 ? UniqueConstraintViolationException::class
-    855▕                 : QueryException::class;
-    856▕ 
-  ➜ 857▕             $exception = new $exceptionType(
-    858▕                 $this->getNameWithReadWriteType(),
-    859▕                 $query,
-    860▕                 $this->prepareBindings($bindings),
-    861▕                 $e,
-
-      +9 vendor frames 
-
-  10  database/migrations/2026_08_25_074132_add_channel_ids_to_omnichat_chat_tables.php:23
-      Illuminate\Support\Facades\Facade::__callStatic()
-      +26 vendor frames 
-
-  37  artisan:16
-      Illuminate\Foundation\Application::handleCommand()
+ 1 file changed, 33 insertions(+), 11 deletions(-)
 root@ubuntu2204:~/obita_mxh# php artisan migrate --force
 
    INFO  Running migrations.  
 
-  2026_08_25_074132_add_channel_ids_to_omnichat_chat_tables ..... 32.16ms FAIL
+  2026_08_25_074132_add_channel_ids_to_omnichat_chat_tables .... 191.48ms FAIL
 
    Illuminate\Database\QueryException 
 
-  SQLSTATE[42000]: Syntax error or access violation: 1061 Duplicate key name 'omnichat_contact_identities_channel_id_external_id_unique' (Connection: mysql, Host: 127.0.0.1, Port: 3306, Database: trypost, SQL: alter table `omnichat_contact_identities` add unique `omnichat_contact_identities_channel_id_external_id_unique`(`channel_id`, `external_id`))
+  SQLSTATE[42S22]: Column not found: 1054 Unknown column 'social_account_id' in 'omnichat_messages' (Connection: mysql, Host: 127.0.0.1, Port: 3306, Database: trypost, SQL: alter table `omnichat_messages` add `channel_id` char(36) null after `social_account_id`)
 
   at vendor/laravel/framework/src/Illuminate/Database/Connection.php:857
     853▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
@@ -44,12 +22,10 @@ root@ubuntu2204:~/obita_mxh# php artisan migrate --force
 
       +9 vendor frames 
 
-  10  database/migrations/2026_08_25_074132_add_channel_ids_to_omnichat_chat_tables.php:22
+  10  database/migrations/2026_08_25_074132_add_channel_ids_to_omnichat_chat_tables.php:59
       Illuminate\Support\Facades\Facade::__callStatic()
       +26 vendor frames 
 
   37  artisan:16
       Illuminate\Foundation\Application::handleCommand()
-
-root@ubuntu2204:~/obita_mxh# 
 
