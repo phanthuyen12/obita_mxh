@@ -10,6 +10,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('workspace_topics')) {
+            return;
+        }
+
         Schema::create('workspace_topics', function (Blueprint $table): void {
             $table->uuid('id')->primary();
             $table->foreignUuid('workspace_id')->constrained()->cascadeOnDelete();

@@ -1,0 +1,31 @@
+root@ubuntu2204:~/obita_mxh# php artisan migrate --force
+
+   INFO  Running migrations.  
+
+  2026_08_19_030904_create_omnichat_contacts_table ............... 5.42ms FAIL
+
+   Illuminate\Database\QueryException 
+
+  SQLSTATE[42S01]: Base table or view already exists: 1050 Table 'omnichat_contacts' already exists (Connection: mysql, Host: 127.0.0.1, Port: 3306, Database: trypost, SQL: create table `omnichat_contacts` (`id` char(36) not null, `workspace_id` char(36) not null, `display_name` varchar(255) not null, `avatar_url` text null, `status` varchar(255) not null default 'active', `locale` varchar(255) null, `meta` json null, `last_seen_at` timestamp null, `created_at` timestamp null, `updated_at` timestamp null, primary key (`id`)) default character set utf8mb4 collate 'utf8mb4_unicode_ci')
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:857
+    853▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    854▕                 ? UniqueConstraintViolationException::class
+    855▕                 : QueryException::class;
+    856▕ 
+  ➜ 857▕             $exception = new $exceptionType(
+    858▕                 $this->getNameWithReadWriteType(),
+    859▕                 $query,
+    860▕                 $this->prepareBindings($bindings),
+    861▕                 $e,
+
+      +9 vendor frames 
+
+  10  database/migrations/2026_08_19_030904_create_omnichat_contacts_table.php:13
+      Illuminate\Support\Facades\Facade::__callStatic()
+      +26 vendor frames 
+
+  37  artisan:16
+      Illuminate\Foundation\Application::handleCommand()
+
+root@ubuntu2204:~/obita_mxh# 

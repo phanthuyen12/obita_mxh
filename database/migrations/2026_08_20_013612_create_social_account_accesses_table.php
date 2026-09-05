@@ -13,6 +13,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('social_account_accesses')) {
+            return;
+        }
+
         Schema::create('social_account_accesses', function (Blueprint $table): void {
             $table->foreignUuid('social_account_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();

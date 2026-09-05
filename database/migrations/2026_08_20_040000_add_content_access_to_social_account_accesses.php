@@ -10,9 +10,13 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('social_account_accesses', function (Blueprint $table): void {
-            $table->boolean('can_access_content')->default(true)->after('can_assign_conversations');
-        });
+        if (Schema::hasTable('social_account_accesses')) {
+            Schema::table('social_account_accesses', function (Blueprint $table): void {
+                if (! Schema::hasColumn('social_account_accesses', 'can_access_content')) {
+                    $table->boolean('can_access_content')->default(true)->after('can_assign_conversations');
+                }
+            });
+        }
     }
 
     public function down(): void

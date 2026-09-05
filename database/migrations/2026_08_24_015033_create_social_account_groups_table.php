@@ -13,25 +13,26 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('social_account_groups', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->foreignUuid('workspace_id')->constrained()->cascadeOnDelete();
-            $table->string('name', 100);
-            $table->timestamps();
+        if (! Schema::hasTable('social_account_groups')) {
+            Schema::create('social_account_groups', function (Blueprint $table) {
+                $table->uuid('id')->primary();
+                $table->foreignUuid('workspace_id')->constrained()->cascadeOnDelete();
+                $table->string('name', 100);
+                $table->timestamps();
 
-            $table->unique(['workspace_id', 'name']);
-        });
+                $table->unique(['workspace_id', 'name']);
+            });
+        }
 
-        Schema::create('social_account_group_members', function (Blueprint $table) {
-            $table->foreignUuid('social_account_group_id')
-                ->constrained('social_account_groups')
-                ->cascadeOnDelete();
-            $table->foreignUuid('social_account_id')
-                ->constrained()
-                ->cascadeOnDelete();
+        if (! Schema::hasTable('social_account_group_members')) {
+            Schema::create('social_account_group_members', function (Blueprint $table) {
+                $table->foreignUuid('social_account_group_id')->constrained('social_account_groups')->cascadeOnDelete();
+                $table->foreignUuid('social_account_id')->constrained()->cascadeOnDelete();
+                $table->timestamps();
 
-            $table->primary(['social_account_group_id', 'social_account_id']);
-        });
+                $table->primary(['social_account_group_id', 'social_account_id']);
+            });
+        }
     }
 
     /**

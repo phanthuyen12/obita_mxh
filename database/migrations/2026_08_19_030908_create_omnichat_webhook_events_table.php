@@ -10,6 +10,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('omnichat_webhook_events')) {
+            return;
+        }
+
         Schema::create('omnichat_webhook_events', function (Blueprint $table): void {
             $table->uuid('id')->primary();
             $table->foreignUuid('workspace_id')->nullable()->constrained()->nullOnDelete();

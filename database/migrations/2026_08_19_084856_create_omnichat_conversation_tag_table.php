@@ -10,6 +10,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('omnichat_conversation_tag')) {
+            return;
+        }
+
         Schema::create('omnichat_conversation_tag', function (Blueprint $table): void {
             $table->foreignUuid('omnichat_conversation_id')->constrained('omnichat_conversations')->cascadeOnDelete();
             $table->foreignUuid('omnichat_tag_id')->constrained('omnichat_tags')->cascadeOnDelete();

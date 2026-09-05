@@ -10,10 +10,16 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('user_workspace', function (Blueprint $table): void {
-            $table->boolean('can_omnichat')->default(true)->after('role');
-            $table->boolean('can_content')->default(true)->after('can_omnichat');
-        });
+        if (Schema::hasTable('user_workspace')) {
+            Schema::table('user_workspace', function (Blueprint $table): void {
+                if (! Schema::hasColumn('user_workspace', 'can_omnichat')) {
+                    $table->boolean('can_omnichat')->default(true)->after('role');
+                }
+                if (! Schema::hasColumn('user_workspace', 'can_content')) {
+                    $table->boolean('can_content')->default(true)->after('can_omnichat');
+                }
+            });
+        }
     }
 
     public function down(): void
