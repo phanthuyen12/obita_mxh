@@ -97,13 +97,13 @@ const platforms = [
         <div class="flex min-w-0 flex-col justify-between p-8 md:p-12 lg:p-16">
             <div class="flex items-center gap-3">
                 <img
-                    src="/images/king-social-hub/logo.png"
-                    alt="King Social Hub"
+                    src="/images/aetrading.png"
+                    alt="AETrading"
                     class="h-10 w-auto"
                 />
                 <span
                     class="text-sm font-semibold tracking-tight text-foreground/80"
-                    >TryPost</span
+                    >AETrading</span
                 >
             </div>
 
@@ -144,10 +144,10 @@ const platforms = [
         >
             <!-- Ambient Glow Gradients -->
             <div
-                class="pointer-events-none absolute -top-24 -right-24 size-[480px] rounded-full bg-amber-500/15 blur-[120px]"
+                class="pointer-events-none absolute -top-24 -right-24 size-[480px] rounded-full bg-zinc-500/10 blur-[120px]"
             />
             <div
-                class="pointer-events-none absolute -bottom-32 -left-32 size-[480px] rounded-full bg-indigo-500/15 blur-[120px]"
+                class="pointer-events-none absolute -bottom-32 -left-32 size-[480px] rounded-full bg-slate-500/10 blur-[120px]"
             />
 
             <!-- Subtle Dot Grid -->
@@ -179,28 +179,29 @@ const platforms = [
                                 v-if="activeIndex === index"
                                 class="absolute inset-0 flex items-center justify-center"
                             >
+                                <!-- Interactive Card Mockup -->
                                 <div
-                                    class="w-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/90 shadow-2xl backdrop-blur-xl"
+                                    class="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900/90 shadow-2xl backdrop-blur-xl transition-all duration-300 hover:border-slate-700"
                                 >
-                                    <!-- Window Header -->
+                                    <!-- Window Titlebar -->
                                     <div
-                                        class="flex items-center gap-3 border-b border-slate-800 bg-slate-900/60 px-4 py-3"
+                                        class="flex items-center border-b border-slate-800/80 px-4 py-3"
                                     >
-                                        <div class="flex gap-1.5">
+                                        <div class="flex items-center gap-1.5">
                                             <span
-                                                class="size-2.5 rounded-full bg-rose-500/80"
+                                                class="size-2.5 rounded-full bg-slate-700"
                                             />
                                             <span
-                                                class="size-2.5 rounded-full bg-amber-500/80"
+                                                class="size-2.5 rounded-full bg-slate-700"
                                             />
                                             <span
-                                                class="size-2.5 rounded-full bg-emerald-500/80"
+                                                class="size-2.5 rounded-full bg-slate-700"
                                             />
                                         </div>
                                         <div
                                             class="ml-2 truncate text-[11px] font-medium tracking-wide text-slate-400"
                                         >
-                                            King Social Hub
+                                            AETrading
                                         </div>
                                         <span
                                             class="ml-auto inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-400"
@@ -224,7 +225,7 @@ const platforms = [
                                         class="flex items-center justify-center py-10"
                                     >
                                         <div
-                                            class="flex size-16 items-center justify-center rounded-2xl border border-amber-500/30 bg-amber-500/15 text-amber-400 shadow-inner"
+                                            class="flex size-16 items-center justify-center rounded-2xl border border-zinc-700 bg-zinc-800 text-white shadow-inner"
                                         >
                                             <component
                                                 :is="slide.icon"
@@ -292,7 +293,7 @@ const platforms = [
                                 class="block h-1 rounded-full transition-all duration-300"
                                 :class="
                                     activeIndex === index
-                                        ? 'w-6 bg-amber-400'
+                                        ? 'w-6 bg-white'
                                         : 'w-1.5 bg-slate-600 group-hover:bg-slate-400'
                                 "
                             />

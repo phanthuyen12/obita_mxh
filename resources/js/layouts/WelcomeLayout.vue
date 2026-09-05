@@ -47,13 +47,13 @@ const canNavigateTo = (stepNumber: number): boolean =>
                         class="flex flex-col items-center gap-2 font-medium"
                     >
                         <img
-                            src="/images/king-social-hub/logo.png"
-                            alt="King Social Hub"
+                            src="/images/aetrading.png"
+                            alt="AETrading"
                             class="h-8 w-auto dark:hidden"
                         />
                         <img
-                            src="/images/king-social-hub/logo.png"
-                            alt="King Social Hub"
+                            src="/images/aetrading.png"
+                            alt="AETrading"
                             class="hidden h-8 w-auto dark:block"
                         />
                     </Link>

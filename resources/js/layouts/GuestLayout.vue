@@ -17,13 +17,13 @@ const currentYear = dayjs().year();
             >
                 <div class="flex items-center gap-2">
                     <img
-                        src="/images/king-social-hub/logo.png"
-                        alt="King Social Hub"
+                        src="/images/aetrading.png"
+                        alt="AETrading"
                         class="h-7 w-auto dark:hidden"
                     />
                     <img
-                        src="/images/king-social-hub/logo.png"
-                        alt="King Social Hub"
+                        src="/images/aetrading.png"
+                        alt="AETrading"
                         class="hidden h-7 w-auto dark:block"
                     />
                 </div>
@@ -40,7 +40,7 @@ const currentYear = dayjs().year();
         <footer class="mt-auto border-t">
             <div class="mx-auto max-w-5xl px-6 py-8">
                 <p class="text-center text-sm text-muted-foreground">
-                    &copy; {{ currentYear }} King Social Hub. All rights
+                    &copy; {{ currentYear }} AETrading. All rights
                     reserved.
                 </p>
             </div>

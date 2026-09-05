@@ -17,8 +17,8 @@ defineProps<{
         <div class="w-full max-w-md space-y-8">
             <div class="flex flex-col items-center gap-4 text-center">
                 <img
-                    src="/images/king-social-hub/logo.png"
-                    alt="King Social Hub"
+                    src="/images/aetrading.png"
+                    alt="AETrading"
                     class="h-10 w-auto"
                 />
                 <div class="space-y-2">
