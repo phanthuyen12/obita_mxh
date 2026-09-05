@@ -51,17 +51,22 @@ class FacebookController extends SocialController
             'social_reconnect_id' => null,
         ]);
 
+        $redirectUrl = config('services.facebook.redirect') ?: route('app.social.facebook.callback');
+
         $oauthUrl = Socialite::driver($this->driver)
             ->usingGraphVersion($this->graphVersion())
             ->setScopes($this->scopes)
+            ->redirectUrl($redirectUrl)
             ->redirect()
             ->getTargetUrl();
 
         $uri = Uri::of($oauthUrl)->withoutQuery('scope');
-        $query = array_merge($uri->query()->all(), [
-            'config_id' => (string) config('services.facebook.login_config_id'),
-            'override_default_response_type' => '1',
-        ]);
+        $extraParams = ['override_default_response_type' => '1'];
+        $loginConfigId = config('services.facebook.login_config_id');
+        if (! empty($loginConfigId)) {
+            $extraParams['config_id'] = (string) $loginConfigId;
+        }
+        $query = array_merge($uri->query()->all(), $extraParams);
 
         return Inertia::location((string) $uri->withQuery($query));
     }
@@ -81,7 +86,11 @@ class FacebookController extends SocialController
         }
 
         try {
-            $socialUser = Socialite::driver($this->driver)->usingGraphVersion($this->graphVersion())->user();
+            $redirectUrl = config('services.facebook.redirect') ?: route('app.social.facebook.callback');
+            $socialUser = Socialite::driver($this->driver)
+                ->usingGraphVersion($this->graphVersion())
+                ->redirectUrl($redirectUrl)
+                ->user();
 
             // Trigger public_profile and pages_show_list API calls
             // These calls are needed for Meta app review permission verification
