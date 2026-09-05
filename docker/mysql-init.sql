@@ -1,0 +1,3 @@
+CREATE DATABASE IF NOT EXISTS trypost_test;
+GRANT ALL PRIVILEGES ON trypost_test.* TO 'trypost'@'%';
+FLUSH PRIVILEGES;

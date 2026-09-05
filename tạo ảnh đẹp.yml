@@ -1,0 +1,611 @@
+app:
+  description: 'Quy trình tự động hóa sáng tạo nội dung King Coffee: Tạo bài viết
+    quảng cáo chuẩn SEO/AIDA, Tạo 1 ảnh thương mại AI đỉnh cao với Gemini Image Plugin,
+    và Lên kịch bản & xuất tham số chuẩn Plugin cho 1 Video AI duy nhất'
+  icon: ☕
+  icon_background: '#FFEAD5'
+  icon_type: emoji
+  mode: advanced-chat
+  name: Content Generator - King Coffee AI Creative Suite
+  use_icon_as_answer_icon: true
+dependencies:
+- current_identifier: null
+  type: package
+  value:
+    plugin_unique_identifier: qceank/gemini_image:0.1.7@98772d032522853f063980e6718bdb0d856293ca2578507435c25b9607e7c5ff
+    version: null
+- current_identifier: null
+  type: package
+  value:
+    plugin_unique_identifier: qceank/gemini:0.8.1@9d3d642247ac18621e089775114ff38010f87ebbe773ee27c8f840992e194256
+    version: null
+kind: app
+version: 0.7.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 10
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        skill_file_size_limit: 50
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: question-classifier
+      id: start-source-classifier-target
+      selected: false
+      source: start
+      sourceHandle: source
+      target: classifier
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: llm
+      id: classifier-post-content_llm
+      selected: false
+      source: classifier
+      sourceHandle: class_post
+      target: content_llm
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: llm
+      id: classifier-video-video_llm
+      selected: false
+      source: classifier
+      sourceHandle: class_video
+      target: video_llm
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: content_llm-source-final_answer_post-target
+      selected: false
+      source: content_llm
+      sourceHandle: source
+      target: final_answer_post
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: llm
+      id: video_llm-source-1787712487505-target
+      selected: false
+      source: video_llm
+      sourceHandle: source
+      target: '1787712487505'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: llm
+      id: classifier-class_image-1787712259001-target
+      selected: false
+      source: classifier
+      sourceHandle: class_image
+      target: '1787712259001'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: tool
+        targetType: answer
+      id: 1787713476460-source-final_answer_image-target
+      selected: false
+      source: '1787713476460'
+      sourceHandle: source
+      target: final_answer_image
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: tool
+      id: 1787712259001-source-1787713476460-target
+      source: '1787712259001'
+      sourceHandle: source
+      target: '1787713476460'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: false
+        title: Bắt đầu
+        type: start
+        variables:
+        - allowed_file_extensions: []
+          allowed_file_types:
+          - image
+          allowed_file_upload_methods:
+          - local_file
+          default: ''
+          hide: false
+          hint: ''
+          label: Product
+          max_length: 5
+          options: []
+          placeholder: ''
+          required: true
+          type: file-list
+          variable: Product
+      height: 110
+      id: start
+      position:
+        x: 878.7499999999999
+        y: 350
+      positionAbsolute:
+        x: 878.7499999999999
+        y: 350
+      selected: false
+      type: custom
+      width: 243
+      zIndex: 0
+    - data:
+        classes:
+        - id: class_post
+          name: Viết Bài (Text Post & Content)
+        - id: class_image
+          name: Tạo 1 Ảnh AI Theo Style (Nano Banana Pro)
+        - id: class_video
+          name: Kịch Bản & Video AI (Gemini Flash Lite)
+        model:
+          completion_params:
+            temperature: 0.1
+          mode: chat
+          name: gemini-2.5-pro
+          provider: qceank/gemini/google
+        query_variable_selector:
+        - sys
+        - query
+        selected: false
+        title: Phân loại yêu cầu
+        type: question-classifier
+      height: 221
+      id: classifier
+      position:
+        x: 1177.9748783308141
+        y: 350
+      positionAbsolute:
+        x: 1177.9748783308141
+        y: 350
+      selected: false
+      type: custom
+      width: 243
+      zIndex: 0
+    - data:
+        context:
+          enabled: false
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: gemini-2.5-flash
+          provider: qceank/gemini/google
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: "Bạn là một Giám Đốc Sáng Tạo Nội Dung & Copywriter đa phương tiện\
+            \ hàng đầu.\n\nNHIỆM VỤ CỦA BẠN:\nDựa trên yêu cầu và phong cách của người\
+            \ dùng, tạo một bài viết mạng xã hội hoàn chỉnh, hấp dẫn, chuẩn SEO và\
+            \ có tính lan truyền cao.\n\nCẤU TRÚC BÀI VIẾT:\n1. \U0001F525 **TIÊU\
+            \ ĐỀ (HEADLINE)**: Giật tít viral, khơi gợi tò mò mạnh mẽ.\n2. \U0001F4DD\
+            \ **NỘI DUNG CHÍNH (BODY)**:\n   - Công thức AIDA / PAS.\n   - Chia đoạn\
+            \ ngắn, bullet points rõ ràng, chèn emoji sinh động.\n3. \U0001F3AF **LỜI\
+            \ KÊU GỌI HÀNH ĐỘNG (CTA)**: Mạnh mẽ, thúc đẩy chuyển đổi và tương tác.\n\
+            4. \U0001F3F7️ **BỘ HASHTAGS THỊNH HÀNH**: 6-8 hashtags phù hợp.\n5. \U0001F3A8\
+            \ **PROMPT ẢNH MINH HỌA**:\n   BẮT BUỘC có dòng sau để trích xuất prompt\
+            \ cho engine tạo ảnh:\n   PROMPT: [Mô tả chi tiết bằng tiếng Anh của bức\
+            \ ảnh minh họa phù hợp với bài viết và phong cách yêu cầu]\n"
+        - id: user-prompt
+          role: user
+          text: 'Yêu cầu của người dùng: {{#sys.query#}}'
+        selected: false
+        title: Trình tạo Bài viết
+        type: llm
+        vision:
+          enabled: false
+      height: 89
+      id: content_llm
+      position:
+        x: 1478.75
+        y: 100
+      positionAbsolute:
+        x: 1478.75
+        y: 100
+      selected: true
+      type: custom
+      width: 243
+      zIndex: 0
+    - data:
+        answer: '{{#post_image_code.result_markdown#}}'
+        selected: false
+        title: Kết quả Bài viết & Ảnh Thật
+        type: answer
+      height: 105
+      id: final_answer_post
+      position:
+        x: 2078.75
+        y: 100
+      positionAbsolute:
+        x: 2078.75
+        y: 100
+      selected: false
+      type: custom
+      width: 243
+      zIndex: 0
+    - data:
+        answer: '{{#1787713476460.files#}}'
+        selected: false
+        title: Kết quả 1 Ảnh Thật & Thông Số
+        type: answer
+      height: 104
+      id: final_answer_image
+      position:
+        x: 2669.2079251920504
+        y: 331.6559066937725
+      positionAbsolute:
+        x: 2669.2079251920504
+        y: 331.6559066937725
+      selected: false
+      type: custom
+      width: 243
+      zIndex: 0
+    - data:
+        context:
+          enabled: false
+        model:
+          completion_params: {}
+          mode: chat
+          name: gemini-3.5-flash
+          provider: qceank/gemini/google
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: "Bạn là Đạo Diễn Video & Biên Kịch Video AI (vận hành bởi Gemini Flash\
+            \ Lite siêu tốc).\n\nNHIỆM VỤ:\nXây dựng kịch bản phân cảnh video chuyên\
+            \ sâu bám sát yêu cầu người dùng:\n1. **Tổng quan**: Ý tưởng, thời lượng\
+            \ (15s/30s), phong cách âm nhạc (BGM).\n2. **Phân cảnh chi tiết từng Scene\
+            \ (Scene 1 đến Scene 4)**:\n   - Bối cảnh & Diễn xuất.\n   - Lệnh chuyển\
+            \ động camera (Zoom, Pan, Drone, Tracking shot).\n   - Lời bình Voiceover\
+            \ & Text trên màn hình.\n   - Prompt điều khiển Video AI (Runway Gen-3,\
+            \ Kling AI, Luma Dream Machine).\n3. **Mã JSON Tự động hóa**: JSON cấu\
+            \ trúc mảng phân cảnh chuẩn API.\n"
+        - id: user-prompt
+          role: user
+          text: 'Yêu cầu kịch bản video: {{#sys.query#}}'
+        selected: false
+        title: Biên Kịch Video (Gemini Flash Lite)
+        type: llm
+        vision:
+          enabled: false
+      height: 89
+      id: video_llm
+      position:
+        x: 1478.75
+        y: 600
+      positionAbsolute:
+        x: 1478.75
+        y: 600
+      selected: false
+      type: custom
+      width: 243
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - sys
+          - query
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: gemini-2.5-flash
+          provider: qceank/gemini/google
+        prompt_template:
+        - id: c716ac1c-5a30-4e8e-b432-35f4b612d1c4
+          role: system
+          text: 'Bạn là Chuyên Gia Prompt Engineering cao cấp cho Nano Banana Pro.
+
+            Nhiệm vụ: Phân tích kỹ chủ đề, phong cách, sản phẩm, nhân vật, logo/icon,
+            màu sắc, chất liệu, bố cục và ánh sáng mà người dùng cung cấp. Sau đó
+            tạo DUY NHẤT 1 prompt tiếng Anh hoàn chỉnh, bám sát 100% yêu cầu, không
+            tự ý thay đổi concept.
+
+            Nếu có sản phẩm, phải mô tả rõ hình dáng, màu sắc, chất liệu, bao bì,
+            logo, nhãn và các chi tiết nhận diện. Nếu có icon hoặc logo, mô tả chính
+            xác hình dạng, màu sắc, chất liệu, độ nổi, viền, hiệu ứng và vị trí. Nếu
+            có ảnh tham chiếu, phải giữ nguyên thiết kế và đặc điểm nhận diện, không
+            tự redesign.
+
+            Phản hồi đúng cấu trúc:
+
+            🎯 PHONG CÁCH ĐÃ NHẬN DIỆN: Nêu chính xác style hình ảnh.
+
+            📝 GIẢI THÍCH Ý TƯỞNG: Mô tả ngắn về chủ thể, sản phẩm/icon, bố cục, màu
+            sắc, ánh sáng và góc máy.
+
+            📋 PROMPT CHÍNH:
+
+            PROMPT: [Một prompt tiếng Anh duy nhất, chi tiết và liền mạch, bao gồm
+            chủ thể, sản phẩm, logo/icon, môi trường, phong cách nghệ thuật, chất
+            liệu, màu sắc, bố cục, ánh sáng, camera angle, depth of field, ultra-detailed,
+            professional composition, 8K resolution, masterpiece]
+
+            ⚙️ THÔNG SỐ KHUYẾN NGHỊ: Aspect Ratio phù hợp (1:1 / 16:9 / 9:16) và Negative
+            Prompt.
+
+            Không tạo nhiều prompt. Không giải thích dài dòng. Ưu tiên hình ảnh đẹp,
+            rõ chủ thể, đúng sản phẩm, đúng style và có tính thương mại cao.'
+        selected: true
+        structured_output_enabled: false
+        title: TẠO ẢNH
+        type: llm
+        vision:
+          enabled: false
+      height: 89
+      id: '1787712259001'
+      position:
+        x: 1671.3406928818915
+        y: 350
+      positionAbsolute:
+        x: 1671.3406928818915
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 243
+      zIndex: 0
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: gemini-2.5-flash
+          provider: qceank/gemini/google
+        prompt_template:
+        - id: dfc1e1b5-00c3-4b0a-89c8-db062b3d3fa5
+          role: system
+          text: ''
+        selected: false
+        title: LLM 5
+        type: llm
+        vision:
+          enabled: false
+      height: 89
+      id: '1787712487505'
+      position:
+        x: 1781.75
+        y: 600
+      positionAbsolute:
+        x: 1781.75
+        y: 600
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 243
+      zIndex: 0
+    - data:
+        is_team_authorization: true
+        paramSchemas:
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: Detailed description of the image you want to generate (max 32000
+              tokens). Check the official Gemini documentation.
+            ja_JP: 生成したい画像の細かな説明(最大 32000 トークン)。Gemini 公式ドキュメントを参照してください。
+            pt_BR: Detailed description of the image you want to generate (max 32000
+              tokens). Check the official Gemini documentation.
+            zh_Hans: 您想要生成的图像的详细描述（最多 32000 tokens）。请查看 Gemini 的官方文档。
+          input_schema: null
+          label:
+            en_US: Prompt
+            ja_JP: プロンプト
+            pt_BR: Prompt
+            zh_Hans: 提示词
+          llm_description: Detailed image prompt for Gemini Image Generate(max 32000
+            tokens). Describe the desired image clearly.
+          max: null
+          min: null
+          multiple: false
+          name: prompt
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: One or more images to edit (PNG, JPEG, or WebP, each <7MB).
+            ja_JP: 編集対象の画像(PNG, JPEG, or WebP, 1つ当たり最大 7MB)
+            pt_BR: One or more images to edit (PNG, JPEG, or WebP, each <7MB).
+            zh_Hans: 要编辑的一张或多张图像（PNG、JPEG 或 WebP，每张小于 7MB）。
+          input_schema: null
+          label:
+            en_US: Image(s)
+            ja_JP: 画像
+            pt_BR: Image(s)
+            zh_Hans: 图像
+          llm_description: ''
+          max: null
+          min: null
+          multiple: false
+          name: images
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: files
+        - auto_generate: null
+          default: gemini-2.5-flash-image-preview
+          form: form
+          human_description:
+            en_US: Select the gemini model
+            ja_JP: Gemini モデルを選択
+            pt_BR: Select the gemini model
+            zh_Hans: 选择Gemini模型
+          input_schema: null
+          label:
+            en_US: Gemini Model
+            ja_JP: Gemini モデル
+            pt_BR: Gemini Model
+            zh_Hans: Gemini 模型
+          llm_description: ''
+          max: null
+          min: null
+          multiple: false
+          name: model
+          options:
+          - icon: ''
+            label:
+              en_US: gemini-2.5-flash-image-preview
+              ja_JP: gemini-2.5-flash-image-preview
+              pt_BR: gemini-2.5-flash-image-preview
+              zh_Hans: gemini-2.5-flash-image-preview
+            value: gemini-2.5-flash-image-preview
+          - icon: ''
+            label:
+              en_US: gemini-3.0-pro-image-preview
+              ja_JP: gemini-3.0-pro-image-preview
+              pt_BR: gemini-3.0-pro-image-preview
+              zh_Hans: gemini-3.0-pro-image-preview
+            value: gemini-3-pro-image-preview
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        params:
+          images: ''
+          model: ''
+          prompt: ''
+        plugin_id: qceank/gemini_image
+        plugin_unique_identifier: qceank/gemini_image:0.1.7@98772d032522853f063980e6718bdb0d856293ca2578507435c25b9607e7c5ff
+        provider_icon: https://kingai.tnicorporation.com/console/api/workspaces/current/plugin/icon?tenant_id=fa54662f-72ff-4f9b-977c-1f86e12b6a6d&filename=1a5efebcdcb722a86c72848ea24502de161c804d186a533b2bc112f2181a4a07.png
+        provider_id: qceank/gemini_image/gemini_image
+        provider_name: qceank/gemini_image/gemini_image
+        provider_show_name: Gemini Image
+        provider_type: builtin
+        selected: false
+        title: Gemini Image Generate and Edit
+        tool_configurations:
+          model:
+            type: constant
+            value: gemini-2.5-flash-image-preview
+        tool_description: Gemini Image Generate is a text to image generation and
+          editing tool
+        tool_label: Gemini Image Generate and Edit
+        tool_name: image_generate
+        tool_node_version: '2'
+        tool_parameters:
+          images:
+            type: variable
+            value:
+            - start
+            - Product
+          prompt:
+            type: mixed
+            value: '{{#1787712259001.text#}}'
+        type: tool
+      height: 89
+      id: '1787713476460'
+      position:
+        x: 2325.851653355062
+        y: 331.6559066937725
+      positionAbsolute:
+        x: 2325.851653355062
+        y: 331.6559066937725
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 243
+      zIndex: 0
+    viewport:
+      x: -485.5014016754093
+      y: 260.9028423594729
+      zoom: 0.9422435874771505
+  rag_pipeline_variables: []

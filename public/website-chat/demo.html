@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="vi">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="description" content="Website mẫu để kiểm thử KingHub Omnichat Website Live Chat." />
+        <title>KingHub Coffee — Website Chat Demo</title>
+        <style>
+            :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#17221b;background:#f6f1e7}*{box-sizing:border-box}body{min-height:100vh;margin:0;background:radial-gradient(circle at 12% 10%,#fff7cf 0 11%,transparent 30%),linear-gradient(135deg,#f8f3e8,#e9f0df)}.shell{width:min(1180px,calc(100% - 32px));margin:auto}header{display:flex;align-items:center;justify-content:space-between;padding:26px 0}.brand{display:flex;align-items:center;gap:12px;color:inherit;font-weight:900;letter-spacing:-.03em;text-decoration:none}.brand-mark{display:grid;width:42px;height:42px;place-items:center;border:2px solid;border-radius:13px;background:#d8f36b;box-shadow:4px 4px 0}.status{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid #cad2c4;border-radius:999px;background:#ffffffb8;font-size:13px;font-weight:700}.dot{width:9px;height:9px;border-radius:50%;background:#20a65a;box-shadow:0 0 0 4px #20a65a22}main{display:grid;grid-template-columns:1.15fr .85fr;align-items:center;gap:70px;padding:72px 0 110px}.eyebrow{margin:0 0 18px;color:#52705c;font-size:13px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}h1{max-width:760px;margin:0;font-size:clamp(48px,7vw,92px);line-height:.94;letter-spacing:-.075em}.accent{color:#187749}.lead{max-width:620px;margin:28px 0 0;color:#4e5b52;font-size:clamp(18px,2vw,22px);line-height:1.65}.features{display:flex;flex-wrap:wrap;gap:10px;margin-top:32px}.feature{padding:10px 14px;border:1px solid #ced7c9;border-radius:12px;background:#ffffffa8;font-size:14px;font-weight:750}.card{position:relative;overflow:hidden;padding:30px;border:2px solid;border-radius:28px;background:#fffdf7;box-shadow:12px 12px 0}.card:before{position:absolute;top:-70px;right:-50px;width:190px;height:190px;border-radius:50%;background:#d8f36b;content:"";opacity:.72}.card>*{position:relative}.card h2{margin:0 0 8px;font-size:28px;letter-spacing:-.04em}.card p{margin:0 0 24px;color:#667068;line-height:1.55}label{display:block;margin-bottom:8px;font-size:13px;font-weight:850}input{width:100%;height:48px;padding:0 14px;border:1.5px solid #9da99f;border-radius:12px;background:white;color:#17221b;font:inherit;outline:none}input:focus{border-color:#187749;box-shadow:0 0 0 4px #18774918}button{width:100%;height:50px;margin-top:12px;border:2px solid #17221b;border-radius:12px;background:#187749;color:white;font:inherit;font-weight:850;cursor:pointer;box-shadow:4px 4px 0 #17221b}button:hover{transform:translate(-1px,-1px);box-shadow:6px 6px 0 #17221b}.help{margin-top:18px!important;padding:12px;border-radius:12px;background:#edf3e9;color:#435047!important;font-size:13px}.error{display:none;margin-top:12px;color:#b42318;font-size:13px;font-weight:700}footer{padding:24px 0 40px;border-top:1px solid #ccd5c8;color:#68736b;font-size:13px}@media(max-width:840px){main{grid-template-columns:1fr;gap:48px;padding-top:38px}.card{box-shadow:7px 7px 0}.status{display:none}}
+        </style>
+    </head>
+    <body>
+        <header class="shell">
+            <a class="brand" href="/"><span class="brand-mark">KH</span><span>KingHub Coffee</span></a>
+            <span class="status"><span class="dot"></span> Omnichat đang trực tuyến</span>
+        </header>
+        <main class="shell">
+            <section>
+                <p class="eyebrow">Website Live Chat Demo</p>
+                <h1>Chạm một nút,<br /><span class="accent">nói chuyện ngay.</span></h1>
+                <p class="lead">Website mẫu tích hợp KingHub Omnichat. Nhập public key để hiện nút chat và chuyển tin nhắn thẳng vào hộp thư chung của đội CSKH.</p>
+                <div class="features"><span class="feature">Không cần đăng nhập</span><span class="feature">Lưu phiên 30 ngày</span><span class="feature">Tin nhắn chống trùng</span></div>
+            </section>
+            <aside class="card">
+                <h2>Khởi động bản demo</h2>
+                <p>Nhập public key của kênh Website Live Chat để tải widget thật.</p>
+                <form id="demo-form">
+                    <label for="public-key">Public key</label>
+                    <input id="public-key" name="public_key" type="text" placeholder="wc_pk_..." autocomplete="off" spellcheck="false" />
+                    <button type="submit">Mở Website Chat</button>
+                    <div id="error" class="error" role="alert"></div>
+                </form>
+                <p class="help">Kênh cần cho phép origin <strong id="current-origin"></strong>. Public key không phải secret quản trị.</p>
+            </aside>
+        </main>
+        <footer class="shell">Demo kỹ thuật KingHub Omnichat · Chat được gửi vào workspace sở hữu public key.</footer>
+        <script>
+            (function(){'use strict';var params=new URLSearchParams(location.search),form=document.getElementById('demo-form'),input=document.getElementById('public-key'),error=document.getElementById('error');document.getElementById('current-origin').textContent=location.origin;function loadWidget(key){if(!/^wc_pk_[A-Za-z0-9]+$/.test(key)){error.textContent='Public key không đúng định dạng wc_pk_...';error.style.display='block';return}error.style.display='none';input.value=key;var next=new URL(location.href);next.searchParams.set('public_key',key);history.replaceState({},'',next);var script=document.createElement('script');script.src='/website-chat/widget.js';script.dataset.publicKey=key;script.async=true;script.onerror=function(){error.textContent='Không tải được widget. Vui lòng thử lại.';error.style.display='block'};document.body.appendChild(script)}form.addEventListener('submit',function(event){event.preventDefault();if(document.querySelector('[data-kinghub-chat-root]')){location.search='?public_key='+encodeURIComponent(input.value.trim());return}loadWidget(input.value.trim())});var initial=params.get('public_key');if(initial)loadWidget(initial)})();
+        </script>
+    </body>
+</html>

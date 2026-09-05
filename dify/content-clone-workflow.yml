@@ -1,0 +1,232 @@
+app:
+  description: Quy trình tự động hóa sáng tạo & clone nội dung King Coffee AI Creative Suite cho mạng xã hội.
+  icon: copy
+  icon_background: '#FFEAD5'
+  mode: workflow
+  name: King Coffee AI Creative Suite - Content Clone Workflow
+  use_icon_as_answer_icon: false
+
+kind: app
+version: 0.1.5
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: ''
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+
+  graph:
+    edges:
+      - data:
+          isInIteration: false
+          sourceType: start
+          targetType: llm
+        id: start-source-llm-target
+        source: start
+        sourceHandle: source
+        target: llm
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInIteration: false
+          sourceType: llm
+          targetType: end
+        id: llm-source-end-target
+        source: llm
+        sourceHandle: source
+        target: end
+        targetHandle: target
+        type: custom
+        zIndex: 0
+
+    nodes:
+      - data:
+          desc: Inputs sent by King Coffee ContentCloneGenerator.
+          selected: false
+          title: Start
+          type: start
+          variables:
+            - label: Source content
+              max_length: 20000
+              options: []
+              required: true
+              type: paragraph
+              variable: source_content
+            - label: Content type (post, image, video)
+              max_length: 50
+              options: []
+              required: false
+              type: text-input
+              variable: content_type
+            - label: Theme
+              max_length: 500
+              options: []
+              required: false
+              type: text-input
+              variable: theme
+            - label: Additional prompt
+              max_length: 4000
+              options: []
+              required: false
+              type: paragraph
+              variable: prompt
+            - label: Platform
+              max_length: 100
+              options: []
+              required: true
+              type: text-input
+              variable: platform
+            - label: Brand name
+              max_length: 500
+              options: []
+              required: false
+              type: text-input
+              variable: brand_name
+            - label: Brand description
+              max_length: 4000
+              options: []
+              required: false
+              type: paragraph
+              variable: brand_description
+            - label: Brand voice traits
+              max_length: 4000
+              options: []
+              required: false
+              type: paragraph
+              variable: brand_voice_traits
+            - label: Content language
+              max_length: 30
+              options: []
+              required: true
+              type: text-input
+              variable: content_language
+            - label: Laravel instructions
+              max_length: 8000
+              options: []
+              required: true
+              type: paragraph
+              variable: instructions
+        height: 240
+        id: start
+        position:
+          x: 80
+          y: 240
+        positionAbsolute:
+          x: 80
+          y: 240
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: Sáng tạo nội dung chuẩn King Coffee AI Creative Suite.
+          model:
+            completion_params:
+              temperature: 0.7
+              top_p: 0.9
+            mode: chat
+            name: gpt-4o-mini
+            provider: openai
+          prompt_template:
+            - id: system-prompt
+              role: system
+              text: |-
+                Bạn là một Giám Đốc Sáng Tạo Nội Dung & Chuyên Gia Copywriting hàng đầu cho thương hiệu King Coffee.
+
+                NHIỆM VỤ CỦA BẠN:
+                Dựa trên bài viết nguồn và yêu cầu được cung cấp, tạo một bài viết mạng xã hội (Facebook/Instagram/LinkedIn) hoàn chỉnh, cuốn hút, đúng tone & voice sang trọng, đẳng cấp của King Coffee, chuẩn SEO và có tính lan truyền (viral) cao.
+
+                CẤU TRÚC BÀI VIẾT BẮT BUỘC:
+                1. 🔥 **TIÊU ĐỀ (HEADLINE)**: Giật tít hấp dẫn, khơi gợi cảm xúc hoặc sự tò mò mạnh mẽ.
+                2. 📝 **NỘI DUNG CHÍNH (BODY)**:
+                   - Sử dụng linh hoạt công thức AIDA hoặc PAS.
+                   - Nhấn mạnh hương vị đậm đà, chất lượng hạt cà phê tuyển chọn và trải nghiệm đẳng cấp của King Coffee.
+                   - Chia đoạn ngắn gọn, súc tích, bullet points rõ ràng, chèn emoji tinh tế.
+                3. 🎯 **LỜI KÊU GỌI HÀNH ĐỘNG (CTA)**: Rõ ràng, thúc đẩy mua hàng hoặc tương tác.
+                4. 🏷️ **BỘ HASHTAGS THỊNH HÀNH**: 6-8 hashtags phù hợp (#KingCoffee #CaPheVietNam #CoffeeLover...).
+                5. 🎨 **GỢI Ý HÌNH ẢNH/VISUAL MINH HỌA**: Mô tả ý tưởng hình ảnh hoặc poster phù hợp bài viết.
+
+                QUY TẮC BẮT BUỘC:
+                - Ngôn ngữ: {{#start.content_language#}}.
+                - Tối ưu cho nền tảng: {{#start.platform#}}.
+                - Giữ nguyên giá trị cốt lõi, không sao chép nguyên văn từ bài viết nguồn.
+                - Không bịa đặt số liệu sai lệch về sản phẩm hay sự kiện.
+
+                Thương hiệu: {{#start.brand_name#}}
+                Mô tả thương hiệu: {{#start.brand_description#}}
+                Đặc điểm giọng thương hiệu: {{#start.brand_voice_traits#}}
+                Chủ đề chiến dịch: {{#start.theme#}}
+                Yêu cầu thêm: {{#start.prompt#}}
+                Hướng dẫn bổ sung: {{#start.instructions#}}
+
+                Bài viết nguồn:
+                {{#start.source_content#}}
+          selected: false
+          title: Generate King Coffee Content
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: llm
+        position:
+          x: 420
+          y: 240
+        positionAbsolute:
+          x: 420
+          y: 240
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+
+      - data:
+          desc: Output consumed by Laravel at data.outputs.content.
+          outputs:
+            - value_selector:
+                - llm
+                - text
+              variable: content
+          selected: false
+          title: End
+          type: end
+        height: 90
+        id: end
+        position:
+          x: 760
+          y: 240
+        positionAbsolute:
+          x: 760
+          y: 240
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+
+  viewport:
+    x: 0
+    y: 0
+    zoom: 1

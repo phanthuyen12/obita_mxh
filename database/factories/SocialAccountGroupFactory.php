@@ -1,0 +1,28 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Database\Factories;
+
+use App\Models\SocialAccountGroup;
+use App\Models\Workspace;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+/**
+ * @extends Factory<SocialAccountGroup>
+ */
+class SocialAccountGroupFactory extends Factory
+{
+    /**
+     * Define the model's default state.
+     *
+     * @return array<string, mixed>
+     */
+    public function definition(): array
+    {
+        return [
+            'workspace_id' => Workspace::factory(),
+            'name' => fake()->unique()->words(2, true),
+        ];
+    }
+}

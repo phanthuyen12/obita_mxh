@@ -1,0 +1,25 @@
+@theme {
+    --color-gold: #d2ad60;
+    --color-gold-dark: #c68a45;
+    --color-copper: #a65335;
+    --color-red-brown: #91362d;
+    --color-red-wine: #812526;
+    --color-brown-light: #b77550;
+    --color-coffee-black: #080a08;
+    --color-gold-cream: #e1c77e;
+    --color-off-white: #f8f7f4;
+}
+
+/* Kích hoạt đoạn dưới này để đổi giao diện mặc định của toàn bộ hệ thống sang tông màu này */
+:root {
+    --background: #f8f7f4;
+    --foreground: #080a08;
+    --primary: #d2ad60;
+    --primary-foreground: #080a08;
+    --secondary: #e1c77e;
+    --secondary-foreground: #080a08;
+    --accent: #812526;
+    --accent-foreground: #ffffff;
+    --border: #080a08;
+    --ring: #d2ad60;
+}

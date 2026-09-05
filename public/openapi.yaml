@@ -1,0 +1,817 @@
+openapi: 3.1.0
+info:
+    title: KingHub Omnichat Partner & Website Live Chat API
+    version: 1.5.0
+    description: |
+        # 📘 Tài liệu API Omnichat Website Live Chat & Support Ticket
+
+        Chào mừng bạn đến với tài liệu API chính thức của **KingHub Omnichat**. Hệ thống cung cấp đầy đủ các API dành cho:
+        1. **Client Widget Website**: Khởi tạo phiên chat, gửi tin nhắn, gửi Ticket hỗ trợ đính kèm tối đa 5 hình ảnh, tự động phân loại Thẻ Tag.
+        2. **Backend Partner / CSKH**: Quản lý thẻ Tags, truy xuất lịch sử hội thoại, đăng ký Webhook nhận phản hồi realtime.
+
+        ---
+
+        ## 🔑 3 Loại Khóa Xác Thực (Authentication)
+
+        | Khóa | Cú pháp | Vị trí sử dụng | Phạm vi quyền hạn |
+        | :--- | :--- | :--- | :--- |
+        | **Public Key** | `wc_pk_...` | Query `?public_key=` hoặc Header `X-Website-Chat-Key` | Chỉ dùng để lấy config và khởi tạo phiên chat (`POST /sessions`). |
+        | **Session Token** | `wc_session_...` | Header `Authorization: Bearer wc_session_...` | Truy cập và gửi/nhận tin nhắn trong **duy nhất 1 cuộc hội thoại** (Thời hạn 30 ngày). |
+        | **Personal API Key** | `kinghub_...` | Header `Authorization: Bearer <API_KEY>` | Khóa bí mật dành cho Backend đối tác để quản trị Thẻ Tag, Webhook và danh sách hội thoại. |
+
+        ---
+
+        ## ⚠️ Xử Lý Lỗi Chuẩn (Error Handling)
+
+        Tất cả các API khi gặp sự cố đều trả về mã lỗi HTTP chuẩn kèm cấu trúc JSON rõ ràng:
+        - **`400 Bad Request`**: Dữ liệu gửi lên không đúng định dạng.
+        - **`401 Unauthorized`**: Token phiên (`wc_session_...`) hoặc Personal API Key bị thiếu, sai hoặc đã hết hạn.
+        - **`403 Forbidden`**: Origin truy cập không nằm trong danh sách được cấp phép (`authorized_origins`) hoặc Public Key không hợp lệ.
+        - **`404 Not Found`**: Không tìm thấy Channel, Conversation hoặc Message tương ứng.
+        - **`422 Unprocessable Content`**: Lỗi vi phạm quy tắc kiểm tra dữ liệu (Validation Errors). Trả về chi tiết từng trường bị lỗi.
+        - **`429 Too Many Requests`**: Vượt quá giới hạn gọi API (Rate limit 120 requests/phút).
+servers:
+    - url: https://autopost.tnicorporation.com/api
+tags:
+    - name: Chat profile
+      description: Quản lý vòng đời phiên chat của khách trên Website (Khởi tạo phiên, lấy config, kết thúc phiên).
+    - name: Messages
+      description: Gửi & nhận tin nhắn, gửi Ticket Hỗ Trợ Khách Hàng đính kèm tối đa 5 hình ảnh.
+    - name: Conversations
+      description: API Backend đối tác quản lý và truy xuất danh sách cuộc hội thoại.
+    - name: Webhooks
+      description: Đăng ký Webhook nhận tin nhắn phản hồi của nhân viên Omnichat theo thời gian thực.
+    - name: Conversation tags
+      description: Tạo và gán Thẻ Tag phân loại khách hàng trong Omnichat.
+paths:
+    /website-chat/v1/config:
+        get:
+            tags: [Chat profile]
+            summary: Lấy cấu hình Website Chat Channel
+            description: Lấy thông tin kênh, màu sắc chủ đạo (`theme_color`), lời chào tự động (`welcome_message`).
+            parameters:
+                - $ref: '#/components/parameters/PublicKey'
+                - $ref: '#/components/parameters/PartnerOrigin'
+            responses:
+                '200':
+                    description: Lấy cấu hình thành công
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    channel:
+                                        type: object
+                                        properties:
+                                            id: { type: string, format: uuid }
+                                            name: { type: string, example: "web site king" }
+                                    branding:
+                                        type: object
+                                        properties:
+                                            theme_color: { type: string, example: "#D97706" }
+                                            welcome_message: { type: string, example: "Xin chào! Chúng tôi có thể giúp gì cho bạn?" }
+                '403': { $ref: '#/components/responses/ForbiddenError' }
+                '429': { $ref: '#/components/responses/RateLimitedError' }
+    /website-chat/v1/sessions:
+        post:
+            tags: [Chat profile]
+            summary: Khởi tạo Phiên Chat & Tự động gắn Thẻ Tag
+            description: |
+                Tạo thông tin khách hàng và cuộc hội thoại mới.
+                - Nếu truyền `context.tags` (dạng chuỗi `"Tag 1, Tag 2"` hoặc mảng), hệ thống sẽ **tự động tạo thẻ và gán ngay vào cuộc hội thoại**.
+                - Trả về `token` (`wc_session_...`) để client lưu vào `localStorage`.
+            parameters:
+                - $ref: '#/components/parameters/PublicKey'
+                - $ref: '#/components/parameters/PartnerOrigin'
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema: { $ref: '#/components/schemas/CreateProfileRequest' }
+                        example:
+                            visitor_id: "018f3f14-c32d-7f41-b13b-b857e76799d8"
+                            name: "Nguyễn Thị Lan"
+                            email: "lan.nguyen@gmail.com"
+                            locale: "vi"
+                            context:
+                                source: "website"
+                                tags: "Khách Lẻ 3in1, Lead Nóng"
+                                page_url: "https://kingcoffee.com/products/3in1"
+                                page_title: "Cà phê King 3in1 Hộp 18 Gói"
+            responses:
+                '201':
+                    description: Phiên chat đã được tạo thành công
+                    content:
+                        application/json:
+                            schema: { $ref: '#/components/schemas/Profile' }
+                            example:
+                                token: "wc_session_oG25dFPI3bNIfa9vAjoyNK3EMN2uPrsIiYQqsKSSQGDM50DPPPgb4uygkxivOst8"
+                                session_id: "01a03c4c-345f-730c-953c-4d17b5d8d50f"
+                                conversation_id: "01a03c4c-3449-70e8-b2ec-27cce2873618"
+                                tags:
+                                    - id: "9ed57fc4-40af-46a7-a1fb-bdb64a487c94"
+                                      name: "Khách Lẻ 3in1"
+                                      color: "#3B82F6"
+                                    - id: "663805c4-b422-45f5-8965-f7483ee25b18"
+                                      name: "Lead Nóng"
+                                      color: "#EF4444"
+                                expires_at: "2026-09-25T04:20:22+00:00"
+                '403': { $ref: '#/components/responses/ForbiddenError' }
+                '422': { $ref: '#/components/responses/ValidationError' }
+                '429': { $ref: '#/components/responses/RateLimitedError' }
+    /website-chat/v1/sessions/current:
+        delete:
+            operationId: delete_website_chat_v1_session
+            tags: [Chat profile]
+            summary: Kết thúc phiên chat hiện tại
+            description: Đóng phiên chat của khách và vô hiệu hóa session token hiện tại.
+            security: [{ sessionToken: [] }]
+            parameters:
+                - $ref: '#/components/parameters/PartnerOrigin'
+            responses:
+                '200':
+                    description: Phiên chat đã kết thúc
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    ended: { type: boolean, example: true }
+                '401': { $ref: '#/components/responses/UnauthorizedError' }
+                '429': { $ref: '#/components/responses/RateLimitedError' }
+    /website-chat/v1/messages:
+        parameters:
+            - $ref: '#/components/parameters/PartnerOrigin'
+        get:
+            operationId: get_website_chat_v1_messages
+            tags: [Messages]
+            summary: Lấy danh sách tin nhắn & Polling
+            description: Trả về danh sách tin nhắn trong phiên chat. Dùng query `?after=ISO8601` để lấy các tin nhắn mới gửi sau thời điểm đó.
+            security: [{ sessionToken: [] }]
+            parameters:
+                - name: after
+                  in: query
+                  required: false
+                  description: Chỉ lấy các tin nhắn gửi sau mốc thời gian này (ISO 8601).
+                  schema: { type: string, format: date-time, example: "2026-08-26T04:30:00Z" }
+            responses:
+                '200':
+                    description: Danh sách tin nhắn
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    messages:
+                                        type: array
+                                        items: { $ref: '#/components/schemas/Message' }
+                '401': { $ref: '#/components/responses/UnauthorizedError' }
+                '429': { $ref: '#/components/responses/RateLimitedError' }
+        post:
+            operationId: post_website_chat_v1_messages
+            tags: [Messages]
+            summary: Gửi Tin Nhắn / Gửi Ticket Hỗ Trợ Đính Kèm Ảnh (Max 5)
+            description: |
+                Hỗ trợ 2 hình thức gửi:
+                1. **Tin nhắn chat thông thường:** Gửi `body` văn bản và/hoặc đính kèm ảnh (nút 📎).
+                2. **Ticket Hỗ Trợ Khách Hàng:** Truyền `metadata.ticket_type`, `metadata.title`, `metadata.ticket_content`, `metadata.image_count` và mảng `attachments` chứa tối đa 5 hình ảnh. Hệ thống sẽ tự động gán loại hỗ trợ thành Thẻ Tag vào cuộc hội thoại.
+            security: [{ sessionToken: [] }]
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema: { $ref: '#/components/schemas/CreateMessageRequest' }
+                        examples:
+                            ticket_support:
+                                summary: 🎫 Tạo Ticket Hỗ Trợ Đơn Hàng (Kèm 2 hình ảnh)
+                                value:
+                                    client_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                                    type: "image"
+                                    body: "[HỖ TRỢ ĐƠN HÀNG] Tôi cần hỗ trợ đơn hàng\n\nTôi cần kiểm tra tình trạng giao đơn 50 hộp Cà phê King 3in1 đã đặt hôm qua."
+                                    attachments:
+                                        - id: "att_01"
+                                          type: "image"
+                                          url: "https://slakable-penney-neglectfully.ngrok-free.dev/uploads/bill_don_hang.png"
+                                          file_name: "bill_don_hang.png"
+                                          mime_type: "image/png"
+                                          size: 154200
+                                        - id: "att_02"
+                                          type: "image"
+                                          url: "https://slakable-penney-neglectfully.ngrok-free.dev/uploads/anh_san_pham.png"
+                                          file_name: "anh_san_pham.png"
+                                          mime_type: "image/png"
+                                          size: 210500
+                                    metadata:
+                                        title: "Tôi cần hỗ trợ đơn hàng"
+                                        ticket_type: "Hỗ trợ đơn hàng"
+                                        ticket_content: "Tôi cần kiểm tra tình trạng giao đơn 50 hộp Cà phê King 3in1 đã đặt hôm qua."
+                                        image_count: "2"
+                                        tags: "Hỗ Trợ Đơn Hàng"
+                                        source: "website_ticket"
+                            live_chat:
+                                summary: 💬 Gửi tin nhắn chat thông thường
+                                value:
+                                    client_id: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+                                    type: "text"
+                                    body: "Xin chào shop, mình muốn tư vấn mua sỉ 100 thùng cà phê 3in1 thì liên hệ ai ạ?"
+                                    metadata:
+                                        tags: "Khách Mua Sỉ, Báo Giá"
+                                        source: "website_livechat"
+            responses:
+                '201':
+                    description: Đã nhận tin nhắn / Ticket thành công
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: { $ref: '#/components/schemas/Message' }
+                '401': { $ref: '#/components/responses/UnauthorizedError' }
+                '422': { $ref: '#/components/responses/ValidationError' }
+                '429': { $ref: '#/components/responses/RateLimitedError' }
+    /website-chat/v1/channels/{channel}/webhook:
+        parameters:
+            - $ref: '#/components/parameters/ChannelId'
+        get:
+            tags: [Webhooks]
+            summary: Xem cấu hình webhook outbound của channel
+            security: [{ apiKey: [] }]
+            responses:
+                '200':
+                    description: Cấu hình webhook hiện tại
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    url: { type: string, format: uri, example: "https://partner.example/webhooks/kinghub" }
+                                    events:
+                                        type: array
+                                        items: { type: string, example: "message.created" }
+                '401': { $ref: '#/components/responses/UnauthorizedError' }
+                '404': { $ref: '#/components/responses/NotFoundError' }
+        put:
+            tags: [Webhooks]
+            summary: Đăng ký hoặc cập nhật webhook outbound
+            description: Đăng ký URL backend đối tác để nhận tin nhắn phản hồi của nhân viên CSKH (`message.created`). Secret chỉ trả về một lần khi tạo mới hoặc rotate.
+            security: [{ apiKey: [] }]
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required: [url, events]
+                            properties:
+                                url:
+                                    type: string
+                                    format: uri
+                                    example: "https://partner.example/webhooks/kinghub"
+                                events:
+                                    type: array
+                                    items:
+                                        type: string
+                                        enum: [message.created, conversation.tagged]
+                                rotate_secret: { type: boolean, default: false }
+            responses:
+                '200':
+                    description: Webhook đã được lưu thành công
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    url: { type: string }
+                                    events: { type: array, items: { type: string } }
+                                    secret: { type: string, example: "whsec_abcdef123456..." }
+                '401': { $ref: '#/components/responses/UnauthorizedError' }
+                '422': { $ref: '#/components/responses/ValidationError' }
+        delete:
+            tags: [Webhooks]
+            summary: Hủy đăng ký webhook outbound
+            security: [{ apiKey: [] }]
+            responses:
+                '204': { description: Đã hủy webhook thành công }
+                '401': { $ref: '#/components/responses/UnauthorizedError' }
+                '404': { $ref: '#/components/responses/NotFoundError' }
+    /website-chat/v1/channels/{channel}/conversations:
+        get:
+            operationId: get_website_chat_channel_conversations
+            tags: [Conversations]
+            summary: Lấy danh sách cuộc hội thoại của Channel (Backend Partner)
+            description: |
+                Endpoint dành riêng cho Backend đối tác sử dụng **Personal API Key**.
+                - Hỗ trợ phân trang bằng `page` và `per_page`.
+                - Hỗ trợ tìm kiếm theo tên, email khách hàng (`search`).
+                - Hỗ trợ lọc incremental theo `updated_after`.
+            security: [{ apiKey: [] }]
+            parameters:
+                - $ref: '#/components/parameters/ChannelId'
+                - name: status
+                  in: query
+                  required: false
+                  schema: { type: string, enum: [open, pending, resolved, spam] }
+                - name: search
+                  in: query
+                  required: false
+                  description: Tìm kiếm theo tên, email, sđt khách.
+                  schema: { type: string, maxLength: 120 }
+                - name: updated_after
+                  in: query
+                  required: false
+                  description: Chỉ lấy hội thoại cập nhật sau mốc thời gian này.
+                  schema: { type: string, format: date-time }
+                - name: per_page
+                  in: query
+                  required: false
+                  schema: { type: integer, minimum: 1, maximum: 100, default: 25 }
+                - name: page
+                  in: query
+                  required: false
+                  schema: { type: integer, minimum: 1, default: 1 }
+            responses:
+                '200':
+                    description: Danh sách phân trang các cuộc hội thoại
+                    content:
+                        application/json:
+                            schema: { $ref: '#/components/schemas/ConversationListResponse' }
+                '401': { $ref: '#/components/responses/UnauthorizedError' }
+                '404': { $ref: '#/components/responses/NotFoundError' }
+                '422': { $ref: '#/components/responses/ValidationError' }
+    /omnichat/tags:
+        get:
+            operationId: get_omnichat_tags
+            tags: [Conversation tags]
+            summary: Lấy danh sách Thẻ Tag trong Workspace
+            description: Trả về danh sách thẻ tag có sẵn để gắn vào cuộc hội thoại.
+            security: [{ apiKey: [] }]
+            responses:
+                '200':
+                    description: Danh sách thẻ trong workspace
+                    content:
+                        application/json:
+                            schema: { $ref: '#/components/schemas/TagListResponse' }
+                            example:
+                                tags:
+                                    - id: "9ed57fc4-40af-46a7-a1fb-bdb64a487c94"
+                                      name: "Khách Mua Sỉ"
+                                      color: "#F59E0B"
+                                    - id: "663805c4-b422-45f5-8965-f7483ee25b18"
+                                      name: "Hỗ Trợ Đơn Hàng"
+                                      color: "#E11D48"
+                '401': { $ref: '#/components/responses/UnauthorizedError' }
+        post:
+            operationId: post_omnichat_tags
+            tags: [Conversation tags]
+            summary: Tạo Thẻ Tag mới trong Workspace
+            security: [{ apiKey: [] }]
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required: [name, color]
+                            properties:
+                                name:
+                                    type: string
+                                    maxLength: 80
+                                    example: "VIP Doanh Nghiệp"
+                                color:
+                                    type: string
+                                    pattern: '^#[0-9A-Fa-f]{6}$'
+                                    example: "#EC4899"
+            responses:
+                '201':
+                    description: Thẻ vừa được tạo thành công
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    tag: { $ref: '#/components/schemas/Tag' }
+                '401': { $ref: '#/components/responses/UnauthorizedError' }
+                '422': { $ref: '#/components/responses/ValidationError' }
+    /omnichat/conversations/{conversation}/tags:
+        put:
+            operationId: put_omnichat_conversation_tags
+            tags: [Conversation tags]
+            summary: Gắn hoặc gỡ Thẻ Tag của cuộc hội thoại
+            description: Thay thế toàn bộ thẻ hiện tại của cuộc hội thoại bằng danh sách `tag_ids` mới.
+            security: [{ apiKey: [] }]
+            parameters:
+                - name: conversation
+                  in: path
+                  required: true
+                  schema: { type: string, format: uuid }
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required: [tag_ids]
+                            properties:
+                                tag_ids:
+                                    type: array
+                                    maxItems: 20
+                                    items: { type: string, format: uuid }
+                        example:
+                            tag_ids:
+                                - "9ed57fc4-40af-46a7-a1fb-bdb64a487c94"
+                                - "663805c4-b422-45f5-8965-f7483ee25b18"
+            responses:
+                '200':
+                    description: Danh sách thẻ mới của cuộc hội thoại
+                    content:
+                        application/json:
+                            schema: { $ref: '#/components/schemas/TagListResponse' }
+                '401': { $ref: '#/components/responses/UnauthorizedError' }
+                '404': { $ref: '#/components/responses/NotFoundError' }
+                '422': { $ref: '#/components/responses/ValidationError' }
+webhooks:
+    messageCreated:
+        post:
+            tags: [Webhooks]
+            summary: KingHub gửi tin nhắn CSKH về backend đối tác
+            description: Được kích hoạt tự động mỗi khi nhân viên CSKH gửi tin nhắn trả lời trên Omnichat.
+            parameters:
+                - name: X-KingHub-Event
+                  in: header
+                  required: true
+                  schema: { type: string, const: message.created }
+                - name: X-KingHub-Signature
+                  in: header
+                  required: true
+                  description: Chuỗi `t=timestamp,v1=HMAC_SHA256(timestamp.raw_body, webhook_secret)`
+                  schema: { type: string }
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema: { $ref: '#/components/schemas/WebhookEnvelope' }
+            responses:
+                '200': { description: Backend đối tác đã nhận thành công }
+components:
+    securitySchemes:
+        apiKey:
+            type: http
+            scheme: bearer
+            bearerFormat: KingHub API key
+            description: Personal API Key bí mật của workspace. Nhập token nguyên bản.
+        sessionToken:
+            type: http
+            scheme: bearer
+            bearerFormat: wc_session_...
+            description: Token nhận từ API tạo session (`wc_session_...`).
+    parameters:
+        PublicKey:
+            name: public_key
+            in: query
+            required: false
+            description: Khóa công khai của kênh (có thể truyền qua header `X-Website-Chat-Key`).
+            schema: { type: string, pattern: '^wc_pk_' }
+        ChannelId:
+            name: channel
+            in: path
+            required: true
+            description: UUID định danh của Website Chat Channel.
+            schema: { type: string, format: uuid }
+        PartnerOrigin:
+            name: X-Website-Chat-Origin
+            in: header
+            required: false
+            description: Origin website đã được khai báo trong channel. Trình duyệt tự gửi Origin/Referer nên không bắt buộc gửi header này từ web client.
+            schema:
+                { type: string, format: uri, example: "https://slakable-penney-neglectfully.ngrok-free.dev" }
+    responses:
+        UnauthorizedError:
+            description: Lỗi 401 — Chưa xác thực hoặc Session Token / API Key không hợp lệ.
+            content:
+                application/json:
+                    schema: { $ref: '#/components/schemas/ErrorResponse' }
+                    example:
+                        message: "Unauthenticated."
+        ForbiddenError:
+            description: Lỗi 403 — Không có quyền truy cập, Public Key sai hoặc Origin không nằm trong whitelist.
+            content:
+                application/json:
+                    schema: { $ref: '#/components/schemas/ErrorResponse' }
+                    example:
+                        message: "Origin không được channel cho phép."
+        NotFoundError:
+            description: Lỗi 404 — Không tìm thấy tài nguyên (Channel, Cuộc hội thoại hoặc Tin nhắn).
+            content:
+                application/json:
+                    schema: { $ref: '#/components/schemas/ErrorResponse' }
+                    example:
+                        message: "Không tìm thấy tài nguyên yêu cầu."
+        ValidationError:
+            description: Lỗi 422 — Dữ liệu gửi lên không hợp lệ (Validation Failure).
+            content:
+                application/json:
+                    schema: { $ref: '#/components/schemas/ValidationErrorResponse' }
+                    example:
+                        message: "Dữ liệu không hợp lệ."
+                        errors:
+                            visitor_id:
+                                - "The visitor_id field must be a valid UUID."
+                            attachments.0.url:
+                                - "The attachments.0.url field must be a valid URL."
+                            title:
+                                - "The title field must not be greater than 256 characters."
+        RateLimitedError:
+            description: Lỗi 429 — Vượt quá giới hạn gọi API (Rate Limit 120 requests/phút).
+            content:
+                application/json:
+                    schema: { $ref: '#/components/schemas/ErrorResponse' }
+                    example:
+                        message: "Too Many Requests"
+    schemas:
+        ErrorResponse:
+            type: object
+            required: [message]
+            properties:
+                message:
+                    type: string
+                    description: Thông báo nguyên nhân lỗi.
+                    example: "Unauthenticated."
+        ValidationErrorResponse:
+            type: object
+            required: [message, errors]
+            properties:
+                message:
+                    type: string
+                    description: Thông báo tổng quan lỗi validation.
+                    example: "Dữ liệu không hợp lệ."
+                errors:
+                    type: object
+                    description: Chi tiết các trường bị lỗi và nguyên nhân vi phạm.
+                    additionalProperties:
+                        type: array
+                        items: { type: string }
+                    example:
+                        visitor_id:
+                            - "The visitor_id field must be a valid UUID."
+                        attachments.0.url:
+                            - "The attachments.0.url field must be a valid URL."
+        Tag:
+            type: object
+            required: [id, name, color]
+            properties:
+                id: { type: string, format: uuid }
+                name: { type: string, example: "Khách VIP" }
+                color: { type: string, example: "#16A34A" }
+        TagListResponse:
+            type: object
+            required: [tags]
+            properties:
+                tags:
+                    type: array
+                    items: { $ref: '#/components/schemas/Tag' }
+        WebsiteChatConversation:
+            type: object
+            properties:
+                id: { type: string, format: uuid }
+                external_id: { type: string, format: uuid }
+                status: { type: string, enum: [open, pending, resolved, spam] }
+                priority: { type: string, example: normal }
+                last_message_preview: { type: [string, 'null'] }
+                last_message_at: { type: [string, 'null'], format: date-time }
+                last_inbound_at: { type: [string, 'null'], format: date-time }
+                last_outbound_at: { type: [string, 'null'], format: date-time }
+                unread_count: { type: integer, minimum: 0 }
+                contact:
+                    type: object
+                    properties:
+                        id: { type: string, format: uuid }
+                        name: { type: string }
+                        email: { type: [string, 'null'], format: email }
+                        phone: { type: [string, 'null'] }
+                        avatar_url: { type: [string, 'null'], format: uri }
+                        locale: { type: [string, 'null'] }
+                tags:
+                    type: array
+                    items: { $ref: '#/components/schemas/Tag' }
+                created_at: { type: string, format: date-time }
+                updated_at: { type: string, format: date-time }
+        ConversationListResponse:
+            type: object
+            properties:
+                data:
+                    type: array
+                    items: { $ref: '#/components/schemas/WebsiteChatConversation' }
+                links: { type: object, additionalProperties: true }
+                meta:
+                    type: object
+                    properties:
+                        current_page: { type: integer }
+                        last_page: { type: integer }
+                        per_page: { type: integer }
+                        total: { type: integer }
+        CreateProfileRequest:
+            type: object
+            required: [visitor_id]
+            properties:
+                visitor_id:
+                    type: string
+                    format: uuid
+                    description: UUID định danh duy nhất của khách trên trình duyệt (lưu trong cookie/localStorage).
+                name:
+                    type: string
+                    maxLength: 120
+                    description: Tên hiển thị của khách hàng.
+                    example: "Nguyễn Thị Lan"
+                email:
+                    type: string
+                    format: email
+                    description: Email của khách hàng.
+                    example: "lan.nguyen@gmail.com"
+                locale:
+                    type: string
+                    maxLength: 12
+                    default: vi
+                    description: Mã ngôn ngữ (vi, en, ko, ja, zh...).
+                    example: "vi"
+                context:
+                    type: object
+                    description: Thông tin ngữ cảnh bổ sung của khách hàng (UTM, trang đang xem, và danh sách tags).
+                    properties:
+                        source:
+                            type: string
+                            description: Nguồn truy cập
+                            example: "website"
+                        tags:
+                            type: string
+                            description: Danh sách thẻ tag ngăn cách bởi dấu phẩy (hệ thống sẽ tự động tạo và gắn thẻ vào cuộc hội thoại).
+                            example: "Khách Lẻ 3in1, Lead Nóng"
+                        utm_source:
+                            type: string
+                            example: "facebook"
+                        utm_campaign:
+                            type: string
+                            example: "king-coffee-3in1"
+                        page_url:
+                            type: string
+                            format: uri
+                            example: "https://kingcoffee.com/products/3in1"
+                        page_title:
+                            type: string
+                            example: "Cà phê King 3in1 Hộp 18 Gói"
+                    additionalProperties: true
+                tag_ids:
+                    type: array
+                    maxItems: 20
+                    description: Các UUID thẻ Omnichat đã tồn tại trong workspace nếu muốn gắn trực tiếp bằng ID.
+                    items: { type: string, format: uuid }
+        Profile:
+            type: object
+            properties:
+                token:
+                    type: string
+                    description: Session token bí mật dùng để xác thực trong các request `/messages`.
+                    example: "wc_session_oG25dFPI3bNIfa9vAjoyNK3EMN2uPrsIiYQqsKSSQGDM50DPPPgb4uygkxivOst8"
+                session_id:
+                    type: string
+                    format: uuid
+                    description: ID của phiên chat trên hệ thống.
+                conversation_id:
+                    type: string
+                    format: uuid
+                    description: ID cuộc hội thoại tương ứng trong Omnichat.
+                tags:
+                    type: array
+                    items:
+                        type: object
+                        properties:
+                            id: { type: string, format: uuid }
+                            name: { type: string }
+                            color: { type: string }
+                expires_at:
+                    type: string
+                    format: date-time
+                    description: Thời điểm hết hạn của phiên (mặc định sau 30 ngày).
+        CreateMessageRequest:
+            type: object
+            required: [client_id]
+            description: |
+                Gửi tin nhắn chat thông thường hoặc **Ticket Hỗ Trợ Khách Hàng**:
+                - Phải có ít nhất `body` hoặc `attachments`.
+                - Để tạo **Ticket Hỗ Trợ**, hãy truyền đầy đủ `metadata.ticket_type`, `metadata.title`, `metadata.ticket_content`, và danh sách `attachments` (tối đa 5 ảnh).
+            anyOf:
+                - required: [body]
+                - required: [attachments]
+            properties:
+                client_id:
+                    type: string
+                    format: uuid
+                    description: UUID duy nhất do client sinh ra để chống gửi trùng lặp (Idempotency Key).
+                    example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                type:
+                    type: string
+                    enum: [text, image, video, audio, document]
+                    default: text
+                    description: Loại tin nhắn chính (text hoặc image).
+                body:
+                    type: [string, 'null']
+                    maxLength: 5000
+                    description: Nội dung văn bản tin nhắn hoặc tóm tắt Ticket.
+                    example: "[HỖ TRỢ ĐƠN HÀNG] Tôi cần hỗ trợ đơn hàng\n\nTôi cần kiểm tra tình trạng giao đơn 50 hộp cà phê King 3in1."
+                attachments:
+                    type: array
+                    maxItems: 5
+                    description: Danh sách tệp/hình ảnh đính kèm (Tối đa 5 hình ảnh).
+                    items: { $ref: '#/components/schemas/Attachment' }
+                reply_to_message_id:
+                    type: [string, 'null']
+                    format: uuid
+                    description: ID của tin nhắn trước đó nếu đang trả lời (quote).
+                metadata:
+                    type: object
+                    description: Thông tin Ticket hoặc nhãn tag bổ sung của tin nhắn.
+                    properties:
+                        title:
+                            type: string
+                            maxLength: 256
+                            description: Tiêu đề yêu cầu hỗ trợ (Max 256 ký tự).
+                            example: "Tôi cần hỗ trợ đơn hàng"
+                        ticket_type:
+                            type: string
+                            description: Loại yêu cầu hỗ trợ.
+                            enum:
+                                - "Hỗ trợ đơn hàng"
+                                - "Hỗ trợ ứng dụng"
+                                - "Góp ý"
+                                - "Hỗ trợ về báo cáo"
+                                - "Hỗ trợ sản phẩm"
+                                - "Hỗ trợ đại lý / Kỹ thuật"
+                            example: "Hỗ trợ đơn hàng"
+                        ticket_content:
+                            type: string
+                            maxLength: 1000
+                            description: Nội dung chi tiết yêu cầu hỗ trợ (Max 1000 ký tự).
+                            example: "Tôi cần kiểm tra tình trạng giao đơn 50 hộp cà phê King 3in1 đã đặt hôm qua."
+                        image_count:
+                            type: string
+                            description: Số lượng hình ảnh đính kèm trong Ticket.
+                            example: "2"
+                        tags:
+                            type: string
+                            description: Thẻ tag muốn tự động gán vào cuộc hội thoại khi gửi tin nhắn này.
+                            example: "Hỗ Trợ Đơn Hàng"
+                        source:
+                            type: string
+                            example: "website_ticket"
+                    additionalProperties: true
+        Attachment:
+            type: object
+            required: [type, url]
+            properties:
+                id: { type: [string, 'null'], maxLength: 255 }
+                type: { type: string, enum: [image, video, audio, document] }
+                url: { type: string, format: uri, maxLength: 2048, example: "https://your-domain.com/uploads/image.png" }
+                thumbnail_url:
+                    { type: [string, 'null'], format: uri, maxLength: 2048 }
+                file_name: { type: [string, 'null'], maxLength: 255, example: "bill_don_hang.png" }
+                mime_type: { type: [string, 'null'], maxLength: 120, example: "image/png" }
+                size:
+                    { type: [integer, 'null'], minimum: 0, maximum: 104857600, example: 154200 }
+                width: { type: [integer, 'null'], minimum: 1, maximum: 20000 }
+                height: { type: [integer, 'null'], minimum: 1, maximum: 20000 }
+        Message:
+            type: object
+            properties:
+                id: { type: string, format: uuid }
+                client_id: { type: [string, 'null'], format: uuid }
+                direction: { type: string, enum: [inbound, outbound] }
+                type:
+                    {
+                        type: string,
+                        enum: [text, image, video, audio, document],
+                    }
+                body: { type: [string, 'null'] }
+                status: { type: string, example: sent }
+                attachments:
+                    type: array
+                    items: { $ref: '#/components/schemas/Attachment' }
+                reply_to_message_id: { type: [string, 'null'], format: uuid }
+                metadata: { type: object, additionalProperties: true }
+                sent_at: { type: [string, 'null'], format: date-time }
+                delivered_at: { type: [string, 'null'], format: date-time }
+                read_at: { type: [string, 'null'], format: date-time }
+                failed_at: { type: [string, 'null'], format: date-time }
+                error_message: { type: [string, 'null'] }
+                created_at: { type: string, format: date-time }
+        WebhookEnvelope:
+            type: object
+            required: [id, event, created_at, channel_id, data]
+            properties:
+                id: { type: string, format: uuid }
+                event:
+                    {
+                        type: string,
+                        enum: [message.created, conversation.tagged],
+                    }
+                created_at: { type: string, format: date-time }
+                channel_id: { type: string, format: uuid }
+                data: { type: object, additionalProperties: true }

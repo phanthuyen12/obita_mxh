@@ -1,0 +1,44 @@
+nohup: ignoring input
+
+   INFO  Running scheduled tasks.  
+
+  2026-08-13 09:47:00 Running ['artisan' posts:process-scheduled]  538.44ms DONE
+  ⇂ Process scheduled posts that are due for publishing  
+  2026-08-13 09:47:01 Running ['artisan' automation:fire-schedule]  509.41ms DONE
+  ⇂ Fire scheduled automations whose cron matches now  
+  2026-08-13 09:47:01 Running ['artisan' automation:process-delays]  477.92ms DONE
+  ⇂ Wake up runs that finished their delay window  
+  2026-08-13 09:47:02 Running ['artisan' content:clone-due] .... 447.66ms DONE
+  ⇂ Generate due content-clone posts and send them for approval  
+
+  2026-08-13 09:48:00 Running ['artisan' posts:process-scheduled]  483.10ms DONE
+  ⇂ Process scheduled posts that are due for publishing  
+  2026-08-13 09:48:00 Running ['artisan' automation:fire-schedule]  501.70ms DONE
+  ⇂ Fire scheduled automations whose cron matches now  
+  2026-08-13 09:48:01 Running ['artisan' automation:process-delays]  468.36ms DONE
+  ⇂ Wake up runs that finished their delay window  
+  2026-08-13 09:48:01 Running ['artisan' content:clone-due] .... 502.31ms DONE
+  ⇂ Generate due content-clone posts and send them for approval  
+
+  2026-08-13 09:49:00 Running ['artisan' posts:process-scheduled]  560.50ms DONE
+  ⇂ Process scheduled posts that are due for publishing  
+  2026-08-13 09:49:01 Running ['artisan' automation:fire-schedule]  504.35ms DONE
+  ⇂ Fire scheduled automations whose cron matches now  
+  2026-08-13 09:49:01 Running ['artisan' automation:process-delays]  522.43ms DONE
+  ⇂ Wake up runs that finished their delay window  
+  2026-08-13 09:49:02 Running ['artisan' content:clone-due] .... 479.44ms DONE
+  ⇂ Generate due content-clone posts and send them for approval  
+
+  2026-08-13 09:50:00 Running ['artisan' posts:process-scheduled]  492.51ms DONE
+  ⇂ Process scheduled posts that are due for publishing  
+  2026-08-13 09:50:01 Running ['artisan' automation:fire-schedule]  492.21ms DONE
+  ⇂ Fire scheduled automations whose cron matches now  
+  2026-08-13 09:50:01 Running ['artisan' automation:process-delays]  529.90ms DONE
+  ⇂ Wake up runs that finished their delay window  
+  2026-08-13 09:50:02 Running ['artisan' automation:recover-stuck-runs]  514.31ms DONE
+  ⇂ Fail automation runs stuck running or pending for more than 1 hour  
+  2026-08-13 09:50:02 Running ['artisan' automation:prune-dry-runs]  486.67ms DONE
+  ⇂ Delete terminal dry-run automation runs older than the test-panel grace window  
+  2026-08-13 09:50:03 Running ['artisan' content:clone-due] .... 494.75ms DONE
+  ⇂ Generate due content-clone posts and send them for approval  
+

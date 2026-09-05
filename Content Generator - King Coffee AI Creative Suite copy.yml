@@ -1,0 +1,1537 @@
+app:
+  description: 'Quy trình tự động hóa sáng tạo nội dung King Coffee: Tạo bài viết
+    quảng cáo chuẩn SEO/AIDA, Tạo 1 ảnh thương mại AI đỉnh cao với Gemini Image Plugin,
+    và Lên kịch bản & xuất Video AI với Gemini Video Plugin.'
+  icon: ☕
+  icon_background: '#FFEAD5'
+  icon_type: emoji
+  mode: workflow
+  name: Content Generator - King Coffee AI Creative Suite
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: package
+  value:
+    plugin_unique_identifier: qceank/gemini_image:0.2.3@8e50b4ad4e0168465d50efd50199303c51e327428bc706e0f6c0bf86fbc4ece4
+    version: null
+- current_identifier: null
+  type: package
+  value:
+    plugin_unique_identifier: qceank/revid_tool:0.2.1@b5a597fc0431e16172be55b6f9acb4b45388a22da81f9bdaa388ccbe3d05dae9
+    version: null
+- current_identifier: null
+  type: package
+  value:
+    plugin_unique_identifier: qceank/gemini:0.9.7@baff358c8c77425d6e22231058b60db0b9a59a5d37a917ea145758a4ce2f8634
+    version: null
+kind: app
+version: 0.7.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: true
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 10
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        skill_file_size_limit: 50
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: true
+        number_limits: 5
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 5
+    opening_statement: ''
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: if-else
+      id: start-to-router
+      selected: false
+      source: start
+      sourceHandle: source
+      target: router_type
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: router-to-post
+      selected: false
+      source: router_type
+      sourceHandle: case_post
+      target: content_llm
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: router-to-image
+      selected: false
+      source: router_type
+      sourceHandle: case_image
+      target: '1787712259001'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: router-to-video
+      selected: false
+      source: router_type
+      sourceHandle: case_video
+      target: video_llm
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: content_llm-to-answer
+      selected: false
+      source: content_llm
+      sourceHandle: source
+      target: final_answer_post
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: image_llm-to-code
+      selected: false
+      source: '1787712259001'
+      sourceHandle: source
+      target: '1787716214379'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: tool
+      id: code-to-image_tool
+      selected: false
+      source: '1787716214379'
+      sourceHandle: source
+      target: '1787713476460'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: tool
+        targetType: end
+      id: image_tool-to-answer
+      selected: false
+      source: '1787713476460'
+      sourceHandle: source
+      target: final_answer_image
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: video_llm-to-code
+      selected: false
+      source: video_llm
+      sourceHandle: source
+      target: video_code_parser
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: tool
+      id: video_code_parser-source-1788423116630-target
+      source: video_code_parser
+      sourceHandle: source
+      target: '1788423116630'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: tool
+        targetType: end
+      id: 1788423116630-source-final_answer_video-target
+      source: '1788423116630'
+      sourceHandle: source
+      target: final_answer_video
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: false
+        title: Bắt đầu
+        type: start
+        variables:
+        - default: post
+          hint: Chọn loại nội dung cần tạo
+          label: Loại nội dung (Type)
+          options:
+          - post
+          - image
+          - video
+          placeholder: Chọn loại nội dung
+          required: false
+          type: select
+          variable: content_type
+        - default: ''
+          hint: Nhập mô tả, chủ đề bài viết, ý tưởng ảnh hoặc kịch bản video
+          label: Yêu cầu chi tiết
+          max_length: 3000
+          options: []
+          placeholder: 'Ví dụ: Bài viết giới thiệu King Coffee Espresso phong cách
+            sang trọng, lịch lãm...'
+          required: false
+          type: paragraph
+          variable: requirement
+        - allowed_file_extensions:
+          - .JPG
+          - .JPEG
+          - .PNG
+          - .WEBP
+          allowed_file_types:
+          - image
+          allowed_file_upload_methods:
+          - local_file
+          - remote_url
+          default: ''
+          hide: false
+          hint: Tải lên hình ảnh sản phẩm King Coffee để AI tham chiếu (tuỳ chọn)
+          label: Ảnh sản phẩm King Coffee (Product)
+          max_length: 5
+          options: []
+          placeholder: ''
+          required: false
+          type: file-list
+          variable: Product
+        - default: ''
+          hint: Chủ đề nội dung
+          label: Chủ đề (Theme)
+          max_length: 500
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: theme
+        - default: ''
+          hint: Yêu cầu bổ sung
+          label: Yêu cầu (Prompt)
+          max_length: 3000
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: prompt
+        - default: facebook
+          hint: Nền tảng xuất bản
+          label: Nền tảng (Platform)
+          max_length: 50
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: platform
+        - default: ''
+          hint: Hook mở đầu video (3s đầu)
+          label: Hook Video
+          max_length: 500
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: video_hook
+        - default: 30
+          hint: Tổng thời lượng video mong muốn
+          label: Thời lượng Video (giây)
+          max_length: 10
+          options: []
+          placeholder: ''
+          required: false
+          type: number
+          variable: video_target_duration
+        - default: King Coffee
+          hint: Tên thương hiệu
+          label: Tên thương hiệu (Brand Name)
+          max_length: 200
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: brand_name
+        - default: ''
+          hint: Nội dung bài viết nguồn
+          label: Bài viết nguồn (Source Content)
+          max_length: 5000
+          options: []
+          placeholder: ''
+          required: false
+          type: paragraph
+          variable: source_content
+        - default: ''
+          hint: Hướng dẫn chi tiết cho AI
+          label: Hướng dẫn hệ thống (Instructions)
+          max_length: 5000
+          options: []
+          placeholder: ''
+          required: false
+          type: paragraph
+          variable: instructions
+      height: 220
+      id: start
+      position:
+        x: 100
+        y: 350
+      positionAbsolute:
+        x: 100
+        y: 350
+      selected: false
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        cases:
+        - case_id: case_post
+          conditions:
+          - comparison_operator: is
+            id: cond_post
+            value: post
+            varType: string
+            variable_selector:
+            - start
+            - content_type
+          id: case_post
+          logical_operator: and
+        - case_id: case_image
+          conditions:
+          - comparison_operator: is
+            id: cond_image
+            value: image
+            varType: string
+            variable_selector:
+            - start
+            - content_type
+          id: case_image
+          logical_operator: and
+        - case_id: case_video
+          conditions:
+          - comparison_operator: is
+            id: cond_video
+            value: video
+            varType: string
+            variable_selector:
+            - start
+            - content_type
+          id: case_video
+          logical_operator: and
+        selected: false
+        title: Điều hướng loại nội dung
+        type: if-else
+      height: 291
+      id: router_type
+      position:
+        x: 450
+        y: 350
+      positionAbsolute:
+        x: 450
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        context:
+          enabled: false
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: gemini-2.5-flash
+          provider: qceank/gemini/google
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 'Bạn là Giám Đốc Sáng Tạo & Copywriter hàng đầu của thương hiệu King
+            Coffee.
+
+
+            NHIỆM VỤ:
+
+            Tạo một bài viết mạng xã hội (Facebook) hoàn chỉnh, cuốn hút, sang trọng,
+            đúng phong cách King Coffee, chuẩn AIDA và sẵn sàng xuất bản ngay.
+
+
+            QUY TẮC ĐẦU RA BẮT BUỘC:
+
+            - CHỈ XUẤT BÀI VIẾT THỰC TẾ, không thêm câu chào hỏi, lời dẫn hay văn
+            bản mở đầu/kết bài phụ.
+
+            - TUYỆT ĐỐI KHÔNG in các nhãn cấu trúc phân mục như ''1. TIÊU ĐỀ:'', ''2.
+            NỘI DUNG CHÍNH:'', ''3. CTA:'', ''4. HASHTAGS:'', ''5. GỢI Ý HÌNH ẢNH:''.
+
+            - Bắt đầu trực tiếp bằng Tiêu đề bài viết ấn tượng (in đậm kèm emoji),
+            tiếp nối là thân bài truyền cảm, các ưu đãi đặc quyền, lời kêu gọi hành
+            động (CTA) mượt mà và kết thúc bằng bộ hashtags thịnh hành (#KingCoffee
+            #KingCoffee3in1...).
+
+            - Giọng văn: Sang trọng, ấm áp, tinh tế, giàu cảm xúc và khơi dậy đam
+            mê thưởng thức cà phê thượng hạng.'
+        - id: user-prompt
+          role: user
+          text: 'Yêu cầu bài viết: {{#start.requirement#}}'
+        selected: false
+        title: ✍️ Trình tạo Bài viết
+        type: llm
+        vision:
+          configs:
+            detail: high
+            variable_selector:
+            - start
+            - Product
+          enabled: true
+      height: 87
+      id: content_llm
+      position:
+        x: 800
+        y: 100
+      positionAbsolute:
+        x: 800
+        y: 100
+      selected: false
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        desc: 'Kết quả bài viết King Coffee'
+        outputs:
+        - value_selector:
+          - content_llm
+          - text
+          variable: content
+        selected: false
+        title: 📄 Kết quả Bài viết
+        type: end
+      height: 102
+      id: final_answer_post
+      position:
+        x: 1200
+        y: 100
+      positionAbsolute:
+        x: 1200
+        y: 100
+      selected: false
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        model:
+          completion_params:
+            temperature: 0.5
+          mode: chat
+          name: gemini-2.5-flash
+          provider: qceank/gemini/google
+        prompt_template:
+        - id: system-prompt-image
+          role: system
+          text: "Bạn là Senior Prompt Engineer & Commercial Art Director chuyên nghiệp\
+            \ cho thương hiệu cà phê quốc tế King Coffee.\n\nNHIỆM VỤ:\nPhân tích\
+            \ yêu cầu của người dùng và ảnh sản phẩm tham chiếu (nếu có), sau đó tạo\
+            \ DUY NHẤT 1 prompt tiếng Anh hoàn hảo để đưa vào engine AI tạo ảnh quảng\
+            \ cáo chất lượng cao (8K, cinematic commercial product photography).\n\
+            \nNGUYÊN TẮC BẮT BUỘC:\n1. GIỮ NGUYÊN NHẬN DIỆN SẢN PHẨM (Locked Product\
+            \ Asset):\n   Nếu có ảnh sản phẩm đính kèm, giữ nguyên bao bì, màu sắc,\
+            \ logo, tên thương hiệu King Coffee. Không tạo hình dạng biến dạng hay\
+            \ chế logo mới.\n2. BỐ CỤC & ÁNH SÁNG THƯƠNG MẠI:\n   - Studio advertising\
+            \ lighting, soft shadows, warm natural coffee tones, depth of field.\n\
+            \   - Môi trường phù hợp: quầy bar gỗ sang trọng, hạt cà phê rơi nghệ\
+            \ thuật, làn khói thơm bốc lên, hoặc phong cách tối giản hiện đại (minimalist\
+            \ luxury).\n3. ĐỊNH DẠNG ĐẦU RA BẮT BUỘC:\n\n\U0001F3AF PHONG CÁCH: [Mô\
+            \ tả ngắn phong cách]\n\U0001F4DD Ý TƯỞNG BỐ CỤC: [Mô tả ngắn gọn bằng\
+            \ tiếng Việt]\n\U0001F4CB PROMPT CHÍNH:\nPROMPT: [1 prompt hoàn chỉnh\
+            \ bằng tiếng Anh mô tả chi tiết hình ảnh quảng cáo, không chứa ngoặc vuông]\n\
+            ⚙️ THÔNG SỐ: Aspect Ratio: 1:1 hoặc 16:9, Negative Prompt: blurry, distorted,\
+            \ bad packaging, fake logo, watermark, low quality."
+        - id: user-prompt-image
+          role: user
+          text: 'Yêu cầu hình ảnh / concept quảng cáo: {{#start.requirement#}}'
+        selected: false
+        structured_output_enabled: false
+        title: 🎨 Viết Prompt Ảnh AI
+        type: llm
+        vision:
+          configs:
+            detail: high
+            variable_selector:
+            - start
+            - Product
+          enabled: true
+      height: 87
+      id: '1787712259001'
+      position:
+        x: 800
+        y: 350
+      positionAbsolute:
+        x: 800
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        code: "function main({ promeLLm }) {\n  const text = String(promeLLm || \"\
+          \").trim();\n  \n  const match = text.match(/PROMPT:\\s*([^\\n\\r]+(?:\\\
+          n(?!\\s*(?:⚙️|Negative Prompt:|ASPECT RATIO:|THÔNG SỐ:|$))[^\\n\\r]+)*)/i)\
+          \ \n             || text.match(/PROMPT:\\s*([\\s\\S]*?)(?:\\n\\s*⚙️|\\n\\\
+          s*Negative Prompt:|\\n\\s*THÔNG SỐ:|$)/i);\n  \n  let result = match ? match[1].trim()\
+          \ : text;\n  \n  // Remove surrounding brackets, quotes, or markdown bold\n\
+          \  result = result.replace(/^\\[|\\]$/g, '').replace(/^\"|\"$/g, '').replace(/^\\\
+          *\\*|\\*\\*$/g, '').trim();\n  \n  if (!result || result.length < 15) {\n\
+          \    result = \"High-end commercial product photography for King Coffee,\
+          \ cinematic studio lighting, rich coffee beans, steam rising, elegant luxury\
+          \ background, photorealistic, 8k resolution\";\n  }\n  \n  return {\n  \
+          \  result\n  };\n}"
+        code_language: javascript
+        outputs:
+          result:
+            children: null
+            type: string
+        selected: false
+        title: ⚙️ Trích Xuất Prompt Ảnh
+        type: code
+        variables:
+        - value_selector:
+          - '1787712259001'
+          - text
+          value_type: string
+          variable: promeLLm
+      height: 51
+      id: '1787716214379'
+      position:
+        x: 1200
+        y: 350
+      positionAbsolute:
+        x: 1200
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        is_team_authorization: true
+        paramSchemas:
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: Detailed description of the image you want to generate (max 32000
+              tokens). Check the official Gemini documentation.
+            ja_JP: 生成したい画像の細かな説明(最大 32000 トークン)。Gemini 公式ドキュメントを参照してください。
+            pt_BR: Detailed description of the image you want to generate (max 32000
+              tokens). Check the official Gemini documentation.
+            zh_Hans: 您想要生成的图像的详细描述（最多 32000 tokens）。请查看 Gemini 的官方文档。
+          input_schema: null
+          label:
+            en_US: Prompt
+            ja_JP: プロンプト
+            pt_BR: Prompt
+            zh_Hans: 提示词
+          llm_description: Detailed image prompt for Gemini Image Generate(max 32000
+            tokens). Describe the desired image clearly.
+          max: null
+          min: null
+          multiple: false
+          name: prompt
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: One or more images to edit (PNG, JPEG, or WebP, each <7MB).
+            ja_JP: 編集対象の画像(PNG, JPEG, or WebP, 1つ当たり最大 7MB)
+            pt_BR: One or more images to edit (PNG, JPEG, or WebP, each <7MB).
+            zh_Hans: 要编辑的一张或多张图像（PNG、JPEG 或 WebP，每张小于 7MB）。
+          input_schema: null
+          label:
+            en_US: Image(s)
+            ja_JP: 画像
+            pt_BR: Image(s)
+            zh_Hans: 图像
+          llm_description: ''
+          max: null
+          min: null
+          multiple: false
+          name: images
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: files
+        - auto_generate: null
+          default: gemini-2.5-flash-image-preview
+          form: form
+          human_description:
+            en_US: Select the gemini model
+            ja_JP: Gemini モデルを選択
+            pt_BR: Select the gemini model
+            zh_Hans: 选择Gemini模型
+          input_schema: null
+          label:
+            en_US: Gemini Model
+            ja_JP: Gemini モデル
+            pt_BR: Gemini Model
+            zh_Hans: Gemini 模型
+          llm_description: ''
+          max: null
+          min: null
+          multiple: false
+          name: model
+          options:
+          - icon: ''
+            label:
+              en_US: gemini-2.5-flash-image-preview
+              ja_JP: gemini-2.5-flash-image-preview
+              pt_BR: gemini-2.5-flash-image-preview
+              zh_Hans: gemini-2.5-flash-image-preview
+            value: gemini-2.5-flash-image-preview
+          - icon: ''
+            label:
+              en_US: gemini-3.0-pro-image-preview
+              ja_JP: gemini-3.0-pro-image-preview
+              pt_BR: gemini-3.0-pro-image-preview
+              zh_Hans: gemini-3.0-pro-image-preview
+            value: gemini-3-pro-image-preview
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        params:
+          images: ''
+          model: ''
+          prompt: ''
+        plugin_id: qceank/gemini_image
+        plugin_unique_identifier: qceank/gemini_image:0.2.3@8e50b4ad4e0168465d50efd50199303c51e327428bc706e0f6c0bf86fbc4ece4
+        provider_icon: https://kingai.tnicorporation.com/console/api/workspaces/current/plugin/icon?tenant_id=fa54662f-72ff-4f9b-977c-1f86e12b6a6d&filename=1a5efebcdcb722a86c72848ea24502de161c804d186a533b2bc112f2181a4a07.png
+        provider_id: qceank/gemini_image/gemini_image
+        provider_name: qceank/gemini_image/gemini_image
+        provider_show_name: Gemini Image
+        provider_type: builtin
+        selected: false
+        title: Gemini Image Generate
+        tool_configurations:
+          model:
+            type: constant
+            value: gemini-3-pro-image-preview
+        tool_description: Gemini Image Generate is a text to image generation and
+          editing tool
+        tool_label: Gemini Image Generate and Edit
+        tool_name: image_generate
+        tool_node_version: '2'
+        tool_parameters:
+          images:
+            type: variable
+            value:
+            - start
+            - Product
+          prompt:
+            type: mixed
+            value: '{{#1787716214379.result#}}'
+        type: tool
+      height: 87
+      id: '1787713476460'
+      position:
+        x: 1550
+        y: 350
+      positionAbsolute:
+        x: 1550
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        desc: 'Kết quả ảnh thương mại AI'
+        outputs:
+        - value_selector:
+          - '1787713476460'
+          - files
+          variable: files
+        - value_selector:
+          - '1787716214379'
+          - result
+          variable: image_prompt
+        selected: false
+        title: ✨ Kết quả Ảnh AI
+        type: end
+      height: 121
+      id: final_answer_image
+      position:
+        x: 1900
+        y: 350
+      positionAbsolute:
+        x: 1900
+        y: 350
+      selected: false
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        context:
+          enabled: false
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: gemini-2.5-flash
+          provider: qceank/gemini/google
+        prompt_template:
+        - id: system-prompt-video
+          role: system
+          text: "Bạn là Đạo Diễn & Biên Kịch Video Quảng Cáo AI cho thương hiệu King\
+            \ Coffee.\n\nNHIỆM VỤ:\nXây dựng kịch bản phân cảnh video thương mại ngắn\
+            \ (15s - 30s) chuyên nghiệp, ấn tượng bám sát yêu cầu người dùng.\n\n\
+            CẤU TRÚC KỊCH BẢN:\n1. **Tổng quan**: Ý tưởng chính, thời lượng, phong\
+            \ cách âm nhạc/BGM, tone & mood.\n2. **Phân cảnh chi tiết từng Scene (Scene\
+            \ 1 đến Scene 4)**:\n   - Bối cảnh & Hành động nhân vật / sản phẩm.\n\
+            \   - Chuyển động máy quay (Camera Movement: Slow-motion, Close-up, Dolly\
+            \ Zoom, Drone shot).\n   - Voiceover (Lời thuyết minh tiếng Việt) & Text\
+            \ hiển thị trên màn hình.\n3. **PROMPT VIDEO AI (Veo 3.1 / Gen-3)**:\n\
+            \   PROMPT: [Mô tả chi tiết bằng tiếng Anh phân cảnh chính ấn tượng nhất\
+            \ của King Coffee để đưa vào công cụ tạo video AI]"
+        - id: user-prompt-video
+          role: user
+          text: 'Yêu cầu kịch bản video: {{#start.requirement#}}'
+        selected: false
+        title: 🎬 Biên Kịch Video
+        type: llm
+        vision:
+          configs:
+            detail: high
+            variable_selector:
+            - start
+            - Product
+          enabled: true
+      height: 87
+      id: video_llm
+      position:
+        x: 800
+        y: 650
+      positionAbsolute:
+        x: 800
+        y: 650
+      selected: false
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        code: "function main({ scriptText }) {\n  const text = String(scriptText ||\
+          \ \"\").trim();\n  \n  const promptMatch = text.match(/PROMPT:\\s*([^\\\
+          n\\r]+(?:\\n(?!\\s*(?:Negative Prompt:|Thông số:|$))[^\\n\\r]+)*)/i)\n \
+          \                  || text.match(/Prompt điều khiển Video AI[^:]*:\\s*([^\\\
+          n\\r]+)/i)\n                   || text.match(/PROMPT\\s*(?:VIDEO|AI)?:\\\
+          s*([\\s\\S]*?)(?:\\n\\s*Negative|\\n\\s*Scene|\\n\\s*Thông số|$)/i);\n \
+          \ \n  let prompt = promptMatch ? promptMatch[1].trim() : \"\";\n  prompt\
+          \ = prompt.replace(/^\\[|\\]$/g, '').replace(/^\"|\"$/g, '').replace(/^\\\
+          *\\*|\\*\\*$/g, '').trim();\n  \n  if (!prompt || prompt.length < 15) {\n\
+          \    prompt = \"Cinematic slow motion commercial shot of steaming King Coffee\
+          \ being poured into a luxury glass cup, fresh coffee beans rolling, golden\
+          \ morning sunlight, 4k ultra-realistic\";\n  }\n  \n  const negative_prompt\
+          \ = \"blurry, low quality, distorted, extra limbs, watermark, artifacts,\
+          \ bad typography, morphing, jerky movement\";\n  \n  return {\n    prompt,\n\
+          \    negative_prompt\n  };\n}"
+        code_language: javascript
+        outputs:
+          negative_prompt:
+            children: null
+            type: string
+          prompt:
+            children: null
+            type: string
+        selected: false
+        title: ⚙️ Trích Xuất Prompt Video
+        type: code
+        variables:
+        - value_selector:
+          - video_llm
+          - text
+          value_type: string
+          variable: scriptText
+      height: 51
+      id: video_code_parser
+      position:
+        x: 1200
+        y: 650
+      positionAbsolute:
+        x: 1200
+        y: 650
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        desc: 'Kết quả kịch bản & video AI'
+        outputs:
+        - value_selector:
+          - '1788423116630'
+          - files
+          variable: video_files
+        - value_selector:
+          - video_llm
+          - text
+          variable: video_script
+        - value_selector:
+          - video_code_parser
+          - prompt
+          variable: video_prompt
+        selected: false
+        title: 🎬 Kết quả Video AI
+        type: end
+      height: 204
+      id: final_answer_video
+      position:
+        x: 2200
+        y: 650
+      positionAbsolute:
+        x: 2200
+        y: 650
+      selected: false
+      type: custom
+      width: 241
+      zIndex: 0
+    - data:
+        is_team_authorization: true
+        paramSchemas:
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: Description of the desired motion and animation for the image
+            ja_JP: Description of the desired motion and animation for the image
+            pt_BR: Description of the desired motion and animation for the image
+            zh_Hans: 描述图像的期望运动和动画
+          input_schema: null
+          label:
+            en_US: Prompt
+            ja_JP: Prompt
+            pt_BR: Prompt
+            zh_Hans: 提示词
+          llm_description: Describe the motion, camera movement, and animation you
+            want applied to the image.
+          max: null
+          min: null
+          multiple: false
+          name: prompt
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: The source image to animate
+            ja_JP: The source image to animate
+            pt_BR: The source image to animate
+            zh_Hans: 要动画化的源图像
+          input_schema: null
+          label:
+            en_US: Input Image
+            ja_JP: Input Image
+            pt_BR: Input Image
+            zh_Hans: 输入图像
+          llm_description: Upload the static image you want to animate into a video.
+          max: null
+          min: null
+          multiple: false
+          name: input_image
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: file
+        - auto_generate: null
+          default: kling-2.6
+          form: form
+          human_description:
+            en_US: AI model to use for video generation
+            ja_JP: AI model to use for video generation
+            pt_BR: AI model to use for video generation
+            zh_Hans: 用于视频生成的 AI 模型
+          input_schema: null
+          label:
+            en_US: Model
+            ja_JP: Model
+            pt_BR: Model
+            zh_Hans: 模型
+          llm_description: ''
+          max: null
+          min: null
+          multiple: false
+          name: model
+          options:
+          - icon: ''
+            label:
+              en_US: Kling 2.6 (Recommended)
+              ja_JP: Kling 2.6 (Recommended)
+              pt_BR: Kling 2.6 (Recommended)
+              zh_Hans: Kling 2.6（推荐）
+            value: kling-2.6
+          - icon: ''
+            label:
+              en_US: Kling 2.5 Turbo (Fast)
+              ja_JP: Kling 2.5 Turbo (Fast)
+              pt_BR: Kling 2.5 Turbo (Fast)
+              zh_Hans: Kling 2.5 Turbo（快速）
+            value: kling-2.5-turbo
+          - icon: ''
+            label:
+              en_US: Kling 3.0 Video
+              ja_JP: Kling 3.0 Video
+              pt_BR: Kling 3.0 Video
+              zh_Hans: Kling 3.0 Video
+            value: kling-3.0-video
+          - icon: ''
+            label:
+              en_US: Kling 3.0 Omni
+              ja_JP: Kling 3.0 Omni
+              pt_BR: Kling 3.0 Omni
+              zh_Hans: Kling 3.0 Omni
+            value: kling-3.0-omni
+          - icon: ''
+            label:
+              en_US: Kling O1 Video
+              ja_JP: Kling O1 Video
+              pt_BR: Kling O1 Video
+              zh_Hans: Kling O1 Video
+            value: kling-o1-video
+          - icon: ''
+            label:
+              en_US: Happy Horse 1.0
+              ja_JP: Happy Horse 1.0
+              pt_BR: Happy Horse 1.0
+              zh_Hans: Happy Horse 1.0
+            value: happy-horse-1.0
+          - icon: ''
+            label:
+              en_US: Veo 3.1 Fast (Fast)
+              ja_JP: Veo 3.1 Fast (Fast)
+              pt_BR: Veo 3.1 Fast (Fast)
+              zh_Hans: Veo 3.1 Fast（快速）
+            value: veo3.1-fast
+          - icon: ''
+            label:
+              en_US: Veo 3.1 High (Quality)
+              ja_JP: Veo 3.1 High (Quality)
+              pt_BR: Veo 3.1 High (Quality)
+              zh_Hans: Veo 3.1 High（高质量）
+            value: veo3.1-high
+          - icon: ''
+            label:
+              en_US: Veo 3.1 Lite (Cheap)
+              ja_JP: Veo 3.1 Lite (Cheap)
+              pt_BR: Veo 3.1 Lite (Cheap)
+              zh_Hans: Veo 3.1 Lite（便宜）
+            value: veo3.1-low
+          - icon: ''
+            label:
+              en_US: Veo 3.1 Lower (Cheapest)
+              ja_JP: Veo 3.1 Lower (Cheapest)
+              pt_BR: Veo 3.1 Lower (Cheapest)
+              zh_Hans: Veo 3.1 Lower（最便宜）
+            value: veo3.1-low
+          - icon: ''
+            label:
+              en_US: Veo 3.1 Omni
+              ja_JP: Veo 3.1 Omni
+              pt_BR: Veo 3.1 Omni
+              zh_Hans: Veo 3.1 Omni
+            value: veo3.1-omni
+          - icon: ''
+            label:
+              en_US: Grok Video
+              ja_JP: Grok Video
+              pt_BR: Grok Video
+              zh_Hans: Grok Video
+            value: grok-i2v
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        - auto_generate: null
+          default: 5s
+          form: form
+          human_description:
+            en_US: Duration of the generated video (varies by model)
+            ja_JP: Duration of the generated video (varies by model)
+            pt_BR: Duration of the generated video (varies by model)
+            zh_Hans: 生成视频的时长（因模型而异）
+          input_schema: null
+          label:
+            en_US: Duration
+            ja_JP: Duration
+            pt_BR: Duration
+            zh_Hans: 时长
+          llm_description: ''
+          max: null
+          min: null
+          multiple: false
+          name: duration
+          options:
+          - icon: ''
+            label:
+              en_US: 3 seconds (Kling 3.0 only)
+              ja_JP: 3 seconds (Kling 3.0 only)
+              pt_BR: 3 seconds (Kling 3.0 only)
+              zh_Hans: 3 秒（仅 Kling 3.0）
+            value: 3s
+          - icon: ''
+            label:
+              en_US: 5 seconds
+              ja_JP: 5 seconds
+              pt_BR: 5 seconds
+              zh_Hans: 5 秒
+            value: 5s
+          - icon: ''
+            label:
+              en_US: 6 seconds (Grok only)
+              ja_JP: 6 seconds (Grok only)
+              pt_BR: 6 seconds (Grok only)
+              zh_Hans: 6 秒（仅 Grok）
+            value: 6s
+          - icon: ''
+            label:
+              en_US: 8 seconds
+              ja_JP: 8 seconds
+              pt_BR: 8 seconds
+              zh_Hans: 8 秒
+            value: 8s
+          - icon: ''
+            label:
+              en_US: 10 seconds
+              ja_JP: 10 seconds
+              pt_BR: 10 seconds
+              zh_Hans: 10 秒
+            value: 10s
+          - icon: ''
+            label:
+              en_US: 15 seconds
+              ja_JP: 15 seconds
+              pt_BR: 15 seconds
+              zh_Hans: 15 秒
+            value: 15s
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        - auto_generate: null
+          default: 720p
+          form: form
+          human_description:
+            en_US: Output resolution of the video (varies by model)
+            ja_JP: Output resolution of the video (varies by model)
+            pt_BR: Output resolution of the video (varies by model)
+            zh_Hans: 视频的输出分辨率（因模型而异）
+          input_schema: null
+          label:
+            en_US: Resolution
+            ja_JP: Resolution
+            pt_BR: Resolution
+            zh_Hans: 分辨率
+          llm_description: ''
+          max: null
+          min: null
+          multiple: false
+          name: resolution
+          options:
+          - icon: ''
+            label:
+              en_US: 480p (Grok only)
+              ja_JP: 480p (Grok only)
+              pt_BR: 480p (Grok only)
+              zh_Hans: 480p（仅 Grok）
+            value: 480p
+          - icon: ''
+            label:
+              en_US: 720p
+              ja_JP: 720p
+              pt_BR: 720p
+              zh_Hans: 720p
+            value: 720p
+          - icon: ''
+            label:
+              en_US: 1080p (Kling only)
+              ja_JP: 1080p (Kling only)
+              pt_BR: 1080p (Kling only)
+              zh_Hans: 1080p（仅 Kling）
+            value: 1080p
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        - auto_generate: null
+          default: '16:9'
+          form: form
+          human_description:
+            en_US: Aspect ratio of the video (varies by model)
+            ja_JP: Aspect ratio of the video (varies by model)
+            pt_BR: Aspect ratio of the video (varies by model)
+            zh_Hans: 视频的宽高比（因模型而异）
+          input_schema: null
+          label:
+            en_US: Aspect Ratio
+            ja_JP: Aspect Ratio
+            pt_BR: Aspect Ratio
+            zh_Hans: 宽高比
+          llm_description: ''
+          max: null
+          min: null
+          multiple: false
+          name: aspect_ratio
+          options:
+          - icon: ''
+            label:
+              en_US: Landscape (16:9)
+              ja_JP: Landscape (16:9)
+              pt_BR: Landscape (16:9)
+              zh_Hans: 横屏 (16:9)
+            value: '16:9'
+          - icon: ''
+            label:
+              en_US: Portrait (9:16)
+              ja_JP: Portrait (9:16)
+              pt_BR: Portrait (9:16)
+              zh_Hans: 竖屏 (9:16)
+            value: '9:16'
+          - icon: ''
+            label:
+              en_US: Square (1:1)
+              ja_JP: Square (1:1)
+              pt_BR: Square (1:1)
+              zh_Hans: 方形 (1:1)
+            value: '1:1'
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        - auto_generate: null
+          default: fast
+          form: form
+          human_description:
+            en_US: Generation speed. Fast is cheaper; slow may produce higher quality
+              (Kling models only)
+            ja_JP: Generation speed. Fast is cheaper; slow may produce higher quality
+              (Kling models only)
+            pt_BR: Generation speed. Fast is cheaper; slow may produce higher quality
+              (Kling models only)
+            zh_Hans: 生成速度。快速更便宜；慢速可能质量更高（仅 Kling 模型）
+          input_schema: null
+          label:
+            en_US: Speed
+            ja_JP: Speed
+            pt_BR: Speed
+            zh_Hans: 速度
+          llm_description: ''
+          max: null
+          min: null
+          multiple: false
+          name: speed
+          options:
+          - icon: ''
+            label:
+              en_US: Fast (Recommended)
+              ja_JP: Fast (Recommended)
+              pt_BR: Fast (Recommended)
+              zh_Hans: 快速（推荐）
+            value: fast
+          - icon: ''
+            label:
+              en_US: Slow (Higher Quality)
+              ja_JP: Slow (Higher Quality)
+              pt_BR: Slow (Higher Quality)
+              zh_Hans: 慢速（更高质量）
+            value: slow
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        - auto_generate: null
+          default: frames
+          form: form
+          human_description:
+            en_US: Veo 3.1 mode. 'frames' = start/end frames; 'ingredients' = reference
+              images (Veo Omni only)
+            ja_JP: Veo 3.1 mode. 'frames' = start/end frames; 'ingredients' = reference
+              images (Veo Omni only)
+            pt_BR: Veo 3.1 mode. 'frames' = start/end frames; 'ingredients' = reference
+              images (Veo Omni only)
+            zh_Hans: Veo 3.1 模式。'frames' = 起始/结束帧；'ingredients' = 参考图像（仅 Veo Omni）
+          input_schema: null
+          label:
+            en_US: Veo Mode
+            ja_JP: Veo Mode
+            pt_BR: Veo Mode
+            zh_Hans: Veo 模式
+          llm_description: ''
+          max: null
+          min: null
+          multiple: false
+          name: veo_mode
+          options:
+          - icon: ''
+            label:
+              en_US: Frames (Start/End frames)
+              ja_JP: Frames (Start/End frames)
+              pt_BR: Frames (Start/End frames)
+              zh_Hans: Frames（起始/结束帧）
+            value: frames
+          - icon: ''
+            label:
+              en_US: Ingredients (Reference images)
+              ja_JP: Ingredients (Reference images)
+              pt_BR: Ingredients (Reference images)
+              zh_Hans: Ingredients（参考图像）
+            value: ingredients
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        - auto_generate: null
+          default: 'false'
+          form: form
+          human_description:
+            en_US: Enable AI-generated audio for the video
+            ja_JP: Enable AI-generated audio for the video
+            pt_BR: Enable AI-generated audio for the video
+            zh_Hans: 为视频启用 AI 生成的音频
+          input_schema: null
+          label:
+            en_US: Generate Audio
+            ja_JP: Generate Audio
+            pt_BR: Generate Audio
+            zh_Hans: 生成音频
+          llm_description: ''
+          max: null
+          min: null
+          multiple: false
+          name: audio
+          options:
+          - icon: ''
+            label:
+              en_US: 'No'
+              ja_JP: 'No'
+              pt_BR: 'No'
+              zh_Hans: 否
+            value: 'false'
+          - icon: ''
+            label:
+              en_US: 'Yes'
+              ja_JP: 'Yes'
+              pt_BR: 'Yes'
+              zh_Hans: 是
+            value: 'true'
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: Source video URL for Veo Omni edit mode or Kling 3.0 Omni video
+              transformation (optional)
+            ja_JP: Source video URL for Veo Omni edit mode or Kling 3.0 Omni video
+              transformation (optional)
+            pt_BR: Source video URL for Veo Omni edit mode or Kling 3.0 Omni video
+              transformation (optional)
+            zh_Hans: Veo Omni 编辑模式或 Kling 3.0 Omni 视频转换的源视频 URL（可选）
+          input_schema: null
+          label:
+            en_US: Source Video URL
+            ja_JP: Source Video URL
+            pt_BR: Source Video URL
+            zh_Hans: 源视频 URL
+          llm_description: Provide a public video URL for Veo Omni edit mode or Kling
+            3.0 Omni video transformation.
+          max: null
+          min: null
+          multiple: false
+          name: video_url
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: Additional reference images for multi-ref models (Grok, Kling 3.0
+              Omni, Veo Omni). Up to 7 images.
+            ja_JP: Additional reference images for multi-ref models (Grok, Kling 3.0
+              Omni, Veo Omni). Up to 7 images.
+            pt_BR: Additional reference images for multi-ref models (Grok, Kling 3.0
+              Omni, Veo Omni). Up to 7 images.
+            zh_Hans: 多参考模型的额外参考图像（Grok、Kling 3.0 Omni、Veo Omni）。最多 7 张。
+          input_schema: null
+          label:
+            en_US: Reference Images
+            ja_JP: Reference Images
+            pt_BR: Reference Images
+            zh_Hans: 参考图像
+          llm_description: Upload additional reference images for multi-ref video
+            generation. Supported by Grok, Kling 3.0 Omni, and Veo Omni.
+          max: null
+          min: null
+          multiple: false
+          name: image_urls
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: files
+        - auto_generate: null
+          default: auto
+          form: form
+          human_description:
+            en_US: Server tier to use. Auto selects the cheapest available.
+            ja_JP: Server tier to use. Auto selects the cheapest available.
+            pt_BR: Server tier to use. Auto selects the cheapest available.
+            zh_Hans: 使用的服务器层级。自动选择最便宜的可用服务器。
+          input_schema: null
+          label:
+            en_US: Server
+            ja_JP: Server
+            pt_BR: Server
+            zh_Hans: 服务器
+          llm_description: ''
+          max: null
+          min: null
+          multiple: false
+          name: server_id
+          options:
+          - icon: ''
+            label:
+              en_US: Auto (Recommended)
+              ja_JP: Auto (Recommended)
+              pt_BR: Auto (Recommended)
+              zh_Hans: 自动（推荐）
+            value: auto
+          - icon: ''
+            label:
+              en_US: Fast (Economy)
+              ja_JP: Fast (Economy)
+              pt_BR: Fast (Economy)
+              zh_Hans: Fast（经济）
+            value: fast
+          - icon: ''
+            label:
+              en_US: VIP1 (Premium)
+              ja_JP: VIP1 (Premium)
+              pt_BR: VIP1 (Premium)
+              zh_Hans: VIP1（高级）
+            value: vip1
+          - icon: ''
+            label:
+              en_US: VIP2 (Standard)
+              ja_JP: VIP2 (Standard)
+              pt_BR: VIP2 (Standard)
+              zh_Hans: VIP2（标准）
+            value: vip2
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        params:
+          aspect_ratio: ''
+          audio: ''
+          duration: ''
+          image_urls: ''
+          input_image: ''
+          model: ''
+          prompt: ''
+          resolution: ''
+          server_id: ''
+          speed: ''
+          veo_mode: ''
+          video_url: ''
+        plugin_id: qceank/revid_tool
+        plugin_unique_identifier: qceank/revid_tool:0.2.1@b5a597fc0431e16172be55b6f9acb4b45388a22da81f9bdaa388ccbe3d05dae9
+        provider_icon: https://kingai.tnicorporation.com/console/api/workspaces/current/plugin/icon?tenant_id=fa54662f-72ff-4f9b-977c-1f86e12b6a6d&filename=981db56b5e1836593be1c7f671787806db6b30e8a8e61a904a56a1e583fce5d4.png
+        provider_id: qceank/revid_tool/revid
+        provider_name: qceank/revid_tool/revid
+        provider_show_name: RevidAPI
+        provider_type: builtin
+        selected: true
+        title: Image to Video
+        tool_configurations:
+          aspect_ratio:
+            type: constant
+            value: '16:9'
+          audio:
+            type: constant
+            value: 'false'
+          duration:
+            type: constant
+            value: 5s
+          model:
+            type: constant
+            value: kling-3.0-omni
+          resolution:
+            type: constant
+            value: 720p
+          server_id:
+            type: constant
+            value: auto
+          speed:
+            type: constant
+            value: fast
+          veo_mode:
+            type: constant
+            value: frames
+        tool_description: Generate AI videos from an image and text prompt using RevidAPI
+        tool_label: Image to Video
+        tool_name: revid_i2v
+        tool_node_version: '2'
+        tool_parameters:
+          image_urls:
+            type: variable
+            value:
+            - start
+            - Product
+          input_image:
+            type: variable
+            value:
+            - start
+            - Product
+          prompt:
+            type: mixed
+            value: '{{#video_code_parser.prompt#}}'
+        type: tool
+      height: 269
+      id: '1788423116630'
+      position:
+        x: 1550
+        y: 650
+      positionAbsolute:
+        x: 1550
+        y: 650
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+      zIndex: 0
+    viewport:
+      x: -985.1838447078998
+      y: 137.23904293107952
+      zoom: 1.0238159142706162
+  rag_pipeline_variables: []

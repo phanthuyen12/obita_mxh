@@ -1,0 +1,1007 @@
+<script setup lang="ts">
+import { Head, router } from '@inertiajs/vue3';
+import { IconLoader2 } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
+import { computed, onUnmounted, ref, watch } from 'vue';
+
+import WordPressConnectDialog from '@/components/accounts/WordPressConnectDialog.vue';
+import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
+import AiGenerateDialog from '@/components/posts/ai/AiGenerateDialog.vue';
+import AiRegenerateImageDialog from '@/components/posts/ai/AiRegenerateImageDialog.vue';
+import AiReviewDialog from '@/components/posts/ai/AiReviewDialog.vue';
+import PostEditorActionBar from '@/components/posts/editor/PostEditorActionBar.vue';
+import PostEditorComposer from '@/components/posts/editor/PostEditorComposer.vue';
+import PostEditorHeader from '@/components/posts/editor/PostEditorHeader.vue';
+import PostEditorMobileNav from '@/components/posts/editor/PostEditorMobileNav.vue';
+import PostEditorTabs from '@/components/posts/editor/PostEditorTabs.vue';
+import ScheduleTab from '@/components/posts/editor/ScheduleTab.vue';
+import PickTimePopover from '@/components/posts/PickTimePopover.vue';
+import { usePostEcho } from '@/composables/echo/usePostEcho';
+import {
+    firstCompatibleVariant,
+    getMediaIncompatibilityReason,
+    usePostCompliance,
+} from '@/composables/usePostCompliance';
+import { useWorkspaceRole } from '@/composables/useWorkspaceRole';
+import date from '@/date';
+import debounce from '@/debounce';
+import AppLayout from '@/layouts/AppLayout.vue';
+import {
+    destroy as destroyPost,
+    update as updatePost,
+} from '@/routes/app/posts';
+import {
+    approve as approveWorkflow,
+    reject as rejectWorkflow,
+    submit as submitWorkflow,
+} from '@/routes/app/posts/workflow';
+import type { PinterestBoardsPayload } from '@/types';
+import type { MediaItem } from '@/types/media';
+import { PostStatus } from '@/types/post';
+
+interface SocialAccount {
+    id: string;
+    platform: string;
+    display_name: string;
+    username: string;
+    display_label: string;
+    handle_label: string;
+    avatar_url: string | null;
+}
+
+interface PostPlatform {
+    id: string;
+    social_account_id: string | null;
+    enabled: boolean;
+    platform: string;
+    platform_name: string | null;
+    platform_username: string | null;
+    platform_avatar: string | null;
+    content_type: string | null;
+    status: string;
+    platform_url: string | null;
+    error_message: string | null;
+    published_at: string | null;
+    social_account: SocialAccount | null;
+    meta?: Record<string, any>;
+}
+
+interface Post {
+    id: string;
+    folder_id: string | null;
+    content_workflow_id: string | null;
+    content: string;
+    media: MediaItem[];
+    status: string;
+    scheduled_at: string | null;
+    published_at: string | null;
+    post_platforms: PostPlatform[];
+    labels?: { id: string; name: string }[];
+}
+
+interface Workspace {
+    id: string;
+    name: string;
+}
+
+interface Workflow {
+    name: string | null;
+    status: string;
+    note: string | null;
+    can_write: boolean;
+    can_review: boolean;
+    can_publish: boolean;
+}
+
+interface TikTokCreatorInfo {
+    creator_nickname: string | null;
+    creator_username: string | null;
+    creator_avatar_url: string | null;
+    privacy_level_options: string[];
+    comment_disabled: boolean;
+    duet_disabled: boolean;
+    stitch_disabled: boolean;
+    max_video_post_duration_sec: number | null;
+}
+
+const props = defineProps<{
+    workspace: Workspace;
+    post: Post;
+    socialAccountGroups: { id: string; name: string }[];
+    contentWorkflows: { id: string; name: string }[];
+    folders: {
+        id: string;
+        name: string;
+        parent_id: string | null;
+        type: string;
+    }[];
+    channelBrowserUrl: string;
+    platformConfigs: Record<string, any>;
+    pinterestBoards: Record<string, PinterestBoardsPayload>;
+    tiktokCreatorInfos?: Record<string, TikTokCreatorInfo> | null;
+    labels: { id: string; name: string; color: string }[];
+    signatures: { id: string; name: string; content: string }[];
+    postTags?: { id: string; name: string; color?: string }[];
+    wordPressSites?: Array<{
+        id: string;
+        name: string;
+        url: string;
+        username: string;
+        categories_cache?: any[];
+        tags_cache?: any[];
+    }>;
+    authUserId: string;
+    workflow?: Workflow | null;
+}>();
+
+const { canCreatePost } = useWorkspaceRole();
+
+const post = computed(() => props.post);
+const READONLY_STATUSES: readonly string[] = [
+    PostStatus.Publishing,
+    PostStatus.Published,
+    PostStatus.PartiallyPublished,
+    PostStatus.Failed,
+];
+const isReadOnly = computed(() =>
+    READONLY_STATUSES.includes(post.value.status),
+);
+const isPublishing = computed(
+    () => post.value.status === PostStatus.Publishing,
+);
+const isScheduled = computed(() => post.value.status === PostStatus.Scheduled);
+const isLocked = computed(
+    () => isReadOnly.value || isScheduled.value || !canCreatePost.value,
+);
+
+// Content
+const content = ref(post.value.content || '');
+const selectedFolderId = ref<string | null>(post.value.folder_id ?? null);
+const media = ref<MediaItem[]>(post.value.media || []);
+const isCeoContent = ref<boolean>(Boolean(post.value.is_ceo_content));
+const topicTags = ref<string[]>(post.value.topic_tags || []);
+const selectedWorkflowId = ref<string | null>(
+    post.value.content_workflow_id ?? null,
+);
+
+// Platforms
+const selectedPlatformIds = ref<string[]>(
+    post.value.post_platforms.filter((pp) => pp.enabled).map((pp) => pp.id),
+);
+
+// Per-platform meta (TikTok settings, Pinterest board, etc.)
+const platformMeta = ref<Record<string, Record<string, any>>>(
+    Object.fromEntries(
+        post.value.post_platforms.map((pp) => [pp.id, { ...(pp.meta ?? {}) }]),
+    ),
+);
+
+const updatePlatformMeta = (platformId: string, meta: Record<string, any>) => {
+    platformMeta.value = { ...platformMeta.value, [platformId]: meta };
+};
+
+// Per-platform content_type (Instagram Feed/Reel/Story, Facebook Post/Reel/Story, etc.)
+const platformContentTypes = ref<Record<string, string>>(
+    Object.fromEntries(
+        post.value.post_platforms.map((pp) => [pp.id, pp.content_type ?? '']),
+    ),
+);
+
+const updatePlatformContentType = (platformId: string, contentType: string) => {
+    platformContentTypes.value = {
+        ...platformContentTypes.value,
+        [platformId]: contentType,
+    };
+};
+
+const {
+    platformLimits,
+    mediaIssues,
+    platformIssues,
+    canSchedule,
+    postActionTooltip,
+} = usePostCompliance({
+    post,
+    content,
+    media,
+    selectedPlatformIds,
+    platformContentTypes,
+    platformMeta,
+    platformConfigs: props.platformConfigs,
+});
+
+// Schedule
+const scheduledDateTime = ref(
+    date.formatUtcForDateTimeLocalInput(post.value.scheduled_at),
+);
+const hasPickedTime = ref(Boolean(post.value.scheduled_at));
+
+const pickTimeLabel = computed(() => {
+    if (!hasPickedTime.value || !scheduledDateTime.value) {
+        return trans('posts.edit.pick_time');
+    }
+    return date.formatLocalDateTime(scheduledDateTime.value);
+});
+
+// Labels
+const selectedLabelIds = ref<string[]>(
+    post.value.labels?.map((l) => l.id) || [],
+);
+
+// UI state
+const isSubmitting = ref(false);
+const isSaving = ref(false);
+const showSaved = ref(false);
+const editorMode = ref<'social' | 'website'>('social');
+const isAiGenerateOpen = ref(false);
+const isAiReviewOpen = ref(false);
+const isAiRegenerateImageOpen = ref(false);
+const isWordPressConnectOpen = ref(false);
+const isWorkflowSubmitting = ref(false);
+const selectedAiMediaId = ref<string | null>(null);
+
+const onAiGenerateApply = (newContent: string) => {
+    content.value = newContent;
+};
+
+const onAiReviewApply = (original: string, suggestion: string) => {
+    content.value = content.value.replace(original, suggestion);
+};
+
+const onOpenAiRegenerateImage = (mediaId: string) => {
+    selectedAiMediaId.value = mediaId;
+    isAiRegenerateImageOpen.value = true;
+};
+
+const selectedAiMediaItem = computed(() =>
+    selectedAiMediaId.value
+        ? (media.value.find((item) => item.id === selectedAiMediaId.value) ??
+          null)
+        : null,
+);
+
+const onAiMediaRegenerated = (payload: {
+    media: MediaItem;
+    targetMediaId: string;
+}) => {
+    media.value = media.value.map((item) =>
+        item.id === payload.targetMediaId ? payload.media : item,
+    );
+};
+
+const isPostActionDisabled = computed(
+    () =>
+        isSubmitting.value ||
+        selectedPlatformIds.value.length === 0 ||
+        !canSchedule.value,
+);
+
+// True khi tất cả platforms đang chọn đều là WordPress → ẩn schedule MXH
+const isOnlyWordPress = computed(() => {
+    if (selectedPlatformIds.value.length === 0) return false;
+    return post.value.post_platforms
+        .filter((pp) => selectedPlatformIds.value.includes(pp.id))
+        .every((pp) => pp.platform === 'wordpress');
+});
+const canUsePublishingActions = computed(
+    () =>
+        !selectedWorkflowId.value ||
+        (props.workflow?.status === 'approved' &&
+            Boolean(props.workflow.can_publish)),
+);
+const queryParams =
+    typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search)
+        : null;
+const initialTabFromQuery = (() => {
+    const tab = queryParams?.get('tab');
+    if (['preview', 'schedule', 'comments'].includes(tab ?? '')) {
+        return tab as string;
+    }
+    return canCreatePost.value ? 'schedule' : 'comments';
+})();
+const initialHighlightCommentId = queryParams?.get('comment') ?? null;
+const activeTab = ref(initialTabFromQuery);
+
+// On mobile a single switcher (PostEditorMobileNav) drives which panel shows;
+// 'compose' reveals the composer, the rest reveal the tabs panel. It writes into
+// the shared `activeTab` (mapping 'channels' to the existing 'schedule' tab value)
+// so the tabs panel stays the single source of truth.
+type MobileView = 'compose' | 'channels' | 'preview' | 'comments';
+const mobileView = ref<MobileView>('compose');
+const mobileViewToTab: Record<Exclude<MobileView, 'compose'>, string> = {
+    channels: 'schedule',
+    preview: 'preview',
+    comments: 'comments',
+};
+watch(mobileView, (view) => {
+    if (view !== 'compose') {
+        activeTab.value = mobileViewToTab[view];
+    }
+});
+
+const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
+const editorTabsRef = ref<InstanceType<typeof PostEditorTabs> | null>(null);
+
+const snapToCompatibleVariant = (platformId: string) => {
+    const pp = post.value.post_platforms.find((p) => p.id === platformId);
+    const current = platformContentTypes.value[platformId];
+    if (!pp || !current) return;
+    if (!getMediaIncompatibilityReason(current, media.value)) return;
+
+    const fallback = firstCompatibleVariant(pp.platform, media.value);
+    if (!fallback) return;
+
+    platformContentTypes.value = {
+        ...platformContentTypes.value,
+        [platformId]: fallback,
+    };
+};
+
+const togglePlatform = (platformId: string) => {
+    if (isLocked.value) return;
+
+    if (selectedPlatformIds.value.includes(platformId)) {
+        selectedPlatformIds.value = selectedPlatformIds.value.filter(
+            (id) => id !== platformId,
+        );
+        return;
+    }
+
+    snapToCompatibleVariant(platformId);
+    selectedPlatformIds.value.push(platformId);
+};
+
+// Save logic
+const getSubmitData = () => {
+    const platforms = post.value.post_platforms
+        .filter((pp) => selectedPlatformIds.value.includes(pp.id))
+        .map((pp) => ({
+            id: pp.id,
+            content_type: platformContentTypes.value[pp.id] ?? pp.content_type,
+            meta: platformMeta.value[pp.id] ?? pp.meta ?? {},
+        }));
+
+    return {
+        content: content.value,
+        media: media.value,
+        platforms,
+        is_ceo_content: isCeoContent.value,
+        topic_tags: topicTags.value,
+        scheduled_at: date.formatLocalDateTimeForApi(scheduledDateTime.value),
+        label_ids: selectedLabelIds.value,
+        content_workflow_id: selectedWorkflowId.value,
+        folder_id: selectedFolderId.value,
+    };
+};
+
+const save = () => {
+    if (isSubmitting.value || isLocked.value || isSaving.value) return;
+
+    const data = getSubmitData();
+
+    isSaving.value = true;
+    showSaved.value = false;
+
+    const targetStatus =
+        post.value.status === PostStatus.Scheduled
+            ? PostStatus.Scheduled
+            : post.value.status;
+
+    router.put(
+        updatePost.url(post.value.id),
+        {
+            status: targetStatus,
+            ...data,
+        },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                showSaved.value = true;
+                setTimeout(() => {
+                    showSaved.value = false;
+                }, 2000);
+            },
+            onFinish: () => {
+                isSaving.value = false;
+            },
+        },
+    );
+};
+
+const debouncedSave = debounce(() => {
+    if (!isLocked.value && !isSubmitting.value) {
+        save();
+    }
+}, 1500);
+
+const triggerAutosave = () => {
+    if (!isLocked.value) {
+        showSaved.value = false;
+        debouncedSave();
+    }
+};
+
+watch(
+    [
+        content,
+        media,
+        selectedPlatformIds,
+        scheduledDateTime,
+        selectedLabelIds,
+        platformMeta,
+        platformContentTypes,
+        selectedWorkflowId,
+    ],
+    triggerAutosave,
+    { deep: true },
+);
+
+onUnmounted(() => {
+    debouncedSave.cancel();
+});
+
+const submit = (status: string = PostStatus.Scheduled) => {
+    if (isSubmitting.value || isReadOnly.value) return;
+    debouncedSave.cancel();
+
+    // If WordPress platform exists and is not yet in selectedPlatformIds, but user has WordPress metadata filled or is publishing to website, ensure WordPress platform is enabled
+    const wpPlatforms = post.value.post_platforms.filter(
+        (pp) => pp.platform === 'wordpress',
+    );
+    if (
+        wpPlatforms.length > 0 &&
+        !selectedPlatformIds.value.includes(wpPlatforms[0].id)
+    ) {
+        if (
+            status === PostStatus.Publishing ||
+            status === PostStatus.Draft ||
+            Object.keys(platformMeta.value[wpPlatforms[0].id] ?? {}).length > 0
+        ) {
+            selectedPlatformIds.value.push(wpPlatforms[0].id);
+        }
+    }
+
+    const data = getSubmitData();
+    isSubmitting.value = true;
+
+    router.put(
+        updatePost.url(post.value.id),
+        {
+            status,
+            ...data,
+            scheduled_at:
+                status === PostStatus.Draft
+                    ? null
+                    : data.scheduled_at,
+        },
+        {
+            onSuccess: () => {
+                post.value.status = status;
+                if (status === PostStatus.Draft) {
+                    post.value.scheduled_at = null;
+                    scheduledDateTime.value = '';
+                    hasPickedTime.value = false;
+                    if (props.workflow) {
+                        props.workflow.status = 'draft';
+                    }
+                }
+            },
+            onFinish: () => {
+                isSubmitting.value = false;
+            },
+        },
+    );
+};
+
+const submitForReview = () => {
+    if (
+        !props.workflow?.can_write ||
+        isWorkflowSubmitting.value ||
+        !hasPickedTime.value
+    )
+        return;
+    isWorkflowSubmitting.value = true;
+    router.post(
+        submitWorkflow.url(post.value.id),
+        {
+            scheduled_at: date.formatLocalDateTimeForApi(
+                scheduledDateTime.value,
+            ),
+        },
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                isWorkflowSubmitting.value = false;
+            },
+        },
+    );
+};
+
+const approve = () => {
+    if (
+        !props.workflow?.can_review ||
+        isWorkflowSubmitting.value ||
+        !hasPickedTime.value
+    )
+        return;
+    debouncedSave.cancel();
+    isWorkflowSubmitting.value = true;
+    router.post(
+        approveWorkflow.url(post.value.id),
+        {
+            scheduled_at: date.formatLocalDateTimeForApi(
+                scheduledDateTime.value,
+            ),
+        },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                post.value.status = PostStatus.Scheduled;
+                if (props.workflow) {
+                    props.workflow.status = 'approved';
+                }
+            },
+            onFinish: () => {
+                isWorkflowSubmitting.value = false;
+            },
+        },
+    );
+};
+
+import RejectWorkflowModal from '@/components/posts/RejectWorkflowModal.vue';
+
+const rejectModalRef = ref<InstanceType<typeof RejectWorkflowModal> | null>(
+    null,
+);
+
+const reject = () => {
+    if (!props.workflow?.can_review || isWorkflowSubmitting.value) return;
+    rejectModalRef.value?.open(
+        props.workflow.note ?? 'Vui lòng chỉnh sửa lại nội dung.',
+    );
+};
+
+const onRejectConfirmed = (note: string) => {
+    isWorkflowSubmitting.value = true;
+    router.post(
+        rejectWorkflow.url(post.value.id),
+        { note },
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                isWorkflowSubmitting.value = false;
+            },
+        },
+    );
+};
+
+const workflowStatusLabel = computed(
+    () =>
+        ({
+            draft: 'Bản nháp (Chưa gửi duyệt)',
+            pending_review: 'Chưa duyệt (Đang chờ duyệt bài)',
+            approved: 'Đã duyệt bài',
+            rejected: 'Cần chỉnh sửa (Bị trả lại bài)',
+        })[props.workflow?.status ?? 'draft'] ?? 'Bản nháp',
+);
+
+const toggleLabel = (labelId: string) => {
+    const index = selectedLabelIds.value.indexOf(labelId);
+    if (index === -1) {
+        selectedLabelIds.value.push(labelId);
+    } else {
+        selectedLabelIds.value.splice(index, 1);
+    }
+};
+
+const deletePost = () => {
+    if (isReadOnly.value) return;
+    deleteModal.value?.open({
+        url: destroyPost.url(post.value.id),
+        confirmText: trans('common.confirm_modal.delete_keyword'),
+    });
+};
+
+const unschedulePost = () => {
+    if (isReadOnly.value || isSubmitting.value) return;
+    debouncedSave.cancel();
+    scheduledDateTime.value = '';
+    hasPickedTime.value = false;
+    post.value.status = PostStatus.Draft;
+    post.value.scheduled_at = null;
+    if (props.workflow) {
+        props.workflow.status = 'draft';
+    }
+    submit(PostStatus.Draft);
+};
+
+usePostEcho(post.value.id, '.post.platform.status.updated', () => {
+    router.reload({ only: ['post'] });
+});
+
+// Echo: listen for real-time comments
+usePostEcho(post.value.id, '.post.comment.created', (e: any) => {
+    if (e.mentioned_users) {
+        editorTabsRef.value?.registerMentionedUsers(e.mentioned_users);
+    }
+    editorTabsRef.value?.addCommentFromBroadcast(e.comment);
+});
+</script>
+
+<template>
+    <Head :title="$t('posts.edit.title')" />
+
+    <AppLayout :full-width="true">
+        <div class="flex min-h-0 flex-1 flex-col">
+            <div
+                v-if="workflow?.name || contentWorkflows.length"
+                class="flex flex-wrap items-center gap-3 border-b-2 border-foreground bg-amber-50 px-4 py-3 md:px-6"
+            >
+                <div class="min-w-0 flex-1">
+                    <p
+                        class="text-xs font-bold tracking-wide text-foreground/60 uppercase"
+                    >
+                        Luồng nội dung:
+                        {{ workflow?.name ?? 'Chưa chọn luồng' }}
+                    </p>
+                    <p class="text-sm font-semibold">
+                        {{ workflowStatusLabel }}
+                    </p>
+                    <p v-if="workflow.note" class="text-xs text-rose-700">
+                        {{ workflow.note }}
+                    </p>
+                </div>
+                <label
+                    v-if="
+                        !isLocked &&
+                        ['draft', 'rejected'].includes(
+                            workflow?.status ?? 'draft',
+                        )
+                    "
+                    class="flex min-w-52 flex-col gap-1 text-xs font-semibold text-foreground/70"
+                >
+                    Chọn luồng duyệt
+                    <select
+                        v-model="selectedWorkflowId"
+                        class="h-10 rounded-md border-2 border-foreground bg-white px-3 text-sm font-medium text-foreground"
+                    >
+                        <option :value="null">Không chọn luồng</option>
+                        <option
+                            v-for="contentWorkflow in contentWorkflows"
+                            :key="contentWorkflow.id"
+                            :value="contentWorkflow.id"
+                        >
+                            {{ contentWorkflow.name }}
+                        </option>
+                    </select>
+                </label>
+                <PickTimePopover
+                    v-if="
+                        (workflow.can_write &&
+                            ['draft', 'rejected'].includes(workflow.status)) ||
+                        (workflow.can_review &&
+                            workflow.status === 'pending_review')
+                    "
+                    v-model="scheduledDateTime"
+                    :disabled="isWorkflowSubmitting"
+                    @confirm="hasPickedTime = true"
+                >
+                    <button
+                        type="button"
+                        class="flex items-center gap-2 rounded-lg border-2 border-foreground bg-white px-3 py-2 text-left shadow-2xs transition-colors hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        :disabled="isWorkflowSubmitting"
+                    >
+                        <span
+                            class="text-[10px] font-black tracking-wider text-foreground/55 uppercase"
+                            >Thời gian đăng</span
+                        >
+                        <span class="text-sm font-bold text-foreground">
+                            {{
+                                hasPickedTime ? pickTimeLabel : 'Chọn thời gian'
+                            }}
+                        </span>
+                    </button>
+                </PickTimePopover>
+                <button
+                    v-if="
+                        workflow.can_write &&
+                        ['draft', 'rejected'].includes(workflow.status)
+                    "
+                    type="button"
+                    class="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+                    :disabled="isWorkflowSubmitting || !hasPickedTime"
+                    @click="submitForReview"
+                >
+                    {{ isWorkflowSubmitting ? 'Đang gửi...' : 'Gửi duyệt' }}
+                </button>
+                <template
+                    v-if="
+                        workflow.can_review &&
+                        workflow.status === 'pending_review'
+                    "
+                >
+                    <button
+                        type="button"
+                        class="rounded-md border border-rose-300 bg-white px-3 py-2 text-sm font-semibold text-rose-700 disabled:opacity-60"
+                        :disabled="isWorkflowSubmitting"
+                        @click="reject"
+                    >
+                        Trả bài
+                    </button>
+                    <button
+                        type="button"
+                        class="rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                        :disabled="isWorkflowSubmitting || !hasPickedTime"
+                        @click="approve"
+                    >
+                        Duyệt bài
+                    </button>
+                </template>
+            </div>
+            <!-- On mobile the status moves into the switcher and the actions into the
+                 bottom bar, so the header is desktop-only — except the scheduled banner,
+                 which stays as the locked-state explanation. -->
+            <div :class="isScheduled ? 'shrink-0' : 'hidden shrink-0 lg:block'">
+                <PostEditorHeader
+                    :post="post"
+                    :can-edit="canCreatePost"
+                    :is-saving="isSaving"
+                    :show-saved="showSaved"
+                    :is-submitting="isSubmitting"
+                    :is-post-action-disabled="isPostActionDisabled"
+                    :post-action-tooltip="postActionTooltip"
+                    :pick-time-label="pickTimeLabel"
+                    :workflow-status="workflow?.status"
+                    :hide-schedule="isOnlyWordPress"
+                    :hide-publishing-actions="!canUsePublishingActions"
+                    v-model:has-picked-time="hasPickedTime"
+                    v-model:scheduled-date-time="scheduledDateTime"
+                    @delete="deletePost"
+                    @unschedule="unschedulePost"
+                    @submit="submit"
+                />
+            </div>
+
+            <PostEditorMobileNav
+                v-model:active-view="mobileView"
+                :status="post.status"
+            />
+
+            <div class="relative flex-1 overflow-hidden">
+                <div
+                    v-if="isPublishing"
+                    class="absolute inset-0 z-40 flex flex-col items-center justify-center gap-4 bg-background/80 backdrop-blur-sm"
+                >
+                    <div
+                        class="inline-flex size-14 -rotate-3 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs"
+                    >
+                        <IconLoader2
+                            class="size-7 animate-spin text-foreground"
+                            stroke-width="2"
+                        />
+                    </div>
+                    <div class="text-center">
+                        <p
+                            class="text-2xl leading-tight font-semibold text-foreground"
+                            style="font-family: var(--font-display)"
+                        >
+                            {{ $t('posts.edit.publishing_overlay_title') }}
+                        </p>
+                        <p class="mt-1 text-sm text-foreground/70">
+                            {{ $t('posts.edit.publishing_overlay_subtitle') }}
+                        </p>
+                    </div>
+                </div>
+                <div
+                    class="flex h-full"
+                    :class="{
+                        'pointer-events-none opacity-60 select-none':
+                            isScheduled,
+                    }"
+                >
+                    <div
+                        class="w-full overflow-y-auto lg:w-2/3 lg:border-r-2 lg:border-foreground"
+                        :class="{ 'hidden lg:block': mobileView !== 'compose' }"
+                    >
+                        <div
+                            v-if="folders.length"
+                            class="border-b-2 border-foreground bg-muted/30 p-3"
+                        >
+                            <label
+                                class="flex items-center gap-3 text-sm font-medium"
+                            >
+                                <span class="shrink-0">Thư mục bài viết</span>
+                                <select
+                                    v-model="selectedFolderId"
+                                    :disabled="isLocked"
+                                    class="h-9 min-w-0 flex-1 rounded-md border bg-background px-3 text-sm"
+                                >
+                                    <option :value="null">
+                                        Chưa phân loại
+                                    </option>
+                                    <option
+                                        v-for="folder in folders"
+                                        :key="folder.id"
+                                        :value="folder.id"
+                                    >
+                                        {{
+                                            folder.type === 'master'
+                                                ? '📁 '
+                                                : '↳ '
+                                        }}{{ folder.name }}
+                                    </option>
+                                </select>
+                            </label>
+                        </div>
+                        <PostEditorComposer
+                            v-model:content="content"
+                            v-model:media="media"
+                            v-model:is-ceo-content="isCeoContent"
+                            v-model:topic-tags="topicTags"
+                            v-model:editor-mode="editorMode"
+                            :signatures="signatures"
+                            :post-tags="postTags"
+                            :platform-limits="platformLimits"
+                            :media-issues="mediaIssues"
+                            :allow-ai-regenerate="!isLocked"
+                            :read-only="!canCreatePost"
+                            :post-platforms="post.post_platforms"
+                            :selected-platform-ids="selectedPlatformIds"
+                            :platform-meta="platformMeta"
+                            :word-press-sites="wordPressSites"
+                            :can-publish="canUsePublishingActions"
+                            @toggle-platform="togglePlatform"
+                            @update:platform-meta="updatePlatformMeta"
+                            @open-wordpress-connect="
+                                isWordPressConnectOpen = true
+                            "
+                            @open-ai-generate="isAiGenerateOpen = true"
+                            @open-ai-review="isAiReviewOpen = true"
+                            @open-ai-regenerate-image="onOpenAiRegenerateImage"
+                            @publish-now="submit(PostStatus.Publishing)"
+                            @save-draft="submit(PostStatus.Draft)"
+                        />
+                        <section
+                            v-if="
+                                activeTab === 'schedule' &&
+                                editorMode !== 'website'
+                            "
+                            class="border-t-2 border-foreground bg-background p-4"
+                        >
+                            <div
+                                class="mb-4 flex flex-wrap items-end justify-between gap-2"
+                            >
+                                <div>
+                                    <h2 class="text-lg font-semibold">
+                                        Chọn kênh / Page để đăng
+                                    </h2>
+                                    <p class="text-sm text-muted-foreground">
+                                        Tìm kiếm, lọc theo nền tảng hoặc nhóm
+                                        Page.
+                                    </p>
+                                </div>
+                                <span class="text-sm text-muted-foreground">
+                                    Đã chọn:
+                                    <strong class="text-primary">{{
+                                        selectedPlatformIds.length
+                                    }}</strong>
+                                </span>
+                            </div>
+                            <ScheduleTab
+                                :post-platforms="post.post_platforms"
+                                :selected-platform-ids="selectedPlatformIds"
+                                :labels="labels"
+                                :selected-label-ids="selectedLabelIds"
+                                :is-read-only="isLocked"
+                                :platform-configs="platformConfigs"
+                                :platform-meta="platformMeta"
+                                :platform-content-types="platformContentTypes"
+                                :platform-issues="platformIssues"
+                                :tiktok-creator-infos="tiktokCreatorInfos"
+                                :pinterest-boards="pinterestBoards"
+                                :social-account-groups="socialAccountGroups"
+                                :channel-browser-url="channelBrowserUrl"
+                                :media="media"
+                                @toggle-platform="togglePlatform"
+                                @toggle-label="toggleLabel"
+                                @update:platform-meta="updatePlatformMeta"
+                                @update:platform-content-type="
+                                    updatePlatformContentType
+                                "
+                            />
+                        </section>
+                    </div>
+
+                    <div
+                        class="w-full overflow-hidden lg:block lg:w-1/3"
+                        :class="{ 'hidden lg:block': mobileView === 'compose' }"
+                    >
+                        <PostEditorTabs
+                            ref="editorTabsRef"
+                            v-model:active-tab="activeTab"
+                            :post="post"
+                            :workspace-id="workspace.id"
+                            :content="content"
+                            :media="media"
+                            :selected-platform-ids="selectedPlatformIds"
+                            :platform-meta="platformMeta"
+                            :platform-content-types="platformContentTypes"
+                            :platform-issues="platformIssues"
+                            :platform-configs="platformConfigs"
+                            :labels="labels"
+                            :selected-label-ids="selectedLabelIds"
+                            :tiktok-creator-infos="tiktokCreatorInfos"
+                            :pinterest-boards="pinterestBoards"
+                            :social-account-groups="socialAccountGroups"
+                            :is-read-only="isLocked"
+                            :auth-user-id="authUserId"
+                            :initial-highlight-comment-id="
+                                initialHighlightCommentId
+                            "
+                            :posted-at="scheduledDateTime || null"
+                            :hide-schedule="editorMode === 'website'"
+                            @toggle-platform="togglePlatform"
+                            @toggle-label="toggleLabel"
+                            @update:platform-meta="updatePlatformMeta"
+                            @update:platform-content-type="
+                                updatePlatformContentType
+                            "
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <PostEditorActionBar
+                :is-read-only="isReadOnly"
+                :is-scheduled="isScheduled"
+                :can-edit="canCreatePost"
+                :is-saving="isSaving"
+                :is-submitting="isSubmitting"
+                :is-post-action-disabled="isPostActionDisabled"
+                :post-action-tooltip="postActionTooltip"
+                :pick-time-label="pickTimeLabel"
+                :hide-schedule="isOnlyWordPress"
+                :hide-publishing-actions="!canUsePublishingActions"
+                v-model:has-picked-time="hasPickedTime"
+                v-model:scheduled-date-time="scheduledDateTime"
+                @delete="deletePost"
+                @unschedule="unschedulePost"
+                @submit="submit"
+            />
+        </div>
+    </AppLayout>
+
+    <ConfirmDeleteModal
+        ref="deleteModal"
+        :title="$t('posts.delete.title')"
+        :description="$t('posts.delete.description')"
+        :action="$t('posts.delete.confirm')"
+        :cancel="$t('posts.delete.cancel')"
+    />
+
+    <AiGenerateDialog
+        v-model:open="isAiGenerateOpen"
+        :post-id="post.id"
+        :current-content="content"
+        @apply="onAiGenerateApply"
+    />
+
+    <AiReviewDialog
+        v-model:open="isAiReviewOpen"
+        :post-id="post.id"
+        :content="content"
+        @apply="onAiReviewApply"
+    />
+
+    <AiRegenerateImageDialog
+        v-model:open="isAiRegenerateImageOpen"
+        :post-id="post.id"
+        :media-item="selectedAiMediaItem"
+        @regenerated="onAiMediaRegenerated"
+    />
+
+    <RejectWorkflowModal ref="rejectModalRef" @confirm="onRejectConfirmed" />
+
+    <WordPressConnectDialog v-model:open="isWordPressConnectOpen" />
+</template>

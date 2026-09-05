@@ -1,0 +1,142 @@
+/* ==========================================================================
+   Modern Enterprise SaaS Theme Layer (TryPost / King Social Hub)
+   Styles inspired by Linear, Stripe, Intercom, Notion, and Vercel.
+   ========================================================================== */
+
+/* 1. Normalize All Hard Borders & Border Widths */
+[class*='border-2'],
+[class*='border-4'] {
+    border-width: 1px !important;
+}
+
+[class*='border-foreground']:not([class*='hover:border-foreground']):not(
+        [class*='focus:border-foreground']
+    ) {
+    border-color: var(--border) !important;
+}
+
+/* 2. Reset All Neo-Brutalist Rotation & Tilt Transforms */
+[class*='-rotate-1'],
+[class*='-rotate-2'],
+[class*='-rotate-3'],
+[class*='rotate-1'],
+[class*='rotate-2'],
+[class*='rotate-3'] {
+    transform: none !important;
+}
+
+/* 3. Refine Hard Shadows into Soft SaaS Depth */
+[class*='shadow-[3px_3px'],
+[class*='shadow-[2px_2px'],
+[class*='shadow-[4px_4px'] {
+    box-shadow: var(--shadow-sm) !important;
+}
+
+/* 4. Smooth Micro-Interactions (150-200ms) */
+a,
+button,
+input,
+select,
+textarea,
+[data-slot='button'],
+[data-slot='tabs-trigger'],
+[data-slot='badge'],
+[data-slot='sidebar-menu-button'] {
+    transition-property:
+        color, background-color, border-color, text-decoration-color, fill,
+        stroke, opacity, box-shadow, transform;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+
+/* 5. Modern Data Table Treatment */
+table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.015);
+}
+
+/* 6. Clean Card & Container Elevation */
+[data-slot='card'],
+section.rounded-2xl,
+section.rounded-xl {
+    border-color: var(--border) !important;
+    box-shadow: var(--shadow-xs);
+}
+
+/* 7. Subtle Scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* Ẩn hoàn toàn thanh cuộn (scrollbar) ở menu sidebar */
+[data-sidebar="content"],
+[data-slot="sidebar-content"],
+[data-sidebar="menu"],
+[data-slot="sidebar"] * {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+[data-sidebar="content"]::-webkit-scrollbar,
+[data-slot="sidebar-content"]::-webkit-scrollbar,
+[data-sidebar="menu"]::-webkit-scrollbar,
+[data-slot="sidebar"] *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* 8. Accessibility: Respect User Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}
+
+/* 9. Enforce Unified 10px Border Radius Across Entire System */
+.rounded-3xl,
+.rounded-2xl,
+.rounded-xl,
+.rounded-lg,
+[data-slot='card'],
+[data-slot='dialog-content'],
+[data-slot='dropdown-menu-content'],
+[data-slot='dropdown-menu-sub-content'],
+[data-slot='popover-content'],
+[data-slot='combobox-list'],
+[data-slot='table-container'],
+[data-sidebar='sidebar'] {
+    border-radius: 10px !important;
+}
+
+[data-slot='button'],
+[data-slot='input'],
+[data-slot='textarea'],
+[data-slot='select-trigger'],
+[data-slot='tabs-list'],
+[data-slot='sidebar-menu-button'] {
+    border-radius: 10px !important;
+}

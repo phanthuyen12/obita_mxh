@@ -1,0 +1,648 @@
+# PROMPT NÂNG CẤP HỆ THỐNG TRYPOST
+
+Hãy nâng cấp hệ thống **TryPost** thành một hệ thống quản lý nội dung và AutoPost có khả năng mở rộng cho nhiều User, nhiều Folder, nhiều Topic, nhiều bài viết và nhiều tài khoản/Page.
+
+Mục tiêu quan trọng nhất là xây dựng lại cấu trúc quản lý dữ liệu theo hướng:
+
+**User → Folder → Post**
+
+Trong đó **Topic là thành phần tùy chọn**, có thể được Admin tạo và phân công cho nhiều User cùng sử dụng.
+
+---
+
+# 1. QUẢN LÝ USER
+
+Hệ thống phải hỗ trợ nhiều User làm việc đồng thời.
+
+Mỗi User có:
+
+* `user_id`
+* Tên
+* Email
+* Avatar
+* Role
+* Team
+* Trạng thái
+* Ngày tạo
+* Người tạo
+
+Các Role cơ bản:
+
+* Owner
+* Admin
+* Manager
+* Content
+* Reviewer
+* Publisher
+
+Admin có quyền:
+
+* Tạo User
+* Khóa User
+* Phân quyền User
+* Gán User vào Team
+* Gán Topic cho User
+* Xem dữ liệu của User
+* Xem Folder của User
+* Xem bài viết của User
+* Xem lịch sử đăng bài
+* Xem báo cáo hoạt động
+
+---
+
+# 2. USER WORKSPACE
+
+Mỗi User khi được tạo sẽ có một **không gian dữ liệu riêng**.
+
+Ví dụ:
+
+User A
+
+→ Folder của User A
+→ Bài viết của User A
+→ Media của User A
+→ Topic được giao
+→ Lịch đăng của User A
+
+User B
+
+→ Folder của User B
+→ Bài viết của User B
+→ Media của User B
+→ Topic được giao
+→ Lịch đăng của User B
+
+Dữ liệu của các User phải được phân tách rõ ràng nhưng Admin/Manager có quyền phù hợp vẫn có thể quản lý tập trung.
+
+---
+
+# 3. FOLDER CÁ NHÂN
+
+Folder là thành phần tổ chức nội dung chính.
+
+Mỗi User được quyền tự tạo Folder.
+
+Ví dụ:
+
+User A
+
+* Kiến thức Forex
+* Tin thị trường
+* Phân tích kỹ thuật
+* Video ngắn
+* Content bán hàng
+* Ý tưởng
+* Test AI
+
+User có thể:
+
+* Tạo Folder
+* Đổi tên Folder
+* Xóa Folder
+* Di chuyển Folder
+* Tạo Folder con
+* Di chuyển Post giữa các Folder
+* Tìm kiếm Folder
+* Sắp xếp Folder
+* Ghim Folder thường sử dụng
+
+Folder phải thuộc về User thông qua:
+
+`folder.user_id`
+
+Có thể hỗ trợ cấu trúc Folder cha/con thông qua:
+
+`parent_folder_id`
+
+Ví dụ:
+
+User A
+└── Forex
+　　├── Kiến thức
+　　├── Tin tức
+　　└── Phân tích kỹ thuật
+
+---
+
+# 4. TOPIC MASTER
+
+Xây dựng khu vực **Topic Master** dành cho Admin.
+
+Admin có thể tạo các Topic chung như:
+
+* Forex
+* Crypto
+* AI
+* MMO
+* Marketing
+* Ecommerce
+* Trading
+* News
+
+Topic là dữ liệu dùng chung của hệ thống.
+
+Không tạo Topic Forex riêng cho từng User.
+
+Chỉ tồn tại:
+
+`Topic ID = Forex`
+
+Sau đó Topic này có thể được gán cho nhiều User.
+
+---
+
+# 5. GÁN TOPIC CHO NHIỀU USER
+
+Thiết kế quan hệ Many-to-Many:
+
+`Users ↔ User_Topics ↔ Topics`
+
+Ví dụ:
+
+Forex
+
+→ User A
+→ User B
+→ User C
+→ User D
+
+Trong khi:
+
+User A
+
+→ Forex
+→ Crypto
+→ AI
+
+User B
+
+→ Forex
+→ Marketing
+
+Sử dụng bảng trung gian:
+
+`user_topics`
+
+Bao gồm:
+
+* id
+* user_id
+* topic_id
+* assigned_by
+* role
+* permission
+* created_at
+
+---
+
+# 6. TOPIC KHÔNG BẮT BUỘC
+
+TryPost phải hỗ trợ cả hai trường hợp.
+
+## Trường hợp A — Có Topic
+
+Admin tạo:
+
+`Forex`
+
+Admin gán Forex cho:
+
+`User A`
+
+User A tạo Folder:
+
+`Phân tích kỹ thuật`
+
+Sau đó tạo:
+
+`Post 001`
+
+Quan hệ:
+
+User A
+→ Folder: Phân tích kỹ thuật
+→ Post 001
+→ Topic: Forex
+
+---
+
+## Trường hợp B — Không có Topic
+
+User tự tạo:
+
+`Folder: Content bán hàng`
+
+Sau đó:
+
+`Post 002`
+
+Quan hệ:
+
+User A
+→ Folder: Content bán hàng
+→ Post 002
+→ Topic: NULL
+
+Do đó:
+
+`topic_id` trong Post phải cho phép `NULL`.
+
+Không được bắt buộc User phải chọn Topic mới có thể tạo bài.
+
+---
+
+# 7. CẤU TRÚC POST
+
+Mỗi Post cần lưu tối thiểu:
+
+* post_id
+* user_id
+* folder_id
+* topic_id
+* title
+* content
+* media
+* status
+* campaign_id
+* created_by
+* assigned_to
+* reviewer_id
+* created_at
+* updated_at
+
+Trong đó:
+
+`user_id` = User sở hữu/tạo bài
+
+`folder_id` = Folder chứa bài
+
+`topic_id` = Topic chung, có thể NULL
+
+---
+
+# 8. TRẠNG THÁI BÀI VIẾT
+
+Xây dựng workflow:
+
+Draft
+↓
+Waiting Approval
+↓
+Approved
+↓
+Scheduled
+↓
+Publishing
+↓
+Published
+
+Nếu lỗi:
+
+Publishing
+↓
+Failed
+↓
+Retry
+
+Dashboard cần hiển thị số lượng:
+
+* Bản nháp
+* Chờ duyệt
+* Đã duyệt
+* Chờ đăng
+* Đang đăng
+* Đã đăng
+* Đăng lỗi
+
+---
+
+# 9. ĐĂNG MỘT POST LÊN NHIỀU PAGE
+
+Không duplicate Post khi đăng nhiều Page.
+
+Ví dụ:
+
+Post #1001
+
+→ Facebook Page 001
+→ Facebook Page 002
+→ Facebook Page 003
+→ TikTok Account 01
+→ Telegram Channel 01
+
+Post vẫn chỉ tồn tại một bản.
+
+Tạo nhiều:
+
+`publish_jobs`
+
+Ví dụ:
+
+Post #1001
+
+→ Job #01 → Facebook Page 001
+→ Job #02 → Facebook Page 002
+→ Job #03 → Facebook Page 003
+→ Job #04 → TikTok 01
+
+---
+
+# 10. CHANNEL ACCOUNT
+
+Tách riêng hệ thống quản lý Channel:
+
+Channels
+
+→ Facebook
+→ TikTok
+→ Instagram
+→ Telegram
+→ YouTube
+→ Zalo OA
+
+Mỗi Channel có nhiều Account/Page.
+
+Ví dụ:
+
+Facebook
+
+→ Page 001
+→ Page 002
+→ Page 003
+→ ...
+→ Page 1000
+
+Không lưu Page trực tiếp trong Post.
+
+Post và Page liên kết thông qua `publish_jobs`.
+
+---
+
+# 11. MEDIA LIBRARY
+
+Mỗi User có Media Library riêng.
+
+Hỗ trợ:
+
+* Image
+* Video
+* Audio
+* Thumbnail
+* Document
+
+Media có thể được gắn vào Post nhưng không duplicate file nếu nhiều Post cùng sử dụng.
+
+Cấu trúc:
+
+User
+→ Media Library
+→ Media
+→ Post Media
+
+---
+
+# 12. SEARCH & FILTER
+
+Vì hệ thống có thể có hàng nghìn Page và hàng trăm nghìn bài viết, không được phụ thuộc hoàn toàn vào Folder Tree.
+
+Xây dựng Global Search.
+
+Cho phép Filter theo:
+
+* User
+* Team
+* Folder
+* Topic
+* Status
+* Channel
+* Page
+* Campaign
+* Created Date
+* Scheduled Date
+* Published Date
+
+Cho phép kết hợp nhiều Filter.
+
+Ví dụ:
+
+`User A + Forex + Waiting Approval`
+
+hoặc:
+
+`Team Forex + Facebook + Failed + Today`
+
+---
+
+# 13. SAVED VIEW
+
+Cho phép User lưu bộ lọc thường xuyên sử dụng.
+
+Ví dụ:
+
+* Bài của tôi
+* Bài chờ duyệt
+* Forex hôm nay
+* Facebook đăng lỗi
+* Bài chưa lên lịch
+* Campaign tháng này
+* Bài của Team A
+
+Saved View thuộc riêng từng User.
+
+---
+
+# 14. PERMISSION
+
+Xây dựng RBAC kết hợp Resource Permission.
+
+Ví dụ:
+
+Admin:
+
+* Xem toàn bộ User
+* Xem toàn bộ Folder
+* Quản lý Topic
+* Quản lý Page
+* Quản lý quyền
+* Xem toàn bộ báo cáo
+
+Manager:
+
+* Xem Team được phân công
+* Xem Folder của thành viên
+* Phân công bài
+* Duyệt bài
+* Xem báo cáo Team
+
+Content:
+
+* Quản lý Folder của mình
+* Tạo Post
+* Sửa Post của mình
+* Xem Topic được cấp
+
+Reviewer:
+
+* Xem bài chờ duyệt
+* Approve
+* Reject
+* Comment
+
+Publisher:
+
+* Lên lịch
+* Chọn Page
+* Publish
+* Retry bài lỗi
+
+---
+
+# 15. DATABASE ĐỀ XUẤT
+
+Thiết kế các bảng chính:
+
+`users`
+
+`teams`
+
+`team_members`
+
+`roles`
+
+`permissions`
+
+`user_roles`
+
+`workspaces`
+
+`workspace_members`
+
+`folders`
+
+`topics`
+
+`user_topics`
+
+`posts`
+
+`post_versions`
+
+`post_media`
+
+`media`
+
+`campaigns`
+
+`channels`
+
+`channel_accounts`
+
+`publish_jobs`
+
+`publish_results`
+
+`schedules`
+
+`saved_views`
+
+`activity_logs`
+
+---
+
+# 16. QUAN HỆ DATA CHÍNH
+
+Luồng chính:
+
+User
+↓
+Folder
+↓
+Post
+↓
+Publish Job
+↓
+Channel Account / Page
+↓
+Publish Result
+
+Topic chạy song song:
+
+Topic Master
+↓
+User Topic
+↓
+User
+
+và:
+
+Topic
+↓
+Post
+
+Trong đó:
+
+**Topic → Post là OPTIONAL.**
+
+---
+
+# 17. NGUYÊN TẮC QUAN TRỌNG
+
+Không duplicate Topic theo User.
+
+Không duplicate Post khi đăng nhiều Page.
+
+Không bắt buộc Post phải có Topic.
+
+Folder phải thuộc User hoặc Workspace.
+
+User được tự tạo Folder.
+
+Admin có thể xem và quản lý Folder theo quyền.
+
+Một Topic có thể được giao cho nhiều User.
+
+Một User có thể nhận nhiều Topic.
+
+Một Post chỉ có một bản nội dung gốc nhưng có thể có nhiều Publish Job.
+
+Một Page có thể nhận bài từ nhiều User khác nhau nếu User có quyền đăng Page đó.
+
+---
+
+# 18. LUỒNG CUỐI CÙNG
+
+ADMIN
+↓
+Tạo User + phân quyền
+↓
+Tạo Topic Master (nếu cần)
+↓
+Gán Topic cho User
+↓
+USER WORKSPACE
+↓
+User tự tạo Folder
+↓
+Tạo Post
+↓
+Chọn Topic được cấp hoặc Không Topic
+↓
+Chọn Media
+↓
+Gửi duyệt
+↓
+Approve
+↓
+Chọn Page / Channel
+↓
+Schedule
+↓
+Publish Job
+↓
+Đăng bài
+↓
+Publish Result
+↓
+Report
+
+Mục tiêu cuối cùng là biến TryPost thành hệ thống quản lý AutoPost có thể scale từ vài User lên hàng trăm User, từ vài Page lên hàng nghìn Page và quản lý lượng lớn bài viết mà dữ liệu vẫn rõ ràng, dễ tìm kiếm, dễ phân quyền và không bị duplicate.

@@ -1,0 +1,124 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  DB_CONNECTION: mysql
+  DB_DATABASE: trypost_test
+  DB_USERNAME: trypost
+  DB_PASSWORD: password
+  BROADCAST_CONNECTION: "null"
+  CACHE_STORE: array
+  QUEUE_CONNECTION: sync
+  SESSION_DRIVER: array
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: trypost_test
+          MYSQL_USER: trypost
+          MYSQL_PASSWORD: password
+          MYSQL_ROOT_PASSWORD: rootpassword
+        ports:
+          - 3306/tcp
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -utrypost -ppassword"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=20
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379/tcp
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup test environment
+        uses: ./.github/actions/setup-laravel
+        with:
+          db-port: ${{ job.services.mysql.ports['3306'] }}
+          redis-port: ${{ job.services.redis.ports['6379'] }}
+
+      - name: Run backend tests
+        env:
+          DB_PORT: ${{ job.services.mysql.ports['3306'] }}
+          REDIS_PORT: ${{ job.services.redis.ports['6379'] }}
+        run: php artisan test --compact --parallel
+
+  e2e:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: trypost_test
+          MYSQL_USER: trypost
+          MYSQL_PASSWORD: password
+          MYSQL_ROOT_PASSWORD: rootpassword
+        ports:
+          - 3306/tcp
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -utrypost -ppassword"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=20
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379/tcp
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup test environment
+        uses: ./.github/actions/setup-laravel
+        with:
+          node: 'true'
+          db-port: ${{ job.services.mysql.ports['3306'] }}
+          redis-port: ${{ job.services.redis.ports['6379'] }}
+
+      - name: Build assets
+        run: npm run build
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser tests
+        env:
+          DB_PORT: ${{ job.services.mysql.ports['3306'] }}
+          REDIS_PORT: ${{ job.services.redis.ports['6379'] }}
+        run: php artisan test tests/Browser --compact
+
+      - name: Upload Playwright artifacts
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-artifacts
+          path: tests/Browser/Screenshots
+          if-no-files-found: ignore
+          retention-days: 7

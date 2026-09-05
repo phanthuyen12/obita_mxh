@@ -1,0 +1,1665 @@
+app:
+  description: 'Quy trình tự động hóa sáng tạo nội dung King Coffee: Tạo bài viết
+    quảng cáo chuẩn SEO/AIDA, Tạo 1 ảnh thương mại AI đỉnh cao với Gemini Image Plugin,
+    và Lên kịch bản & xuất Video AI với Gemini Video Plugin.'
+  icon: ☕
+  icon_background: '#FFEAD5'
+  icon_type: emoji
+  mode: workflow
+  name: Content Generator - King Coffee AI Creative Suite
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: package
+  value:
+    plugin_unique_identifier: qceank/gemini_image:0.2.3@8e50b4ad4e0168465d50efd50199303c51e327428bc706e0f6c0bf86fbc4ece4
+    version: null
+- current_identifier: null
+  type: package
+  value:
+    plugin_unique_identifier: qceank/gemini:0.9.7@baff358c8c77425d6e22231058b60db0b9a59a5d37a917ea145758a4ce2f8634
+    version: null
+kind: app
+version: 0.7.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 10
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        skill_file_size_limit: 50
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: if-else
+      id: start-to-router
+      selected: false
+      source: start
+      sourceHandle: source
+      target: router_type
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: router-to-post
+      selected: false
+      source: router_type
+      sourceHandle: case_post
+      target: content_llm
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: router-to-image
+      selected: false
+      source: router_type
+      sourceHandle: case_image
+      target: '1787712259001'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: router-to-video
+      selected: false
+      source: router_type
+      sourceHandle: case_video
+      target: video_llm
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: content_llm-to-answer
+      selected: false
+      source: content_llm
+      sourceHandle: source
+      target: final_answer_post
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: image_llm-to-code
+      selected: false
+      source: '1787712259001'
+      sourceHandle: source
+      target: '1787716214379'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: tool
+      id: code-to-image_tool
+      selected: false
+      source: '1787716214379'
+      sourceHandle: source
+      target: '1787713476460'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: tool
+        targetType: end
+      id: image_tool-to-answer
+      selected: false
+      source: '1787713476460'
+      sourceHandle: source
+      target: final_answer_image
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: video_llm-to-code
+      selected: false
+      source: video_llm
+      sourceHandle: source
+      target: video_code_parser
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: http-request
+      id: video_code_parser-source-1788431088475-target
+      selected: false
+      source: video_code_parser
+      sourceHandle: source
+      target: '1788431088475'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: true
+        loop_id: '1788484422500'
+        sourceType: loop-start
+        targetType: http-request
+      id: 1788484422500start-source-1788484432803-target
+      selected: false
+      source: 1788484422500start
+      sourceHandle: source
+      target: '1788484432803'
+      targetHandle: target
+      type: custom
+      zIndex: 1001
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: http-request
+        targetType: code
+      id: 1788431088475-source-1788484445653-target
+      selected: false
+      source: '1788431088475'
+      sourceHandle: source
+      target: '1788484445653'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: loop
+      id: 1788484445653-source-1788484422500-target
+      selected: false
+      source: '1788484445653'
+      sourceHandle: source
+      target: '1788484422500'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: true
+        loop_id: '1788484422500'
+        sourceType: http-request
+        targetType: code
+      id: 1788484432803-source-1788486615684-target
+      selected: false
+      source: '1788484432803'
+      sourceHandle: source
+      target: '1788486615684'
+      targetHandle: target
+      type: custom
+      zIndex: 1001
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: loop
+        targetType: end
+      id: 1788484422500-source-final_answer_video-target
+      selected: false
+      source: '1788484422500'
+      sourceHandle: source
+      target: final_answer_video
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: true
+        loop_id: '1788484422500'
+        sourceType: code
+        targetType: if-else
+      id: 1788486615684-source-1788485167292-target
+      selected: false
+      source: '1788486615684'
+      sourceHandle: source
+      target: '1788485167292'
+      targetHandle: target
+      type: custom
+      zIndex: 1001
+    - data:
+        isInIteration: false
+        isInLoop: true
+        loop_id: '1788484422500'
+        sourceType: if-else
+        targetType: code
+      id: 1788485167292-false-1788486937550-target
+      selected: false
+      source: '1788485167292'
+      sourceHandle: 'false'
+      target: '1788486937550'
+      targetHandle: target
+      type: custom
+      zIndex: 1001
+    - data:
+        isInIteration: false
+        isInLoop: true
+        loop_id: '1788484422500'
+        sourceType: assigner
+        targetType: loop-end
+      id: 1788487507789-source-1788487260526-target
+      selected: false
+      source: '1788487507789'
+      sourceHandle: source
+      target: '1788487260526'
+      targetHandle: target
+      type: custom
+      zIndex: 1001
+    - data:
+        isInIteration: false
+        isInLoop: true
+        loop_id: '1788484422500'
+        sourceType: if-else
+        targetType: code
+      id: 1788485167292-true-1788487943877-target
+      selected: false
+      source: '1788485167292'
+      sourceHandle: 'true'
+      target: '1788487943877'
+      targetHandle: target
+      type: custom
+      zIndex: 1001
+    - data:
+        isInIteration: false
+        isInLoop: true
+        loop_id: '1788484422500'
+        sourceType: code
+        targetType: assigner
+      id: 1788487943877-source-1788487507789-target
+      selected: false
+      source: '1788487943877'
+      sourceHandle: source
+      target: '1788487507789'
+      targetHandle: target
+      type: custom
+      zIndex: 1001
+    nodes:
+    - data:
+        selected: false
+        title: Bắt đầu
+        type: start
+        variables:
+        - default: post
+          hint: Chọn loại nội dung cần tạo
+          label: Loại nội dung (Type)
+          options:
+          - post
+          - image
+          - video
+          placeholder: Chọn loại nội dung
+          required: false
+          type: select
+          variable: content_type
+        - default: ''
+          hint: Nhập mô tả, chủ đề bài viết, ý tưởng ảnh hoặc kịch bản video
+          label: Yêu cầu chi tiết
+          max_length: 3000
+          options: []
+          placeholder: 'Ví dụ: Bài viết giới thiệu King Coffee Espresso phong cách
+            sang trọng, lịch lãm...'
+          required: false
+          type: paragraph
+          variable: requirement
+        - allowed_file_extensions:
+          - .JPG
+          - .JPEG
+          - .PNG
+          - .WEBP
+          allowed_file_types:
+          - image
+          allowed_file_upload_methods:
+          - remote_url
+          default: ''
+          hide: false
+          hint: Tải lên hình ảnh sản phẩm King Coffee để AI tham chiếu (tuỳ chọn)
+          label: Ảnh sản phẩm King Coffee (Product)
+          max_length: 5
+          options: []
+          placeholder: ''
+          required: false
+          type: file-list
+          variable: Product
+        - default: ''
+          hint: Chủ đề nội dung
+          label: Chủ đề (Theme)
+          max_length: 500
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: theme
+        - default: ''
+          hint: Yêu cầu bổ sung
+          label: Yêu cầu (Prompt)
+          max_length: 3000
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: prompt
+        - default: facebook
+          hint: Nền tảng xuất bản
+          label: Nền tảng (Platform)
+          max_length: 50
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: platform
+        - default: ''
+          hint: Hook mở đầu video (3s đầu)
+          label: Hook Video
+          max_length: 500
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: video_hook
+        - default: King Coffee
+          hint: Tên thương hiệu
+          label: Tên thương hiệu (Brand Name)
+          max_length: 200
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: brand_name
+        - default: ''
+          hint: Nội dung bài viết nguồn
+          label: Bài viết nguồn (Source Content)
+          max_length: 5000
+          options: []
+          placeholder: ''
+          required: false
+          type: paragraph
+          variable: source_content
+        - default: ''
+          hint: Hướng dẫn chi tiết cho AI
+          label: Hướng dẫn hệ thống (Instructions)
+          max_length: 5000
+          options: []
+          placeholder: ''
+          required: false
+          type: paragraph
+          variable: instructions
+        - default: ''
+          hint: ''
+          label: imageProduct
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: imageProduct
+        - default: ''
+          hint: Lời thoại nhân vật nói trong video hoặc thuyết minh
+          label: Lời thoại Voiceover (Voiceover Text)
+          max_length: 2000
+          options: []
+          placeholder: ''
+          required: false
+          type: paragraph
+          variable: voiceover_text
+        - default: vi_vn_female_warm
+          hint: Tông giọng AI
+          label: Giọng đọc AI (Voice)
+          max_length: 100
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: voice
+        - default: ''
+          hint: Tên nhân vật AI đại diện thương hiệu
+          label: Tên nhân vật (Character Name)
+          max_length: 100
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: character_name
+        - default: ''
+          hint: Đặc tả DNA nhân vật (khuôn mặt, tuổi, trang phục, phong thái cố định)
+          label: Đặc tả nhân vật (Character DNA)
+          max_length: 2000
+          options: []
+          placeholder: ''
+          required: false
+          type: paragraph
+          variable: character_dna
+        - default: ''
+          hint: URL ảnh chân dung nhân vật đại diện
+          label: Ảnh chân dung nhân vật (Character Avatar)
+          max_length: 1000
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: character_avatar
+        - default: ''
+          hint: Yêu cầu chuyển động góc máy quay và hành động
+          label: Chuyển động camera (Action Prompt)
+          max_length: 1500
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: action_prompt
+        - default: ''
+          hint: URL ảnh sản phẩm tham chiếu trực tiếp
+          label: URL ảnh sản phẩm (Image URL)
+          max_length: 1000
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: image_url
+        - default: '6'
+          hint: Thời lượng video (giây)
+          label: Thời lượng (Duration)
+          max_length: 20
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: duration
+        - default: '9:16'
+          hint: Tỷ lệ khung hình video
+          label: Tỷ lệ khung hình (Aspect Ratio)
+          options:
+          - '9:16'
+          - '16:9'
+          - '1:1'
+          placeholder: ''
+          required: false
+          type: select
+          variable: aspect_ratio
+      height: 371
+      id: start
+      position:
+        x: 97.76012425785461
+        y: 350
+      positionAbsolute:
+        x: 97.76012425785461
+        y: 350
+      selected: false
+      type: custom
+      width: 243
+      zIndex: 0
+    - data:
+        cases:
+        - case_id: case_post
+          conditions:
+          - comparison_operator: is
+            id: cond_post
+            value: post
+            varType: string
+            variable_selector:
+            - start
+            - content_type
+          id: case_post
+          logical_operator: and
+        - case_id: case_image
+          conditions:
+          - comparison_operator: is
+            id: cond_image
+            value: image
+            varType: string
+            variable_selector:
+            - start
+            - content_type
+          id: case_image
+          logical_operator: and
+        - case_id: case_video
+          conditions:
+          - comparison_operator: is
+            id: cond_video
+            value: video
+            varType: string
+            variable_selector:
+            - start
+            - content_type
+          id: case_video
+          logical_operator: and
+        selected: false
+        title: Điều hướng loại nội dung
+        type: if-else
+      height: 294
+      id: router_type
+      position:
+        x: 450
+        y: 350
+      positionAbsolute:
+        x: 450
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 243
+      zIndex: 0
+    - data:
+        context:
+          enabled: false
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: gemini-2.5-flash
+          provider: qceank/gemini/google
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 'Bạn là Giám Đốc Sáng Tạo & Copywriter hàng đầu của thương hiệu King
+            Coffee.
+
+
+            NHIỆM VỤ:
+
+            Tạo một bài viết mạng xã hội (Facebook) hoàn chỉnh, cuốn hút, sang trọng,
+            đúng phong cách King Coffee, chuẩn AIDA và sẵn sàng xuất bản ngay.
+
+
+            QUY TẮC ĐẦU RA BẮT BUỘC:
+
+            - CHỈ XUẤT BÀI VIẾT THỰC TẾ, không thêm câu chào hỏi, lời dẫn hay văn
+            bản mở đầu/kết bài phụ.
+
+            - TUYỆT ĐỐI KHÔNG in các nhãn cấu trúc phân mục như ''1. TIÊU ĐỀ:'', ''2.
+            NỘI DUNG CHÍNH:'', ''3. CTA:'', ''4. HASHTAGS:'', ''5. GỢI Ý HÌNH ẢNH:''.
+
+            - Bắt đầu trực tiếp bằng Tiêu đề bài viết ấn tượng (in đậm kèm emoji),
+            tiếp nối là thân bài truyền cảm, các ưu đãi đặc quyền, lời kêu gọi hành
+            động (CTA) mượt mà và kết thúc bằng bộ hashtags thịnh hành (#KingCoffee
+            #KingCoffee3in1...).
+
+            - Giọng văn: Sang trọng, ấm áp, tinh tế, giàu cảm xúc và khơi dậy đam
+            mê thưởng thức cà phê thượng hạng.'
+        - id: user-prompt
+          role: user
+          text: 'Yêu cầu bài viết: {{#start.requirement#}}'
+        selected: false
+        title: ✍️ Trình tạo Bài viết
+        type: llm
+        vision:
+          configs:
+            detail: high
+            variable_selector:
+            - start
+            - Product
+          enabled: true
+      height: 90
+      id: content_llm
+      position:
+        x: 800
+        y: 100
+      positionAbsolute:
+        x: 800
+        y: 100
+      selected: false
+      type: custom
+      width: 243
+      zIndex: 0
+    - data:
+        desc: Kết quả bài viết King Coffee
+        outputs:
+        - value_selector:
+          - content_llm
+          - text
+          variable: content
+        selected: false
+        title: 📄 Kết quả Bài viết
+        type: end
+      height: 118
+      id: final_answer_post
+      position:
+        x: 1200
+        y: 100
+      positionAbsolute:
+        x: 1200
+        y: 100
+      selected: false
+      type: custom
+      width: 243
+      zIndex: 0
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        model:
+          completion_params:
+            temperature: 0.5
+          mode: chat
+          name: gemini-2.5-flash
+          provider: qceank/gemini/google
+        prompt_template:
+        - id: system-prompt-image
+          role: system
+          text: "Bạn là Senior Prompt Engineer & Commercial Art Director chuyên nghiệp\
+            \ cho thương hiệu cà phê quốc tế King Coffee.\n\nNHIỆM VỤ:\nPhân tích\
+            \ yêu cầu của người dùng và ảnh sản phẩm tham chiếu (nếu có), sau đó tạo\
+            \ DUY NHẤT 1 prompt tiếng Anh hoàn hảo để đưa vào engine AI tạo ảnh quảng\
+            \ cáo chất lượng cao (8K, cinematic commercial product photography).\n\
+            \nNGUYÊN TẮC BẮT BUỘC:\n1. GIỮ NGUYÊN NHẬN DIỆN SẢN PHẨM (Locked Product\
+            \ Asset):\n   Nếu có ảnh sản phẩm đính kèm, giữ nguyên bao bì, màu sắc,\
+            \ logo, tên thương hiệu King Coffee. Không tạo hình dạng biến dạng hay\
+            \ chế logo mới.\n2. BỐ CỤC & ÁNH SÁNG THƯƠNG MẠI:\n   - Studio advertising\
+            \ lighting, soft shadows, warm natural coffee tones, depth of field.\n\
+            \   - Môi trường phù hợp: quầy bar gỗ sang trọng, hạt cà phê rơi nghệ\
+            \ thuật, làn khói thơm bốc lên, hoặc phong cách tối giản hiện đại (minimalist\
+            \ luxury).\n3. ĐỊNH DẠNG ĐẦU RA BẮT BUỘC:\n\n\U0001F3AF PHONG CÁCH: [Mô\
+            \ tả ngắn phong cách]\n\U0001F4DD Ý TƯỞNG BỐ CỤC: [Mô tả ngắn gọn bằng\
+            \ tiếng Việt]\n\U0001F4CB PROMPT CHÍNH:\nPROMPT: [1 prompt hoàn chỉnh\
+            \ bằng tiếng Anh mô tả chi tiết hình ảnh quảng cáo, không chứa ngoặc vuông]\n\
+            ⚙️ THÔNG SỐ: Aspect Ratio: 1:1 hoặc 16:9, Negative Prompt: blurry, distorted,\
+            \ bad packaging, fake logo, watermark, low quality."
+        - id: user-prompt-image
+          role: user
+          text: 'Yêu cầu hình ảnh / concept quảng cáo: {{#start.requirement#}}'
+        selected: false
+        structured_output_enabled: false
+        title: 🎨 Viết Prompt Ảnh AI
+        type: llm
+        vision:
+          configs:
+            detail: high
+            variable_selector:
+            - start
+            - Product
+          enabled: true
+      height: 90
+      id: '1787712259001'
+      position:
+        x: 800
+        y: 350
+      positionAbsolute:
+        x: 800
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 243
+      zIndex: 0
+    - data:
+        code: "function main({ promeLLm }) {\n  const text = String(promeLLm || \"\
+          \").trim();\n  \n  const match = text.match(/PROMPT:\\s*([^\\n\\r]+(?:\\\
+          n(?!\\s*(?:⚙️|Negative Prompt:|ASPECT RATIO:|THÔNG SỐ:|$))[^\\n\\r]+)*)/i)\
+          \ \n             || text.match(/PROMPT:\\s*([\\s\\S]*?)(?:\\n\\s*⚙️|\\n\\\
+          s*Negative Prompt:|\\n\\s*THÔNG SỐ:|$)/i);\n  \n  let result = match ? match[1].trim()\
+          \ : text;\n  \n  // Remove surrounding brackets, quotes, or markdown bold\n\
+          \  result = result.replace(/^\\[|\\]$/g, '').replace(/^\"|\"$/g, '').replace(/^\\\
+          *\\*|\\*\\*$/g, '').trim();\n  \n  if (!result || result.length < 15) {\n\
+          \    result = \"High-end commercial product photography for King Coffee,\
+          \ cinematic studio lighting, rich coffee beans, steam rising, elegant luxury\
+          \ background, photorealistic, 8k resolution\";\n  }\n  \n  return {\n  \
+          \  result\n  };\n}"
+        code_language: javascript
+        outputs:
+          result:
+            children: null
+            type: string
+        selected: false
+        title: ⚙️ Trích Xuất Prompt Ảnh
+        type: code
+        variables:
+        - value_selector:
+          - '1787712259001'
+          - text
+          value_type: string
+          variable: promeLLm
+      height: 54
+      id: '1787716214379'
+      position:
+        x: 1200
+        y: 350
+      positionAbsolute:
+        x: 1200
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 243
+      zIndex: 0
+    - data:
+        is_team_authorization: true
+        paramSchemas:
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: Detailed description of the image you want to generate (max 32000
+              tokens). Check the official Gemini documentation.
+            ja_JP: 生成したい画像の細かな説明(最大 32000 トークン)。Gemini 公式ドキュメントを参照してください。
+            pt_BR: Detailed description of the image you want to generate (max 32000
+              tokens). Check the official Gemini documentation.
+            zh_Hans: 您想要生成的图像的详细描述（最多 32000 tokens）。请查看 Gemini 的官方文档。
+          input_schema: null
+          label:
+            en_US: Prompt
+            ja_JP: プロンプト
+            pt_BR: Prompt
+            zh_Hans: 提示词
+          llm_description: Detailed image prompt for Gemini Image Generate(max 32000
+            tokens). Describe the desired image clearly.
+          max: null
+          min: null
+          multiple: false
+          name: prompt
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: One or more images to edit (PNG, JPEG, or WebP, each <7MB).
+            ja_JP: 編集対象の画像(PNG, JPEG, or WebP, 1つ当たり最大 7MB)
+            pt_BR: One or more images to edit (PNG, JPEG, or WebP, each <7MB).
+            zh_Hans: 要编辑的一张或多张图像（PNG、JPEG 或 WebP，每张小于 7MB）。
+          input_schema: null
+          label:
+            en_US: Image(s)
+            ja_JP: 画像
+            pt_BR: Image(s)
+            zh_Hans: 图像
+          llm_description: ''
+          max: null
+          min: null
+          multiple: false
+          name: images
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: files
+        - auto_generate: null
+          default: gemini-2.5-flash-image-preview
+          form: form
+          human_description:
+            en_US: Select the gemini model
+            ja_JP: Gemini モデルを選択
+            pt_BR: Select the gemini model
+            zh_Hans: 选择Gemini模型
+          input_schema: null
+          label:
+            en_US: Gemini Model
+            ja_JP: Gemini モデル
+            pt_BR: Gemini Model
+            zh_Hans: Gemini 模型
+          llm_description: ''
+          max: null
+          min: null
+          multiple: false
+          name: model
+          options:
+          - icon: ''
+            label:
+              en_US: gemini-2.5-flash-image-preview
+              ja_JP: gemini-2.5-flash-image-preview
+              pt_BR: gemini-2.5-flash-image-preview
+              zh_Hans: gemini-2.5-flash-image-preview
+            value: gemini-2.5-flash-image-preview
+          - icon: ''
+            label:
+              en_US: gemini-3.0-pro-image-preview
+              ja_JP: gemini-3.0-pro-image-preview
+              pt_BR: gemini-3.0-pro-image-preview
+              zh_Hans: gemini-3.0-pro-image-preview
+            value: gemini-3-pro-image-preview
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        params:
+          images: ''
+          model: ''
+          prompt: ''
+        plugin_id: qceank/gemini_image
+        plugin_unique_identifier: qceank/gemini_image:0.2.3@8e50b4ad4e0168465d50efd50199303c51e327428bc706e0f6c0bf86fbc4ece4
+        provider_icon: https://kingai.tnicorporation.com/console/api/workspaces/current/plugin/icon?tenant_id=fa54662f-72ff-4f9b-977c-1f86e12b6a6d&filename=1a5efebcdcb722a86c72848ea24502de161c804d186a533b2bc112f2181a4a07.png
+        provider_id: qceank/gemini_image/gemini_image
+        provider_name: qceank/gemini_image/gemini_image
+        provider_show_name: Gemini Image
+        provider_type: builtin
+        selected: false
+        title: Gemini Image Generate
+        tool_configurations:
+          model:
+            type: constant
+            value: gemini-3-pro-image-preview
+        tool_description: Gemini Image Generate is a text to image generation and
+          editing tool
+        tool_label: Gemini Image Generate and Edit
+        tool_name: image_generate
+        tool_node_version: '2'
+        tool_parameters:
+          images:
+            type: variable
+            value:
+            - start
+            - Product
+          prompt:
+            type: mixed
+            value: '{{#1787716214379.result#}}'
+        type: tool
+      height: 90
+      id: '1787713476460'
+      position:
+        x: 1550
+        y: 350
+      positionAbsolute:
+        x: 1550
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 243
+      zIndex: 0
+    - data:
+        desc: Kết quả ảnh thương mại AI
+        outputs:
+        - value_selector:
+          - '1787713476460'
+          - files
+          variable: files
+        - value_selector:
+          - '1787716214379'
+          - result
+          variable: image_prompt
+        selected: false
+        title: ✨ Kết quả Ảnh AI
+        type: end
+      height: 144
+      id: final_answer_image
+      position:
+        x: 1900
+        y: 350
+      positionAbsolute:
+        x: 1900
+        y: 350
+      selected: false
+      type: custom
+      width: 243
+      zIndex: 0
+    - data:
+        context:
+          enabled: false
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: gemini-2.5-flash
+          provider: qceank/gemini/google
+        prompt_template:
+        - id: system-prompt-video
+          role: system
+          text: 'Bạn là Đạo Diễn & Biên Kịch Video Quảng Cáo AI cho thương hiệu King
+            Coffee.
+
+
+            NHIỆM VỤ:
+
+            Xây dựng kịch bản video thương mại ngắn chuyên nghiệp, ấn tượng, bám sát
+            các ràng buộc kỹ thuật sau:
+
+
+            1. BẢO TỒN NGUYÊN VẸN SẢN PHẨM GỐC (BẮT BUỘC):
+
+            - Sử dụng chính xác 100% hình ảnh sản phẩm từ ảnh tham chiếu (Product
+            / imageProduct / image_url). Giữ nguyên bao bì, nhãn mác, ly/hộp, logo
+            thương hiệu.
+
+            - Tuyệt đối không thay đổi bao bì, không làm biến dạng, không thay bằng
+            sản phẩm khác.
+
+            - Chuyển động trong video chỉ là chuyển động góc máy quay (camera motion:
+            slow push-in, smooth pan, subtle dynamic zoom) và ánh sáng, khói hơi nước
+            xung quanh.
+
+
+            2. BẢO TỒN ĐỒNG NHẤT NHÂN VẬT AI (CHARACTER DNA):
+
+            - Nếu có nhân vật, giữ nguyên 100% khuôn mặt, trang phục, phong thái và
+            độ tuổi theo đúng mô tả Character DNA, không bị đổi mặt qua từng cảnh.
+
+
+            3. LỜI THOẠI LIP-SYNC (NÓI TRỰC TIẾP TRONG VIDEO):
+
+            - Nhân vật phải trực tiếp nói lời thoại được cung cấp bằng tiếng Việt
+            với khẩu hình miệng (lip-sync), ánh mắt và cảm xúc chân thực.
+
+
+            CẤU TRÚC KỊCH BẢN:
+
+            1. Tổng quan phân cảnh & Lời thoại nhân vật nói.
+
+            2. Chuyển động góc máy camera.
+
+            3. PROMPT: [Mô tả chi tiết bằng tiếng Anh theo cấu trúc: Product Preservation
+            + Character DNA + Spoken Dialogue lip-sync + Camera Movement để đưa vào
+            model AI Video]'
+        - id: user-prompt-video
+          role: user
+          text: 'Chủ đề: {{#start.theme#}}
+
+            Cảnh quay yêu cầu: {{#start.prompt#}}
+
+            Chuyển động camera: {{#start.action_prompt#}}
+
+            Nhân vật: {{#start.character_name#}}
+
+            Đặc tả DNA nhân vật: {{#start.character_dna#}}
+
+            Ảnh đại diện nhân vật: {{#start.character_avatar#}}
+
+            Lời thoại nhân vật nói trong video: {{#start.voiceover_text#}}
+
+            Giọng đọc AI: {{#start.voice#}}
+
+            Hook 3s đầu: {{#start.video_hook#}}
+
+            Thời lượng: {{#start.duration#}}s
+
+            Yêu cầu tổng thể: {{#start.requirement#}}
+
+            Hướng dẫn đạo diễn: {{#start.instructions#}}'
+        selected: false
+        title: 🎬 Biên Kịch Video
+        type: llm
+        vision:
+          configs:
+            detail: high
+            variable_selector:
+            - start
+            - Product
+          enabled: true
+      height: 90
+      id: video_llm
+      position:
+        x: 800
+        y: 650
+      positionAbsolute:
+        x: 800
+        y: 650
+      selected: false
+      type: custom
+      width: 243
+      zIndex: 0
+    - data:
+        code: "function main({ scriptText, imageProduct, imageUrl, characterName,\
+          \ characterDna, characterAvatar, voiceoverText, voice, actionPrompt, userPrompt,\
+          \ inputDuration, inputAspectRatio }) {\n  const text = String(scriptText\
+          \ || \"\").trim();\n  \n  // 1. Resolve Image URL & Mode (i2v vs t2v)\n\
+          \  let resolvedImgUrl = String(imageProduct || imageUrl || \"\").trim();\n\
+          \  const charAvatar = String(characterAvatar || \"\").trim();\n  if (!resolvedImgUrl\
+          \ && charAvatar) {\n    resolvedImgUrl = charAvatar;\n  }\n  const mode\
+          \ = resolvedImgUrl ? \"i2v\" : \"t2v\";\n\n  // 2. Parse base prompt from\
+          \ LLM script if present\n  const promptMatch = text.match(/PROMPT:\\s*([^\\\
+          n\\r]+(?:\\n(?!\\s*(?:Negative Prompt:|Thông số:|$))[^\\n\\r]+)*)/i)\n \
+          \                  || text.match(/Prompt điều khiển Video AI[^:]*:\\s*([^\\\
+          n\\r]+)/i)\n                   || text.match(/PROMPT\\s*(?:VIDEO|AI)?:\\\
+          s*([\\s\\S]*?)(?:\\n\\s*Negative|\\n\\s*Scene|\\n\\s*Thông số|$)/i);\n \
+          \ \n  let llmPrompt = promptMatch ? promptMatch[1].trim() : \"\";\n  llmPrompt\
+          \ = llmPrompt.replace(/^\\[|\\]$/g, \"\").replace(/^\"|\"$/g, \"\").replace(/^\\\
+          *\\*|\\*\\*$/g, \"\").trim();\n\n  // 3. Assemble prompt components to enforce\
+          \ Product, Character DNA, and Spoken Lip-sync\n  const parts = [];\n\n \
+          \ // Product Constraint (Mandatory for preserving product identity)\n  if\
+          \ (resolvedImgUrl && resolvedImgUrl !== charAvatar) {\n    parts.push(\"\
+          STRICT PRODUCT PRESERVATION: Maintain 100% exact appearance, packaging,\
+          \ bottle, label, logo, and colors from the reference product image. The\
+          \ original product remains completely sharp and intact at the focal center\
+          \ without any morphing or modification.\");\n  }\n\n  // Consistent Character\
+          \ DNA & Reference Face\n  if (characterName || characterDna || charAvatar)\
+          \ {\n    const charDesc = [characterName, characterDna].filter(Boolean).join(\"\
+          : \");\n    let charPrompt = `CONSISTENT CHARACTER: Featuring ${charDesc\
+          \ || \"King Coffee Brand Ambassador\"}. Retain 100% identical facial features,\
+          \ hair, clothing, and natural friendly commercial appearance.`;\n    if\
+          \ (charAvatar && charAvatar !== resolvedImgUrl) {\n      charPrompt += `\
+          \ Facial reference: ${charAvatar}.`;\n    }\n    parts.push(charPrompt);\n\
+          \  }\n\n  // Spoken Dialogue & Lip Sync\n  if (voiceoverText && String(voiceoverText).trim().length\
+          \ > 0) {\n    parts.push(`SPOKEN DIALOGUE & LIP-SYNC: The character speaks\
+          \ the following lines aloud in Vietnamese with natural synchronized mouth\
+          \ movement and facial emotion: \\\"${String(voiceoverText).trim()}\\\".`);\n\
+          \  }\n\n  // Camera Motion & Scene\n  if (actionPrompt && actionPrompt.trim())\
+          \ {\n    parts.push(`CAMERA MOVEMENT: ${actionPrompt.trim()}`);\n  } else\
+          \ if (llmPrompt && llmPrompt.length > 20) {\n    parts.push(llmPrompt);\n\
+          \  } else if (userPrompt && userPrompt.trim()) {\n    parts.push(`SCENE:\
+          \ ${userPrompt.trim()}`);\n  } else {\n    parts.push(\"Cinematic smooth\
+          \ slow push-in shot, premium coffee atmosphere, soft commercial lighting,\
+          \ 4K resolution ultra-realistic.\");\n  }\n\n  const prompt = parts.join(\"\
+          \ \");\n\n  const negative_prompt = \"distorted product, deformed packaging,\
+          \ altered logo, fake brand, mutating cup, changing label, blurry, low quality,\
+          \ artifacts, extra limbs, bad eyes, cartoonish modification, wrong product,\
+          \ glitch, flickering\";\n\n  // Duration mapping for RevidAPI (valid durations are strictly: 6, 10, 15)\n  let duration = \"6\";\n  if (inputDuration) {\n    const num = parseInt(String(inputDuration).replace(/\\D/g, \"\"), 10);\n    if (num > 12) {\n      duration = \"15\";\n    } else if (num >= 8) {\n      duration = \"10\";\n    } else {\n      duration = \"6\";\n    }\n  }\n\n  // Aspect ratio\n  let aspect_ratio = inputAspectRatio\
+          \ || \"9:16\";\n  if (![\"9:16\", \"16:9\", \"1:1\"].includes(aspect_ratio))\
+          \ {\n    aspect_ratio = \"9:16\";\n  }\n\n  return {\n    prompt,\n    negative_prompt,\n\
+          \    img_url: resolvedImgUrl,\n    character_avatar: charAvatar,\n    mode,\n\
+          \    duration,\n    aspect_ratio,\n    voiceover_text: String(voiceoverText\
+          \ || \"\").trim(),\n    voice: String(voice || \"vi_vn_female_warm\").trim()\n\
+          \  };\n}"
+        code_language: javascript
+        outputs:
+          aspect_ratio:
+            children: null
+            type: string
+          duration:
+            children: null
+            type: string
+          img_url:
+            children: null
+            type: string
+          mode:
+            children: null
+            type: string
+          negative_prompt:
+            children: null
+            type: string
+          prompt:
+            children: null
+            type: string
+          voice:
+            children: null
+            type: string
+          voiceover_text:
+            children: null
+            type: string
+          character_avatar:
+            children: null
+            type: string
+        selected: false
+        title: ⚙️ Trích Xuất Prompt Video
+        type: code
+        variables:
+        - value_selector:
+          - video_llm
+          - text
+          value_type: string
+          variable: scriptText
+        - value_selector:
+          - start
+          - imageProduct
+          value_type: string
+          variable: imageProduct
+        - value_selector:
+          - start
+          - image_url
+          value_type: string
+          variable: imageUrl
+        - value_selector:
+          - start
+          - character_name
+          value_type: string
+          variable: characterName
+        - value_selector:
+          - start
+          - character_dna
+          value_type: string
+          variable: characterDna
+        - value_selector:
+          - start
+          - character_avatar
+          value_type: string
+          variable: characterAvatar
+        - value_selector:
+          - start
+          - voiceover_text
+          value_type: string
+          variable: voiceoverText
+        - value_selector:
+          - start
+          - voice
+          value_type: string
+          variable: voice
+        - value_selector:
+          - start
+          - action_prompt
+          value_type: string
+          variable: actionPrompt
+        - value_selector:
+          - start
+          - prompt
+          value_type: string
+          variable: userPrompt
+        - value_selector:
+          - start
+          - duration
+          value_type: string
+          variable: inputDuration
+        - value_selector:
+          - start
+          - aspect_ratio
+          value_type: string
+          variable: inputAspectRatio
+      height: 54
+      id: video_code_parser
+      position:
+        x: 788.835936156001
+        y: 819.8286350659995
+      positionAbsolute:
+        x: 788.835936156001
+        y: 819.8286350659995
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 243
+      zIndex: 0
+    - data:
+        desc: Kết quả kịch bản & video AI
+        outputs:
+        - value_selector:
+          - '1788484422500'
+          - final_video_url
+          value_type: string
+          variable: video_files
+        - value_selector:
+          - video_llm
+          - text
+          variable: video_script
+        - value_selector:
+          - video_code_parser
+          - prompt
+          variable: video_prompt
+        - value_selector:
+          - video_code_parser
+          - voiceover_text
+          variable: voiceover_text
+        - value_selector:
+          - video_code_parser
+          - voice
+          variable: voice
+        - value_selector:
+          - video_code_parser
+          - character_avatar
+          value_type: string
+          variable: character_avatar
+        selected: false
+        title: 🎬 Kết quả Video AI
+        type: end
+      height: 170
+      id: final_answer_video
+      position:
+        x: 2483.4315656123404
+        y: 1011.3248780048111
+      positionAbsolute:
+        x: 2483.4315656123404
+        y: 1011.3248780048111
+      selected: false
+      type: custom
+      width: 243
+      zIndex: 0
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          data:
+          - id: key-value-180
+            key: prompt
+            type: text
+            value: '{{#video_code_parser.prompt#}}'
+          - id: key-value-181
+            key: negative_prompt
+            type: text
+            value: '{{#video_code_parser.negative_prompt#}}'
+          - id: key-value-182
+            key: duration
+            type: text
+            value: '{{#video_code_parser.duration#}}'
+          - id: key-value-183
+            key: img_url
+            type: text
+            value: '{{#video_code_parser.img_url#}}'
+          - id: key-value-184
+            key: aspect_ratio
+            type: text
+            value: '{{#video_code_parser.aspect_ratio#}}'
+          - id: key-value-203
+            key: mode
+            type: text
+            value: '{{#video_code_parser.mode#}}'
+          - id: key-value-81
+            key: model
+            type: text
+            value: grok-i2v
+          - id: key-value-261
+            key: resolution
+            type: text
+            value: 720p
+          - id: key-value-380
+            key: voiceover_text
+            type: text
+            value: '{{#video_code_parser.voiceover_text#}}'
+          type: form-data
+        headers: Authorization:Bearer sk_live_ZftbkJKe8_qcQODyGttopUKb
+        method: post
+        params: ''
+        retry_config:
+          max_retries: 3
+          retry_enabled: true
+          retry_interval: 100
+        selected: true
+        ssl_verify: true
+        timeout:
+          max_connect_timeout: 0
+          max_read_timeout: 0
+          max_write_timeout: 0
+        title: HTTP Request
+        type: http-request
+        url: https://ai.revidapi.com/v1/video/generate
+        variables: []
+      height: 141
+      id: '1788431088475'
+      position:
+        x: 1151.5529494840905
+        y: 625.280543584177
+      positionAbsolute:
+        x: 1151.5529494840905
+        y: 625.280543584177
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 243
+      zIndex: 0
+    - data:
+        break_conditions: []
+        error_handle_mode: terminated
+        height: 439.8776950135484
+        logical_operator: and
+        loop_count: 98
+        loop_variables:
+        - id: bbac70b5-1ac7-49d6-9d75-a2974144bb2a
+          label: final_video_url
+          value: ''
+          value_type: constant
+          var_type: string
+        selected: false
+        start_node_id: 1788484422500start
+        title: Loop
+        type: loop
+        width: 1758.3213999429558
+      height: 440
+      id: '1788484422500'
+      position:
+        x: 697.6852014096603
+        y: 1011.3248780048111
+      positionAbsolute:
+        x: 697.6852014096603
+        y: 1011.3248780048111
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 1758
+      zIndex: 0
+    - data:
+        desc: ''
+        isInLoop: true
+        selected: false
+        title: ''
+        type: loop-start
+      draggable: false
+      height: 48
+      id: 1788484422500start
+      parentId: '1788484422500'
+      position:
+        x: 24
+        y: 68
+      positionAbsolute:
+        x: 721.6852014096603
+        y: 1079.3248780048111
+      selectable: false
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-loop-start
+      width: 44
+      zIndex: 1001
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          data: []
+          type: none
+        headers: Authorization:Bearer sk_live_ZftbkJKe8_qcQODyGttopUKb
+        isInIteration: false
+        isInLoop: true
+        loop_id: '1788484422500'
+        method: get
+        params: ''
+        retry_config:
+          max_retries: 3
+          retry_enabled: true
+          retry_interval: 100
+        selected: false
+        ssl_verify: true
+        timeout:
+          max_connect_timeout: 0
+          max_read_timeout: 0
+          max_write_timeout: 0
+        title: HTTP Request 2
+        type: http-request
+        url: https://ai.revidapi.com/v1/jobs/{{#1788484445653.result#}}
+        variables: []
+      height: 144
+      id: '1788484432803'
+      parentId: '1788484422500'
+      position:
+        x: 90.46338612464251
+        y: 46.02055026200014
+      positionAbsolute:
+        x: 788.1485875343028
+        y: 1057.3454282668113
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 243
+      zIndex: 1001
+    - data:
+        code: "import json\n\ndef main(data: str) -> dict:\n    obj = json.loads(data)\n\
+          \n    return {\n        \"result\": obj[\"job_id\"]\n    }"
+        code_language: python3
+        outputs:
+          result:
+            children: null
+            type: string
+        selected: false
+        title: Code 3
+        type: code
+        variables:
+        - value_selector:
+          - '1788431088475'
+          - body
+          value_type: string
+          variable: data
+      height: 54
+      id: '1788484445653'
+      position:
+        x: 1123.7229439206199
+        y: 821.9242262921765
+      positionAbsolute:
+        x: 1123.7229439206199
+        y: 821.9242262921765
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 243
+      zIndex: 0
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: contains
+            id: cond_completed
+            value: completed
+            varType: string
+            variable_selector:
+            - '1788486615684'
+            - result
+          id: 'true'
+          logical_operator: and
+        isInIteration: false
+        isInLoop: true
+        loop_id: '1788484422500'
+        selected: false
+        title: IF/ELSE 2
+        type: if-else
+      height: 150
+      id: '1788485167292'
+      parentId: '1788484422500'
+      position:
+        x: 434.41226223796684
+        y: 228.1653986815486
+      positionAbsolute:
+        x: 1132.0974636476271
+        y: 1239.4902766863597
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 243
+      zIndex: 1001
+    - data:
+        code: "import json\n\ndef main(data: str) -> dict:\n    obj = json.loads(data)\n\
+          \n    return {\n        \"result\": obj[\"status\"]\n    }"
+        code_language: python3
+        isInIteration: false
+        isInLoop: true
+        loop_id: '1788484422500'
+        outputs:
+          result:
+            children: null
+            type: string
+        selected: false
+        title: Code 4
+        type: code
+        variables:
+        - value_selector:
+          - '1788484432803'
+          - body
+          value_type: string
+          variable: data
+      height: 54
+      id: '1788486615684'
+      parentId: '1788484422500'
+      position:
+        x: 126.84241960228428
+        y: 286.451400226709
+      positionAbsolute:
+        x: 824.5276210119446
+        y: 1297.77627823152
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 243
+      zIndex: 1001
+    - data:
+        code: "import time\n\ndef main():\n    time.sleep(10)\n\n    return {\n  \
+          \      \"result\": \"waited\"\n    }"
+        code_language: python3
+        isInIteration: false
+        isInLoop: true
+        loop_id: '1788484422500'
+        outputs:
+          result:
+            children: null
+            type: string
+        selected: false
+        title: Code 5
+        type: code
+        variables: []
+      height: 54
+      id: '1788486937550'
+      parentId: '1788484422500'
+      position:
+        x: 733.7734529409813
+        y: 318.02055026200014
+      positionAbsolute:
+        x: 1431.4586543506416
+        y: 1329.3454282668113
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 243
+      zIndex: 1001
+    - data:
+        isInIteration: false
+        isInLoop: true
+        loop_id: '1788484422500'
+        selected: false
+        title: Exit Loop
+        type: loop-end
+      height: 54
+      id: '1788487260526'
+      parentId: '1788484422500'
+      position:
+        x: 1427.814606230956
+        y: 103.55676236688737
+      positionAbsolute:
+        x: 2125.4998076406164
+        y: 1114.8816403716985
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-simple
+      width: 243
+      zIndex: 1001
+    - data:
+        isInIteration: false
+        isInLoop: true
+        items:
+        - input_type: variable
+          operation: over-write
+          value:
+          - '1788487943877'
+          - result
+          variable_selector:
+          - '1788484422500'
+          - final_video_url
+        loop_id: '1788484422500'
+        selected: false
+        title: Variable Assigner
+        type: assigner
+        version: '2'
+      height: 86
+      id: '1788487507789'
+      parentId: '1788484422500'
+      position:
+        x: 1125.4359215656355
+        y: 103.55676236688737
+      positionAbsolute:
+        x: 1823.1211229752957
+        y: 1114.8816403716985
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 243
+      zIndex: 1001
+    - data:
+        code: "import json\n\ndef main(data: str) -> dict:\n    obj = json.loads(data)\n\
+          \    url = obj.get('output_url') or obj.get('result') or obj.get('result_url') or ''\n\
+          \    if isinstance(url, dict):\n        url = url.get('url') or url.get('video_url') or ''\n\
+          \    elif isinstance(url, list) and len(url) > 0:\n        url = url[0]\n\
+          \    return {\n        \"result\": str(url)\n    }"
+        code_language: python3
+        isInIteration: false
+        isInLoop: true
+        loop_id: '1788484422500'
+        outputs:
+          result:
+            children: null
+            type: string
+        selected: false
+        title: GET VIDEOS
+        type: code
+        variables:
+        - value_selector:
+          - '1788484432803'
+          - body
+          value_type: string
+          variable: data
+      height: 54
+      id: '1788487943877'
+      parentId: '1788484422500'
+      position:
+        x: 825.4359215656355
+        y: 102.61270208604583
+      positionAbsolute:
+        x: 1523.1211229752957
+        y: 1113.937580090857
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 243
+      zIndex: 1001
+    viewport:
+      x: -620.263818047682
+      y: -481.0466930578216
+      zoom: 1.064300813825722
+  rag_pipeline_variables: []
