@@ -21,4 +21,35 @@
 
   37  artisan:16
       Illuminate\Foundation\Application::handleCommand()
+root@ubuntu2204:~/obita_mxh# php artisan migrate --force
+
+   INFO  Running migrations.  
+
+  2026_08_25_074132_add_channel_ids_to_omnichat_chat_tables ..... 32.16ms FAIL
+
+   Illuminate\Database\QueryException 
+
+  SQLSTATE[42000]: Syntax error or access violation: 1061 Duplicate key name 'omnichat_contact_identities_channel_id_external_id_unique' (Connection: mysql, Host: 127.0.0.1, Port: 3306, Database: trypost, SQL: alter table `omnichat_contact_identities` add unique `omnichat_contact_identities_channel_id_external_id_unique`(`channel_id`, `external_id`))
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:857
+    853▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    854▕                 ? UniqueConstraintViolationException::class
+    855▕                 : QueryException::class;
+    856▕ 
+  ➜ 857▕             $exception = new $exceptionType(
+    858▕                 $this->getNameWithReadWriteType(),
+    859▕                 $query,
+    860▕                 $this->prepareBindings($bindings),
+    861▕                 $e,
+
+      +9 vendor frames 
+
+  10  database/migrations/2026_08_25_074132_add_channel_ids_to_omnichat_chat_tables.php:22
+      Illuminate\Support\Facades\Facade::__callStatic()
+      +26 vendor frames 
+
+  37  artisan:16
+      Illuminate\Foundation\Application::handleCommand()
+
+root@ubuntu2204:~/obita_mxh# 
 

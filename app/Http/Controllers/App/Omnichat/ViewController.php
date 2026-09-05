@@ -22,9 +22,10 @@ class ViewController extends Controller
             ->omnichatAccessibleBy($user)
             ->whereIn('id', $selectedChannelIds)
             ->pluck('id')->all();
+        $validSelectedIds = array_values(array_filter($selectedChannelIds, fn (string $id): bool => in_array($id, $socialAccountIds, true)));
         $focusedChannelId = in_array($user->current_omnichat_social_account_id, $socialAccountIds, true)
             ? $user->current_omnichat_social_account_id
-            : ($socialAccountIds[0] ?? null);
+            : ($validSelectedIds[0] ?? null);
 
         DB::transaction(function () use ($user, $socialAccountIds, $focusedChannelId): void {
             $user->omnichatViewSocialAccounts()->sync($socialAccountIds);
