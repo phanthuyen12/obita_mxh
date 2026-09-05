@@ -60,15 +60,18 @@ class FacebookController extends SocialController
             ->redirect()
             ->getTargetUrl();
 
-        $uri = Uri::of($oauthUrl)->withoutQuery('scope');
-        $extraParams = ['override_default_response_type' => '1'];
         $loginConfigId = config('services.facebook.login_config_id');
         if (! empty($loginConfigId)) {
-            $extraParams['config_id'] = (string) $loginConfigId;
-        }
-        $query = array_merge($uri->query()->all(), $extraParams);
+            $uri = Uri::of($oauthUrl)->withoutQuery('scope');
+            $query = array_merge($uri->query()->all(), [
+                'config_id' => (string) $loginConfigId,
+                'override_default_response_type' => '1',
+            ]);
 
-        return Inertia::location((string) $uri->withQuery($query));
+            return Inertia::location((string) $uri->withQuery($query));
+        }
+
+        return Inertia::location($oauthUrl);
     }
 
     public function callback(Request $request): InertiaResponse|RedirectResponse
