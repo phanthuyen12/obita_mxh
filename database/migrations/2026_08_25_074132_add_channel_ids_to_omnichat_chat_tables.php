@@ -20,11 +20,13 @@ return new class extends Migration
 
         if (Schema::hasTable('omnichat_contact_identities')) {
             Schema::table('omnichat_contact_identities', function (Blueprint $table): void {
-                if (! Schema::hasColumn('omnichat_contact_identities', 'channel_id')) {
-                    $table->foreignUuid('channel_id')->nullable()->after('social_account_id')->constrained('omnichat_channels')->cascadeOnDelete();
-                }
-                if (Schema::hasColumn('omnichat_contact_identities', 'social_account_id')) {
+                if (! Schema::hasColumn('omnichat_contact_identities', 'social_account_id')) {
+                    $table->foreignUuid('social_account_id')->nullable()->constrained()->cascadeOnDelete();
+                } else {
                     $table->foreignUuid('social_account_id')->nullable()->change();
+                }
+                if (! Schema::hasColumn('omnichat_contact_identities', 'channel_id')) {
+                    $table->foreignUuid('channel_id')->nullable()->constrained('omnichat_channels')->cascadeOnDelete();
                 }
                 if (! Schema::hasColumn('omnichat_contact_identities', 'external_id')) {
                     $table->string('external_id')->nullable();
@@ -37,11 +39,13 @@ return new class extends Migration
 
         if (Schema::hasTable('omnichat_conversations')) {
             Schema::table('omnichat_conversations', function (Blueprint $table): void {
-                if (! Schema::hasColumn('omnichat_conversations', 'channel_id')) {
-                    $table->foreignUuid('channel_id')->nullable()->after('social_account_id')->constrained('omnichat_channels')->cascadeOnDelete();
-                }
-                if (Schema::hasColumn('omnichat_conversations', 'social_account_id')) {
+                if (! Schema::hasColumn('omnichat_conversations', 'social_account_id')) {
+                    $table->foreignUuid('social_account_id')->nullable()->constrained()->cascadeOnDelete();
+                } else {
                     $table->foreignUuid('social_account_id')->nullable()->change();
+                }
+                if (! Schema::hasColumn('omnichat_conversations', 'channel_id')) {
+                    $table->foreignUuid('channel_id')->nullable()->constrained('omnichat_channels')->cascadeOnDelete();
                 }
                 if (! Schema::hasColumn('omnichat_conversations', 'external_id')) {
                     $table->string('external_id')->nullable();
@@ -57,11 +61,13 @@ return new class extends Migration
 
         if (Schema::hasTable('omnichat_messages')) {
             Schema::table('omnichat_messages', function (Blueprint $table): void {
-                if (! Schema::hasColumn('omnichat_messages', 'channel_id')) {
-                    $table->foreignUuid('channel_id')->nullable()->after('social_account_id')->constrained('omnichat_channels')->cascadeOnDelete();
-                }
-                if (Schema::hasColumn('omnichat_messages', 'social_account_id')) {
+                if (! Schema::hasColumn('omnichat_messages', 'social_account_id')) {
+                    $table->foreignUuid('social_account_id')->nullable()->constrained()->cascadeOnDelete();
+                } else {
                     $table->foreignUuid('social_account_id')->nullable()->change();
+                }
+                if (! Schema::hasColumn('omnichat_messages', 'channel_id')) {
+                    $table->foreignUuid('channel_id')->nullable()->constrained('omnichat_channels')->cascadeOnDelete();
                 }
                 if (! Schema::hasColumn('omnichat_messages', 'external_id')) {
                     $table->string('external_id')->nullable();
