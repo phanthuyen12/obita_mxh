@@ -15,7 +15,7 @@ export const Platform = {
     // Pinterest: 'pinterest',
     // Bluesky: 'bluesky',
     // Mastodon: 'mastodon',
-    // Telegram: 'telegram',
+    Telegram: 'telegram',
     // Discord: 'discord',
 } as const;
 
