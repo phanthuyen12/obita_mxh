@@ -473,7 +473,7 @@ enum Platform: string
      */
     public static function connectableOptions(): array
     {
-        $allowedNetworks = ['facebook', 'instagram', 'linkedin', 'tiktok', 'youtube', 'zalo-oa', 'lazada', 'shopee', 'wordpress'];
+        $allowedNetworks = ['facebook', 'instagram', 'linkedin', 'tiktok', 'youtube', 'telegram', 'zalo-oa', 'lazada', 'shopee', 'wordpress'];
 
         return collect(self::cases())
             ->filter(fn (self $platform): bool => $platform->isConnectable() && in_array($platform->network(), $allowedNetworks, true))
