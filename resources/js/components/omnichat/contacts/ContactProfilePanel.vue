@@ -20,7 +20,10 @@ import {
     IconMail,
     IconMessageCircle,
     IconPhone,
+    IconPlayerPause,
+    IconPlayerPlay,
     IconPlus,
+    IconRobot,
     IconTag,
     IconUser,
 } from '@tabler/icons-vue';
@@ -42,6 +45,7 @@ type Props = {
         };
         channel: { provider: string };
         labels: Array<{ id: string; name: string; color: string }>;
+        ai_paused?: boolean;
     } | null;
     availableTags: Array<{ id: string; name: string; color: string }>;
 };
@@ -136,6 +140,20 @@ const formatDateTime = (value: string | null): string => {
         timeStyle: 'short',
     }).format(new Date(value));
 };
+
+const toggleAiCare = () => {
+    if (!props.conversation) return;
+    router.post(
+        `/omnichat/conversations/${props.conversation.id}/ai-toggle`,
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                router.reload({ only: ['conversations', 'selectedConversation'] });
+            },
+        },
+    );
+};
 </script>
 
 <template>
@@ -170,6 +188,46 @@ const formatDateTime = (value: string | null): string => {
                                 : conversation.contact.status
                         }}</Badge
                     >
+                </div>
+
+                <!-- AI Bot Handover Control -->
+                <div class="space-y-2 border-b border-border p-4 bg-muted/10">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                            <IconRobot class="size-3.5 text-[#26A5E4]" />
+                            <span>Trợ Lý AI Bot</span>
+                        </div>
+                        <Badge
+                            :class="
+                                conversation.ai_paused
+                                    ? 'bg-amber-500/10 text-amber-600 border-amber-200'
+                                    : 'bg-emerald-500/10 text-emerald-600 border-emerald-200'
+                            "
+                            variant="outline"
+                            class="text-[10px] h-5"
+                        >
+                            {{ conversation.ai_paused ? 'Đã tạm dừng' : 'Đang bật' }}
+                        </Badge>
+                    </div>
+                    <p class="text-xs text-muted-foreground">
+                        {{
+                            conversation.ai_paused
+                                ? 'AI đang tạm dừng để nhân viên CSKH tư vấn trực tiếp.'
+                                : 'AI đang tự động chăm sóc và phản hồi tin nhắn khách hàng.'
+                        }}
+                    </p>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        class="w-full gap-1.5 text-xs"
+                        @click="toggleAiCare"
+                    >
+                        <component
+                            :is="conversation.ai_paused ? IconPlayerPlay : IconPlayerPause"
+                            class="size-3.5 text-primary"
+                        />
+                        {{ conversation.ai_paused ? 'Kích hoạt lại AI Bot' : 'Tạm dừng AI (Tiếp quản)' }}
+                    </Button>
                 </div>
                 <div class="space-y-4 border-b border-border p-4">
                     <h4

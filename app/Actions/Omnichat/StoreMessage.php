@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Omnichat;
 
+use App\Enums\Omnichat\ChannelProvider;
 use App\Events\OmnichatMessageCreated;
 use App\Models\OmnichatConversation;
 use App\Models\OmnichatMessage;
@@ -11,6 +12,7 @@ use App\Models\User;
 use App\Support\Omnichat\FacebookMessengerClient;
 use App\Support\Omnichat\LazadaClient;
 use App\Support\Omnichat\ShopeeClient;
+use App\Support\Omnichat\TelegramOmnichatClient;
 use App\Support\Omnichat\ZaloOaClient;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +27,7 @@ class StoreMessage
         private readonly ZaloOaClient $zaloOaClient,
         private readonly LazadaClient $lazadaClient,
         private readonly ShopeeClient $shopeeClient,
+        private readonly TelegramOmnichatClient $telegramOmnichatClient,
     ) {}
 
     public function execute(
@@ -43,6 +46,8 @@ class StoreMessage
         }
 
         if ($mode === 'reply') {
+            $conversation->loadMissing('channel');
+
             if ($conversation->socialAccount?->platform?->value === 'facebook') {
                 [$externalId, $providerPayload] = $this->sendFacebookMessage($conversation, $body, $image);
             } elseif ($conversation->socialAccount?->platform?->value === 'zalo-oa') {
@@ -51,6 +56,8 @@ class StoreMessage
                 [$externalId, $providerPayload] = $this->sendLazadaMessage($conversation, $body, $image);
             } elseif ($conversation->socialAccount?->platform?->value === 'shopee') {
                 [$externalId, $providerPayload] = $this->sendShopeeMessage($conversation, $body, $image);
+            } elseif ($conversation->channel?->provider === ChannelProvider::Telegram) {
+                [$externalId, $providerPayload] = $this->sendTelegramMessage($conversation, $body, $image);
             } elseif ($conversation->channel_id !== null && $image !== null) {
                 $diskName = config('filesystems.default');
                 $disk = Storage::disk($diskName);
@@ -223,6 +230,31 @@ class StoreMessage
             'facebook' => $result['payload'],
             'attachments' => [$result['attachment']],
         ]];
+    }
+
+    /** @return array{string, array<string, mixed>} */
+    private function sendTelegramMessage(OmnichatConversation $conversation, string $body, ?UploadedFile $image): array
+    {
+        $channel = $conversation->channel;
+        if ($channel === null || $conversation->external_id === null) {
+            throw new RuntimeException('Telegram conversation is missing its channel or chat ID.');
+        }
+
+        if ($image === null) {
+            $result = $this->telegramOmnichatClient->sendMessage($channel, $conversation->external_id, $body);
+
+            return [$result['id'], ['telegram' => $result['payload']]];
+        }
+
+        $result = $this->telegramOmnichatClient->sendPhoto($channel, $conversation->external_id, $image, $body !== '' ? $body : null);
+
+        return [
+            $result['id'],
+            [
+                'telegram' => $result['payload'],
+                'attachments' => [$result['attachment']],
+            ],
+        ];
     }
 
     private function messageType(?UploadedFile $attachment): string

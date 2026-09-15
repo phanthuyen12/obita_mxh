@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\App\Omnichat;
 
+use App\Enums\Omnichat\ChannelProvider;
 use App\Http\Controllers\Controller;
 use App\Models\OmnichatChannel;
 use App\Models\OmnichatConversation;
@@ -37,9 +38,9 @@ class InboxController extends Controller
             'is_active' => $account->is_active,
         ])->values();
 
-        $websiteChannels = OmnichatChannel::query()
+        $customChannels = OmnichatChannel::query()
             ->where('workspace_id', $workspace->id)
-            ->where('provider', 'website')
+            ->whereIn('provider', [ChannelProvider::Website, ChannelProvider::Telegram])
             ->connected()
             ->when(
                 ! $user->can('manageAccounts', $workspace),
@@ -50,11 +51,11 @@ class InboxController extends Controller
             ->orderBy('name')
             ->get();
 
-        $connectedChannels = $connectedChannels->concat($websiteChannels->map(fn (OmnichatChannel $channel): array => [
+        $connectedChannels = $connectedChannels->concat($customChannels->map(fn (OmnichatChannel $channel): array => [
             'id' => $channel->id,
-            'provider' => 'website',
+            'provider' => $channel->provider->value,
             'name' => $channel->name,
-            'avatar_url' => null,
+            'avatar_url' => $channel->avatar_url,
             'status' => $channel->status->value,
             'is_active' => true,
         ]))->values()->all();
@@ -80,12 +81,12 @@ class InboxController extends Controller
             $user->omnichatViewSocialAccounts()->sync($selectedChannelIds);
         }
 
-        $selectedChannelIds = array_values(array_unique(array_merge($selectedChannelIds, $websiteChannels->pluck('id')->all())));
-        $websiteChannelIds = $websiteChannels->pluck('id')->all();
+        $selectedChannelIds = array_values(array_unique(array_merge($selectedChannelIds, $customChannels->pluck('id')->all())));
+        $customChannelIds = $customChannels->pluck('id')->all();
 
         $focusedChannelId = in_array($user->current_omnichat_social_account_id, $availableChannelIds->all(), true)
             ? $user->current_omnichat_social_account_id
-            : ($availableChannelIds->first() ?? $websiteChannelIds[0] ?? null);
+            : ($availableChannelIds->first() ?? $customChannelIds[0] ?? null);
 
         if ($user->current_omnichat_social_account_id !== $focusedChannelId && in_array($focusedChannelId, $availableChannelIds->all(), true)) {
             $user->update(['current_omnichat_social_account_id' => $focusedChannelId]);
@@ -102,9 +103,9 @@ class InboxController extends Controller
             ->with(['contact', 'socialAccount', 'channel', 'assignedUser', 'tags'])
             ->orderByRaw('COALESCE(last_message_at, updated_at) DESC');
 
-        $conversationQuery->where(function ($query) use ($channelIds, $websiteChannelIds): void {
+        $conversationQuery->where(function ($query) use ($channelIds, $customChannelIds): void {
             $query->whereIn('social_account_id', $channelIds)
-                ->orWhereIn('channel_id', $websiteChannelIds);
+                ->orWhereIn('channel_id', $customChannelIds);
         });
 
         if ($search !== '') {
@@ -144,9 +145,9 @@ class InboxController extends Controller
             $selected = $conversationModels->firstWhere('id', $conversationId)
                 ?? OmnichatConversation::query()
                     ->where('workspace_id', $workspace->id)
-                    ->where(function ($query) use ($channelIds, $websiteChannelIds): void {
+                    ->where(function ($query) use ($channelIds, $customChannelIds): void {
                         $query->whereIn('social_account_id', $channelIds)
-                            ->orWhereIn('channel_id', $websiteChannelIds);
+                            ->orWhereIn('channel_id', $customChannelIds);
                     })
                     ->with(['contact', 'socialAccount', 'channel', 'assignedUser', 'tags'])
                     ->find($conversationId);
@@ -161,9 +162,9 @@ class InboxController extends Controller
         // Calculate unread & mentions counts for the badges
         $totalUnreadCount = OmnichatConversation::query()
             ->where('workspace_id', $workspace->id)
-            ->where(function ($query) use ($channelIds, $websiteChannelIds): void {
+            ->where(function ($query) use ($channelIds, $customChannelIds): void {
                 $query->whereIn('social_account_id', $channelIds)
-                    ->orWhereIn('channel_id', $websiteChannelIds);
+                    ->orWhereIn('channel_id', $customChannelIds);
             })
             ->where(function ($q) {
                 $q->where('meta->unread_count', '>', 0)
@@ -173,9 +174,9 @@ class InboxController extends Controller
 
         $totalMentionsCount = OmnichatConversation::query()
             ->where('workspace_id', $workspace->id)
-            ->where(function ($query) use ($channelIds, $websiteChannelIds): void {
+            ->where(function ($query) use ($channelIds, $customChannelIds): void {
                 $query->whereIn('social_account_id', $channelIds)
-                    ->orWhereIn('channel_id', $websiteChannelIds);
+                    ->orWhereIn('channel_id', $customChannelIds);
             })
             ->where('assigned_user_id', $user->id)
             ->count();
@@ -240,6 +241,7 @@ class InboxController extends Controller
             'last_message_preview' => $conversation->last_message_preview,
             'last_message_at' => $conversation->last_message_at?->toIso8601String(),
             'unread_count' => $unreadCount,
+            'ai_paused' => (bool) data_get($conversation->meta, 'ai_paused', false),
             'status' => $conversation->status,
             'assigned_user' => $conversation->assignedUser ? [
                 'id' => $conversation->assignedUser->id,
@@ -268,6 +270,7 @@ class InboxController extends Controller
             'last_message_preview' => $conversation->last_message_preview,
             'last_message_at' => $conversation->last_message_at?->toIso8601String(),
             'unread_count' => $unreadCount,
+            'ai_paused' => (bool) data_get($conversation->meta, 'ai_paused', false),
             'contact' => [
                 'id' => $conversation->contact->id,
                 'workspace_id' => $conversation->contact->workspace_id,

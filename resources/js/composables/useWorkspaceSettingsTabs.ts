@@ -52,6 +52,11 @@ export const useWorkspaceSettingsTabs = () => {
                 label: trans('settings.workspace.tabs.mcp'),
                 href: mcpRoute.url(),
             },
+            {
+                name: 'webhooks',
+                label: 'Webhooks (API)',
+                href: '/settings/workspace/webhooks',
+            },
         ];
 
         return isAdminOrAbove.value

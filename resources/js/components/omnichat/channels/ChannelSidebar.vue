@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import {
+    IconBrandTelegram,
     IconChevronDown,
     IconInbox,
     IconPlus,
     IconSettings,
     IconStar,
+    IconWebhook,
 } from '@tabler/icons-vue';
 import { computed, ref } from 'vue';
 
@@ -284,9 +286,21 @@ const enabledCount = computed(() => enabledChannelIds.value.size);
 
         <div
             v-if="canManageChannels"
-            class="shrink-0 border-t border-border p-3"
+            class="shrink-0 space-y-2 border-t border-border p-3"
         >
-            <Button as-child variant="outline" size="sm" class="w-full">
+            <Button as-child variant="outline" size="sm" class="w-full justify-start gap-2">
+                <Link href="/omnichat/telegram">
+                    <IconBrandTelegram class="size-4 text-[#26A5E4]" />
+                    Quản lý Telegram Bot
+                </Link>
+            </Button>
+            <Button as-child variant="outline" size="sm" class="w-full justify-start gap-2">
+                <Link href="/omnichat/webhooks">
+                    <IconWebhook class="size-4 text-emerald-600" />
+                    Trung tâm Webhooks Hub
+                </Link>
+            </Button>
+            <Button as-child variant="outline" size="sm" class="w-full justify-start gap-2">
                 <Link :href="accounts.url()">
                     <IconPlus class="size-4" />
                     {{ $t('omnichat.channel.manage') }}

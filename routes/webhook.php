@@ -6,6 +6,7 @@ use App\Http\Controllers\Webhooks\FacebookMessengerMediaController;
 use App\Http\Controllers\Webhooks\FacebookMessengerWebhookController;
 use App\Http\Controllers\Webhooks\LazadaWebhookController;
 use App\Http\Controllers\Webhooks\ShopeeWebhookController;
+use App\Http\Controllers\Webhooks\TelegramOmnichatWebhookController;
 use App\Http\Controllers\Webhooks\TelegramWebhookController;
 use App\Http\Controllers\Webhooks\ZaloOaMediaController;
 use App\Http\Controllers\Webhooks\ZaloOaWebhookController;
@@ -22,6 +23,7 @@ Route::group([
     Route::post('telegram/webhook', [TelegramWebhookController::class, 'handle'])->name('telegram.webhook');
 });
 
+Route::post('webhooks/telegram/{channel}', TelegramOmnichatWebhookController::class)->name('omnichat.telegram.webhook');
 Route::post('webhooks/lazada', LazadaWebhookController::class)->name('lazada.webhook');
 Route::post('webhooks/shopee', ShopeeWebhookController::class)->name('shopee.webhook');
 Route::post('webhooks/zalo-oa', ZaloOaWebhookController::class)->name('zalo-oa.webhook');

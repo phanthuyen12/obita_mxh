@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Events\OmnichatMessageCreated;
 use App\Listeners\StripeEventListener;
+use App\Listeners\Webhook\DispatchOutboundMessageWebhook;
 use App\Models\AccessToken;
 use App\Models\Account;
 use App\Models\AiUsageLog;
@@ -48,9 +50,9 @@ use App\Models\User;
 use App\Models\WordPressSite;
 use App\Models\Workspace;
 use App\Models\WorkspaceInvite;
-use App\Models\WorkspaceKpiTarget;
-use App\Models\WorkspaceLabel;
 use App\Models\WorkspaceSignature;
+use App\Models\WorkspaceWebhook;
+use App\Models\WorkspaceWebhookDelivery;
 use App\Services\Ai\AiConfiguration;
 use App\Services\Ai\DifyTextProvider;
 use App\Services\Dify\DifyWorkflowClient;
@@ -177,10 +179,15 @@ class AppServiceProvider extends ServiceProvider
             'wordPressSite' => WordPressSite::class,
             'workspace' => Workspace::class,
             'workspaceInvite' => WorkspaceInvite::class,
-            'workspaceKpiTarget' => WorkspaceKpiTarget::class,
-            'workspaceLabel' => WorkspaceLabel::class,
             'workspaceSignature' => WorkspaceSignature::class,
+            'workspaceWebhook' => WorkspaceWebhook::class,
+            'workspaceWebhookDelivery' => WorkspaceWebhookDelivery::class,
         ]);
+
+        Event::listen(
+            OmnichatMessageCreated::class,
+            DispatchOutboundMessageWebhook::class,
+        );
     }
 
     protected function configurePostHog(): void

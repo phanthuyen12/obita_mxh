@@ -13,4 +13,5 @@ enum ChannelProvider: string
     case Lazada = 'lazada';
     case Facebook = 'facebook';
     case Website = 'website';
+    case Telegram = 'telegram';
 }

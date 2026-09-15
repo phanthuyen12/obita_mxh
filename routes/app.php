@@ -16,6 +16,7 @@ use App\Http\Controllers\App\LinkPreviewController;
 use App\Http\Controllers\App\McpSettingsController;
 use App\Http\Controllers\App\NotificationController;
 use App\Http\Controllers\App\Omnichat\AnalyticsController as OmnichatAnalyticsController;
+use App\Http\Controllers\App\Omnichat\ConversationAiToggleController;
 use App\Http\Controllers\App\Omnichat\ConversationAssignmentController;
 use App\Http\Controllers\App\Omnichat\ConversationReadController;
 use App\Http\Controllers\App\Omnichat\ConversationTagController;
@@ -24,7 +25,9 @@ use App\Http\Controllers\App\Omnichat\LeadController as OmnichatLeadController;
 use App\Http\Controllers\App\Omnichat\MessageController as OmnichatMessageController;
 use App\Http\Controllers\App\Omnichat\ShopeeSyncController;
 use App\Http\Controllers\App\Omnichat\TagController as OmnichatTagController;
+use App\Http\Controllers\App\Omnichat\TelegramChannelController;
 use App\Http\Controllers\App\Omnichat\ViewController as OmnichatViewController;
+use App\Http\Controllers\App\Omnichat\WebhookHubController;
 use App\Http\Controllers\App\Omnichat\WebsiteChatController;
 use App\Http\Controllers\App\OnboardingController;
 use App\Http\Controllers\App\PostAiCreateController;
@@ -44,6 +47,7 @@ use App\Http\Controllers\App\Settings\NotificationPreferenceController;
 use App\Http\Controllers\App\Settings\ProfileController;
 use App\Http\Controllers\App\Settings\SettingsController;
 use App\Http\Controllers\App\Settings\UsageController;
+use App\Http\Controllers\App\Settings\WorkspaceWebhookController;
 use App\Http\Controllers\App\SocialAccountGroupController;
 use App\Http\Controllers\App\TeamController;
 use App\Http\Controllers\App\UnsplashController;
@@ -266,6 +270,15 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
     Route::post('omnichat/shopee/{account}/sync', ShopeeSyncController::class)->middleware('throttle:10,1')->name('app.omnichat.shopee.sync');
     Route::post('omnichat/conversations/{conversation}/read', ConversationReadController::class)->middleware('throttle:120,1')->name('app.omnichat.conversations.read');
     Route::put('omnichat/conversations/{conversation}/assignment', [ConversationAssignmentController::class, 'update'])->name('app.omnichat.conversations.assignment.update');
+    Route::post('omnichat/conversations/{conversation}/ai-toggle', [ConversationAiToggleController::class, 'toggle'])->name('app.omnichat.conversations.ai-toggle');
+    Route::get('omnichat/telegram', [TelegramChannelController::class, 'index'])->name('app.omnichat.telegram.index');
+    Route::post('omnichat/telegram', [TelegramChannelController::class, 'store'])->name('app.omnichat.telegram.store');
+    Route::put('omnichat/telegram/{channel}', [TelegramChannelController::class, 'update'])->name('app.omnichat.telegram.update');
+    Route::delete('omnichat/telegram/{channel}', [TelegramChannelController::class, 'destroy'])->name('app.omnichat.telegram.destroy');
+    Route::post('omnichat/telegram/{channel}/sync-webhook', [TelegramChannelController::class, 'syncWebhook'])->name('app.omnichat.telegram.sync-webhook');
+    Route::get('omnichat/telegram/{channel}/webhook-info', [TelegramChannelController::class, 'webhookInfo'])->name('app.omnichat.telegram.webhook-info');
+    Route::get('omnichat/webhooks', [WebhookHubController::class, 'index'])->name('app.omnichat.webhooks.index');
+    Route::post('omnichat/webhooks/{event}/retry', [WebhookHubController::class, 'retry'])->name('app.omnichat.webhooks.retry');
 
     Route::get('content-workflows', [ContentWorkflowController::class, 'index'])->name('app.content-workflows.index');
     Route::post('content-workflows', [ContentWorkflowController::class, 'store'])->name('app.content-workflows.store');
@@ -416,6 +429,15 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
     // MCP
     Route::get('settings/workspace/mcp', [McpSettingsController::class, 'index'])->name('app.mcp.index');
     Route::delete('settings/workspace/mcp/{client}', [McpSettingsController::class, 'disconnect'])->name('app.mcp.disconnect');
+
+    // Webhooks
+    Route::get('settings/workspace/webhooks', [WorkspaceWebhookController::class, 'index'])->name('app.workspace.webhooks.index');
+    Route::post('settings/workspace/webhooks', [WorkspaceWebhookController::class, 'store'])->name('app.workspace.webhooks.store');
+    Route::put('settings/workspace/webhooks/{webhook}', [WorkspaceWebhookController::class, 'update'])->name('app.workspace.webhooks.update');
+    Route::delete('settings/workspace/webhooks/{webhook}', [WorkspaceWebhookController::class, 'destroy'])->name('app.workspace.webhooks.destroy');
+    Route::post('settings/workspace/webhooks/{webhook}/test', [WorkspaceWebhookController::class, 'test'])->name('app.workspace.webhooks.test');
+    Route::get('settings/workspace/webhooks/{webhook}/deliveries', [WorkspaceWebhookController::class, 'deliveries'])->name('app.workspace.webhooks.deliveries');
+    Route::post('settings/workspace/webhooks/deliveries/{delivery}/resend', [WorkspaceWebhookController::class, 'resend'])->name('app.workspace.webhooks.deliveries.resend');
 
     // Account Settings
     Route::get('settings/account', [AccountController::class, 'edit'])->name('app.account.edit');

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Listeners\Omnichat;
 
+use App\Enums\Omnichat\ChannelProvider;
 use App\Events\OmnichatMessageCreated;
+use App\Models\OmnichatChannel;
 use App\Models\OmnichatConversation;
 use App\Models\OmnichatMessage;
 use App\Models\SocialAccount;
@@ -12,6 +14,7 @@ use App\Services\Dify\DifyChatClient;
 use App\Support\Omnichat\FacebookMessengerClient;
 use App\Support\Omnichat\LazadaClient;
 use App\Support\Omnichat\ShopeeClient;
+use App\Support\Omnichat\TelegramOmnichatClient;
 use App\Support\Omnichat\ZaloOaClient;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -27,6 +30,7 @@ class HandlePageAiCareAutoReply
         private readonly ZaloOaClient $zaloOaClient,
         private readonly LazadaClient $lazadaClient,
         private readonly ShopeeClient $shopeeClient,
+        private readonly TelegramOmnichatClient $telegramOmnichatClient,
     ) {}
 
     public function handle(OmnichatMessageCreated $event): void
@@ -63,30 +67,55 @@ class HandlePageAiCareAutoReply
             return;
         }
 
-        $message->loadMissing(['conversation.socialAccount', 'senderContact']);
+        $message->loadMissing(['conversation.socialAccount', 'conversation.channel', 'senderContact']);
         $conversation = $message->conversation;
         $account = $conversation?->socialAccount;
+        $channel = $conversation?->channel;
 
-        if ($conversation === null || $account === null) {
-            Log::warning('[AI-Care] Missing conversation or social account for message', ['message_id' => $message->id]);
+        if ($conversation === null || ($account === null && $channel === null)) {
+            Log::warning('[AI-Care] Missing conversation, social account or channel for message', ['message_id' => $message->id]);
 
             return;
         }
 
-        $aiCare = $account->meta['ai_care'] ?? [];
+        // Check if human handover is currently active
+        if ((bool) data_get($conversation->meta, 'ai_paused')) {
+            Log::info('[AI-Care] Conversation AI is paused for human agent takeover', [
+                'conversation_id' => $conversation->id,
+            ]);
+
+            return;
+        }
+
+        $aiCare = $account !== null
+            ? ($account->meta['ai_care'] ?? [])
+            : ($channel->settings['ai_care'] ?? []);
+
         $isEnabled = filter_var($aiCare['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
-        Log::info('[AI-Care] Account AI Care status', [
-            'account_id' => $account->id,
-            'account_name' => $account->display_name ?: $account->username,
+        Log::info('[AI-Care] AI Care status', [
+            'account_id' => $account?->id,
+            'channel_id' => $channel?->id,
             'enabled' => $isEnabled,
-            'raw_enabled' => $aiCare['enabled'] ?? null,
             'provider' => $aiCare['provider'] ?? 'dify',
             'has_dify_key' => ! empty($aiCare['dify_api_key']),
         ]);
 
         if (! $isEnabled) {
-            Log::info('[AI-Care] AI Care is disabled for this page, aborting');
+            Log::info('[AI-Care] AI Care is disabled, aborting');
+
+            return;
+        }
+
+        // Check for human handover trigger keywords
+        $bodyLower = mb_strtolower(trim((string) $message->body), 'UTF-8');
+        if ($bodyLower === '/human' || str_contains($bodyLower, 'gặp nhân viên') || str_contains($bodyLower, 'gặp tư vấn viên') || str_contains($bodyLower, 'cần tư vấn viên')) {
+            $meta = $conversation->meta ?? [];
+            $meta['ai_paused'] = true;
+            $conversation->update(['meta' => $meta]);
+
+            $handoverMsg = $aiCare['handover_message'] ?? 'Dạ em đã chuyển thông tin đến nhân viên tư vấn. Bạn vui lòng đợi trong giây lát, nhân viên sẽ hỗ trợ bạn ngay ạ!';
+            $this->sendOutboundReply($conversation, $account, $channel, $handoverMsg);
 
             return;
         }
@@ -102,7 +131,7 @@ class HandlePageAiCareAutoReply
                 if ($lastMessage && $lastMessage->body === $offHoursMsg) {
                     return;
                 }
-                $this->sendOutboundReply($conversation, $account, $offHoursMsg);
+                $this->sendOutboundReply($conversation, $account, $channel, $offHoursMsg);
             }
 
             return;
@@ -132,7 +161,7 @@ class HandlePageAiCareAutoReply
             'reply' => $replyText,
         ]);
 
-        $this->sendOutboundReply($conversation, $account, $replyText);
+        $this->sendOutboundReply($conversation, $account, $channel, $replyText);
     }
 
     private function isWithinOperatingHours(array $aiCare): bool
@@ -245,53 +274,67 @@ class HandlePageAiCareAutoReply
         return null;
     }
 
-    private function sendOutboundReply(OmnichatConversation $conversation, SocialAccount $account, string $body): void
-    {
+    private function sendOutboundReply(
+        OmnichatConversation $conversation,
+        ?SocialAccount $account,
+        ?OmnichatChannel $channel,
+        string $body,
+    ): void {
         $externalId = null;
         $providerPayload = [];
 
         try {
-            $platform = $account->platform?->value ?? 'facebook';
+            if ($account !== null) {
+                $platform = $account->platform?->value ?? 'facebook';
 
-            Log::info('[AI-Care] Sending outbound reply to social platform', [
-                'platform' => $platform,
-                'external_id' => $conversation->external_id,
-            ]);
+                Log::info('[AI-Care] Sending outbound reply to social platform', [
+                    'platform' => $platform,
+                    'external_id' => $conversation->external_id,
+                ]);
 
-            if ($platform === 'facebook' && $conversation->external_id) {
-                $res = $this->facebookMessengerClient->sendText($account, $conversation->external_id, $body);
-                $externalId = $res['id'] ?? null;
-                $providerPayload = ['facebook' => $res['payload'] ?? []];
-            } elseif ($platform === 'zalo-oa' && $conversation->external_id) {
-                $res = $this->zaloOaClient->sendText($account, $conversation->external_id, $body);
-                $externalId = $res['id'] ?? null;
-                $providerPayload = ['zalo' => $res['payload'] ?? []];
-            } elseif ($platform === 'lazada' && $conversation->external_id) {
-                $res = $this->lazadaClient->sendText($account, $conversation->external_id, $body);
-                $externalId = (string) data_get($res, 'data.message_id', data_get($res, 'message_id'));
-                $providerPayload = ['lazada' => $res];
-            } elseif ($platform === 'shopee' && $conversation->external_id) {
-                $recipientId = (string) data_get($conversation->meta, 'shopee_recipient_id');
-                if ($recipientId !== '') {
-                    $res = $this->shopeeClient->sendText($account, $recipientId, $body, $conversation->external_id, (int) data_get($conversation->meta, 'business_type', 0));
-                    $externalId = (string) data_get($res, 'response.message_id');
-                    $providerPayload = ['shopee' => $res];
+                if ($platform === 'facebook' && $conversation->external_id) {
+                    $res = $this->facebookMessengerClient->sendText($account, $conversation->external_id, $body);
+                    $externalId = $res['id'] ?? null;
+                    $providerPayload = ['facebook' => $res['payload'] ?? []];
+                } elseif ($platform === 'zalo-oa' && $conversation->external_id) {
+                    $res = $this->zaloOaClient->sendText($account, $conversation->external_id, $body);
+                    $externalId = $res['id'] ?? null;
+                    $providerPayload = ['zalo' => $res['payload'] ?? []];
+                } elseif ($platform === 'lazada' && $conversation->external_id) {
+                    $res = $this->lazadaClient->sendText($account, $conversation->external_id, $body);
+                    $externalId = (string) data_get($res, 'data.message_id', data_get($res, 'message_id'));
+                    $providerPayload = ['lazada' => $res];
+                } elseif ($platform === 'shopee' && $conversation->external_id) {
+                    $recipientId = (string) data_get($conversation->meta, 'shopee_recipient_id');
+                    if ($recipientId !== '') {
+                        $res = $this->shopeeClient->sendText($account, $recipientId, $body, $conversation->external_id, (int) data_get($conversation->meta, 'business_type', 0));
+                        $externalId = (string) data_get($res, 'response.message_id');
+                        $providerPayload = ['shopee' => $res];
+                    }
+                }
+            } elseif ($channel !== null && $channel->provider === ChannelProvider::Telegram) {
+                if ($conversation->external_id) {
+                    $res = $this->telegramOmnichatClient->sendMessage($channel, $conversation->external_id, $body);
+                    $externalId = $res['id'] ?? null;
+                    $providerPayload = ['telegram' => $res['payload'] ?? []];
                 }
             }
         } catch (\Throwable $e) {
-            Log::error('[AI-Care] Failed to dispatch AI reply to social platform', [
+            Log::error('[AI-Care] Failed to dispatch AI reply', [
                 'conversation_id' => $conversation->id,
-                'account_id' => $account->id,
+                'account_id' => $account?->id,
+                'channel_id' => $channel?->id,
                 'error' => $e->getMessage(),
             ]);
         }
 
         // Store Outbound message
-        DB::transaction(function () use ($conversation, $account, $body, $externalId, $providerPayload) {
+        DB::transaction(function () use ($conversation, $account, $channel, $body, $externalId, $providerPayload) {
             $sentAt = now();
             $outbound = OmnichatMessage::query()->create([
                 'workspace_id' => $conversation->workspace_id,
-                'social_account_id' => $account->id,
+                'social_account_id' => $account?->id,
+                'channel_id' => $channel?->id,
                 'conversation_id' => $conversation->id,
                 'client_id' => (string) Str::uuid(),
                 'sender_user_id' => null, // AI Bot
