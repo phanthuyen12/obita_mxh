@@ -12,6 +12,7 @@ const platformCapabilities: Record<string, PlatformCapability[]> = {
     wordpress: ['publish'],
     linkedin: ['publish'],
     'linkedin-page': ['publish'],
+    telegram: ['omnichat', 'publish'],
 };
 
 export const getPlatformCapabilities = (

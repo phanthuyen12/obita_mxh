@@ -42,6 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->preventRequestForgery(except: [
             'stripe/*',
             'telegram/webhook',
+            'webhooks/telegram/*',
             'facebook/messenger/webhook',
             'webhooks/zalo-oa',
             'webhooks/lazada',
