@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\App\Omnichat;
 
+use App\Enums\Omnichat\ChannelProvider;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\Omnichat\UpdateLeadRequest;
 use App\Models\OmnichatContact;
@@ -30,7 +31,7 @@ class LeadController extends Controller
             ->where('is_lead', true)
             ->whereNotNull('phone')
             ->with(['conversations' => fn ($query) => $query
-                ->with(['socialAccount', 'tags'])
+                ->with(['socialAccount', 'channel', 'tags'])
                 ->latest('last_message_at')])
             ->latest('phone_detected_at');
 
@@ -41,10 +42,20 @@ class LeadController extends Controller
         }));
 
         $query->when($stage !== '', fn ($query) => $query->where('lead_stage', $stage));
-        $query->when($provider !== '', fn ($query) => $query->whereHas(
-            'conversations.socialAccount',
-            fn ($query) => $query->where('platform', $provider),
-        ));
+
+        $query->when($provider !== '', fn ($query) => $query->where(function ($query) use ($provider): void {
+            // Social-account-based conversations (Facebook, Zalo, etc.)
+            $query->whereHas(
+                'conversations.socialAccount',
+                fn ($q) => $q->where('platform', $provider),
+            )
+            // Channel-based conversations (Telegram, Website)
+                ->orWhereHas(
+                    'conversations.channel',
+                    fn ($q) => $q->where('provider', $provider),
+                );
+        }));
+
         $query->when($tagId !== '', fn ($query) => $query->whereHas(
             'conversations.tags',
             fn ($query) => $query->whereKey($tagId),
@@ -52,6 +63,10 @@ class LeadController extends Controller
 
         $leads = $query->paginate(20)->withQueryString()->through(function (OmnichatContact $contact): array {
             $latestConversation = $contact->conversations->first();
+
+            // Resolve provider from socialAccount OR channel
+            $resolvedProvider = $latestConversation?->socialAccount?->platform?->network()
+                ?? $latestConversation?->channel?->provider?->value;
 
             return [
                 'id' => $contact->id,
@@ -64,7 +79,9 @@ class LeadController extends Controller
                 'last_seen_at' => $contact->last_seen_at?->toIso8601String(),
                 'conversation_count' => $contact->conversations->count(),
                 'latest_conversation_id' => $latestConversation?->id,
-                'provider' => $latestConversation?->socialAccount?->platform?->network(),
+                'last_message_at' => $latestConversation?->last_message_at?->toIso8601String(),
+                'last_message_preview' => $latestConversation?->last_message_preview,
+                'provider' => $resolvedProvider,
                 'tags' => $contact->conversations
                     ->flatMap->tags
                     ->unique('id')
@@ -76,7 +93,8 @@ class LeadController extends Controller
             ];
         });
 
-        $providers = $workspace->socialAccounts()
+        // Collect providers from both socialAccounts and omnichat channels
+        $socialAccountProviders = $workspace->socialAccounts()
             ->whereHas('omnichatConversations', fn ($query) => $query->whereHas(
                 'contact',
                 fn ($query) => $query->where('is_lead', true),
@@ -85,7 +103,25 @@ class LeadController extends Controller
             ->map(fn ($account): array => [
                 'value' => $account->platform->value,
                 'label' => $account->platform->label(),
-            ])
+            ]);
+
+        $channelProviders = $workspace->omnichatChannels()
+            ->whereHas('conversations', fn ($query) => $query->whereHas(
+                'contact',
+                fn ($query) => $query->where('is_lead', true),
+            ))
+            ->get()
+            ->map(fn ($channel): array => [
+                'value' => $channel->provider->value,
+                'label' => match ($channel->provider) {
+                    ChannelProvider::Telegram => 'Telegram',
+                    ChannelProvider::Website => 'Website Live Chat',
+                    default => ucfirst($channel->provider->value),
+                },
+            ]);
+
+        $providers = $socialAccountProviders
+            ->merge($channelProviders)
             ->unique('value')
             ->values();
 

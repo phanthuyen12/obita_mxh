@@ -37,6 +37,9 @@ type Lead = {
     email: string | null;
     lead_stage: string;
     phone_detected_at: string | null;
+    last_seen_at: string | null;
+    last_message_at: string | null;
+    last_message_preview: string | null;
     conversation_count: number;
     latest_conversation_id: string | null;
     provider: string | null;
@@ -114,6 +117,34 @@ const formatDate = (value: string | null): string =>
               timeStyle: 'short',
           }).format(new Date(value))
         : '—';
+
+const formatRelative = (value: string | null): string => {
+    if (!value) return '—';
+    const diff = Date.now() - new Date(value).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Vừa xong';
+    if (mins < 60) return `${mins} phút trước`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours} giờ trước`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days} ngày trước`;
+    return formatDate(value);
+};
+
+const providerLabel = (provider: string | null): string => {
+    const map: Record<string, string> = {
+        facebook: 'Facebook',
+        instagram: 'Instagram',
+        telegram: 'Telegram',
+        zalo: 'Zalo',
+        tiktok: 'TikTok',
+        shopee: 'Shopee',
+        lazada: 'Lazada',
+        website: 'Website',
+        threads: 'Threads',
+    };
+    return provider ? (map[provider] ?? provider) : '—';
+};
 
 const stages = [
     { value: 'new', label: 'Mới' },
@@ -283,7 +314,7 @@ const stages = [
                     <div
                         v-for="lead in leads.data"
                         :key="lead.id"
-                        class="grid gap-4 p-4 hover:bg-muted/30 md:grid-cols-[minmax(220px,1.4fr)_minmax(170px,1fr)_160px_minmax(180px,1fr)_110px] md:items-center"
+                        class="grid gap-4 p-4 hover:bg-muted/30 md:grid-cols-[minmax(220px,1.4fr)_minmax(180px,1fr)_160px_minmax(180px,1fr)_130px] md:items-center"
                     >
                         <div class="flex min-w-0 items-center gap-3">
                             <Avatar
@@ -303,18 +334,33 @@ const stages = [
                                 </p>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2 text-sm">
-                            <ProviderIcon
-                                v-if="lead.provider"
-                                :provider="lead.provider"
-                                class="size-4"
-                            />
-                            <span class="capitalize">{{
-                                lead.provider || '—'
-                            }}</span>
-                            <span class="text-muted-foreground"
-                                >· {{ lead.conversation_count }} chat</span
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2 text-sm">
+                                <ProviderIcon
+                                    v-if="lead.provider"
+                                    :provider="lead.provider"
+                                    class="size-4 shrink-0"
+                                />
+                                <span class="font-medium">{{
+                                    providerLabel(lead.provider)
+                                }}</span>
+                                <span class="text-muted-foreground"
+                                    >· {{ lead.conversation_count }} chat</span
+                                >
+                            </div>
+                            <p
+                                v-if="lead.last_message_preview"
+                                class="mt-1 truncate text-xs text-muted-foreground"
+                                :title="lead.last_message_preview"
                             >
+                                {{ lead.last_message_preview }}
+                            </p>
+                            <p
+                                v-if="lead.last_message_at"
+                                class="mt-0.5 text-xs text-muted-foreground/60"
+                            >
+                                {{ formatRelative(lead.last_message_at) }}
+                            </p>
                         </div>
                         <select
                             :value="lead.lead_stage"
