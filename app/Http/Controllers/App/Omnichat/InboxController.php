@@ -13,6 +13,7 @@ use App\Models\OmnichatTag;
 use App\Models\SocialAccount;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -204,11 +205,43 @@ class InboxController extends Controller
                 'channels' => array_map(fn (array $channel): array => [
                     'id' => $channel['id'], 'provider' => $channel['provider'], 'name' => $channel['name'],
                 ], $connectedChannels),
-                'assignees' => $workspace->members()->orderBy('name')->get(['users.id', 'users.name', 'users.account_id', 'users.current_workspace_id'])
-                    ->filter(fn (User $member): bool => $accounts->contains(fn (SocialAccount $account): bool => $account->userHasAccess($member, 'can_view_omnichat')))
-                    ->map(fn (User $member): array => ['id' => $member->id, 'name' => $member->name, 'avatar_url' => $member->photo_url])
-                    ->prepend(['id' => $user->id, 'name' => $user->name, 'avatar_url' => $user->photo_url])
-                    ->unique('id')->values()->all(),
+                'assignees' => (function () use ($workspace, $user, $accounts, $customChannels): array {
+                    $allMembers = $workspace->members()->orderBy('name')->get(['users.id', 'users.name', 'users.account_id', 'users.current_workspace_id']);
+
+                    // User IDs that have access via social accounts (Facebook, Zalo, etc.)
+                    $socialAccountUserIds = $accounts->flatMap(fn (SocialAccount $account): Collection => $account->sharedUsers->pluck('id'))
+                        ->merge($accounts->filter(fn ($a) => $a->sharedUsers->isEmpty())->pluck('id')) // owner-accounts with no explicit sharing
+                        ->unique();
+
+                    // User IDs that have access via custom channels (Telegram, Website)
+                    $customChannels->load('sharedUsers');
+                    $channelUserIds = $customChannels->flatMap(fn (OmnichatChannel $ch): Collection => $ch->sharedUsers->pluck('id'))->unique();
+
+                    // Admin/owner can always assign anyone in workspace
+                    $canManage = $user->can('manageAccounts', $workspace);
+
+                    return $allMembers
+                        ->filter(function (User $member) use ($canManage, $channelUserIds, $accounts): bool {
+                            if ($canManage) {
+                                return true;
+                            }
+                            // Include if they have access via any social account
+                            if ($accounts->isNotEmpty() && $accounts->contains(fn (SocialAccount $account): bool => $account->userHasAccess($member, 'can_view_omnichat'))) {
+                                return true;
+                            }
+                            // Include if they have access via any custom channel (Telegram/Website)
+                            if ($channelUserIds->contains($member->id)) {
+                                return true;
+                            }
+
+                            return false;
+                        })
+                        ->map(fn (User $member): array => ['id' => $member->id, 'name' => $member->name, 'avatar_url' => $member->photo_url])
+                        ->prepend(['id' => $user->id, 'name' => $user->name, 'avatar_url' => $user->photo_url])
+                        ->unique('id')
+                        ->values()
+                        ->all();
+                })(),
                 'labels' => OmnichatTag::query()
                     ->where('workspace_id', $workspace->id)
                     ->orderBy('name')

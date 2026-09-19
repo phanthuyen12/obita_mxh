@@ -45,6 +45,7 @@ interface PageItem {
     platform: string;
     avatar_url: string | null;
     ai_care: PageAiCare;
+    type?: 'social_account' | 'channel';
 }
 
 const props = defineProps<{
@@ -194,8 +195,15 @@ const testDifyConnection = async () => {
 
 const saveConfig = () => {
     isSaving.value = true;
+
+    // Use correct endpoint: channels/ for OmnichatChannel, pages/ for SocialAccount
+    const endpoint =
+        props.page.type === 'channel'
+            ? `/settings/account/ai/channels/${props.page.id}`
+            : `/settings/account/ai/pages/${props.page.id}`;
+
     router.put(
-        `/settings/account/ai/pages/${props.page.id}`,
+        endpoint,
         form.value as any,
         {
             preserveScroll: true,

@@ -455,6 +455,7 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
     Route::put('settings/account/ai', [AiSettingsController::class, 'update'])->name('app.ai-settings.update');
     Route::post('settings/account/ai/test-dify', [AiSettingsController::class, 'testDify'])->name('app.ai-settings.test-dify');
     Route::put('settings/account/ai/pages/{account}', [AiSettingsController::class, 'updatePageAi'])->name('app.ai-settings.page.update');
+    Route::put('settings/account/ai/channels/{channel}', [AiSettingsController::class, 'updateChannelAi'])->name('app.ai-settings.channel.update');
     Route::put('settings/account/ai/pages', [AiSettingsController::class, 'updateBatchPageAi'])->name('app.ai-settings.pages.batch-update');
     Route::get('settings/account/usage', [UsageController::class, 'index'])->name('app.usage.index');
 

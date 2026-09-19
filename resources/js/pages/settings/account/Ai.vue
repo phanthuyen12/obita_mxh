@@ -59,6 +59,7 @@ interface PageItem {
     platform: string;
     avatar_url: string | null;
     ai_care: PageAiCare;
+    type?: 'social_account' | 'channel';
 }
 
 interface AiSettings {
@@ -88,7 +89,13 @@ const props = defineProps<{
     settings: AiSettings;
     options: AiOptions;
     pages?: PageItem[];
+    telegramChannels?: PageItem[];
 }>();
+
+const allChannels = computed(() => [
+    ...(props.pages ?? []),
+    ...(props.telegramChannels ?? []),
+]);
 
 const currentSection = ref<'pages' | 'global'>('pages');
 
@@ -214,13 +221,13 @@ const handleApplyToAll = (careData: PageAiCare) => {
                         @click="currentSection = 'pages'"
                     >
                         <IconRobot class="size-4" />
-                        AI Chăm sóc Fanpage (Dify Chatbot)
+                        AI Chăm sóc Kênh (Dify Chatbot)
                         <Badge
-                            v-if="pages && pages.length"
+                            v-if="allChannels.length"
                             variant="secondary"
                             class="ml-1 text-xs"
                         >
-                            {{ pages.length }}
+                            {{ allChannels.length }}
                         </Badge>
                     </button>
 
@@ -318,7 +325,7 @@ const handleApplyToAll = (careData: PageAiCare) => {
 
                 <!-- Empty State -->
                 <div
-                    v-if="!pages || pages.length === 0"
+                    v-if="allChannels.length === 0"
                     class="rounded-2xl border-2 border-foreground bg-card p-12 text-center"
                 >
                     <IconRobot
@@ -328,15 +335,15 @@ const handleApplyToAll = (careData: PageAiCare) => {
                         Chưa có Fanpage / Kênh nào được kết nối
                     </h3>
                     <p class="mt-1 text-xs text-muted-foreground">
-                        Hãy kết nối các trang mạng xã hội của bạn ở mục Kênh Kết
-                        Nối để thiết lập AI chăm sóc.
+                        Hãy kết nối các trang mạng xã hội hoặc Telegram Bot ở
+                        mục Kênh Kết Nối để thiết lập AI chăm sóc.
                     </p>
                 </div>
 
-                <!-- Page Cards List -->
+                <!-- Page & Channel Cards List -->
                 <div v-else class="space-y-5">
                     <PageAiCareCard
-                        v-for="page in pages"
+                        v-for="page in allChannels"
                         :key="page.id"
                         :page="page"
                         @apply-to-all="handleApplyToAll"

@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\App\Settings;
 
+use App\Enums\Omnichat\ChannelProvider;
 use App\Http\Controllers\App\Controller;
 use App\Http\Requests\App\Settings\UpdateAiSettingsRequest;
 use App\Http\Requests\App\Settings\UpdatePageAiCareRequest;
+use App\Models\OmnichatChannel;
 use App\Models\SocialAccount;
 use App\Services\Ai\AiConfiguration;
 use App\Services\Dify\DifyChatClient;
@@ -63,12 +65,33 @@ class AiSettingsController extends Controller
                     'platform' => $account->platform->value,
                     'avatar_url' => $account->avatar_url,
                     'ai_care' => $aiCare,
+                    'type' => 'social_account',
                 ];
-            }) : [];
+            }) : collect();
+
+        // Telegram Bot channels — same AI Care config shape stored in channel settings
+        $telegramChannels = $workspace ? $workspace->omnichatChannels()
+            ->whereIn('provider', [ChannelProvider::Telegram])
+            ->get()
+            ->map(function (OmnichatChannel $channel) use ($defaultAiCare) {
+                $savedAiCare = is_array($channel->settings['ai_care'] ?? null) ? $channel->settings['ai_care'] : [];
+                $aiCare = array_merge($defaultAiCare, $savedAiCare);
+
+                return [
+                    'id' => $channel->id,
+                    'display_name' => $channel->name,
+                    'username' => data_get($channel->settings, 'bot_username'),
+                    'platform' => 'telegram',
+                    'avatar_url' => $channel->avatar_url,
+                    'ai_care' => $aiCare,
+                    'type' => 'channel',
+                ];
+            }) : collect();
 
         return Inertia::render('settings/account/Ai', [
             'settings' => $configuration->formData(),
-            'pages' => $pages,
+            'pages' => $pages->values(),
+            'telegramChannels' => $telegramChannels->values(),
             'options' => [
                 'contentCloneProviders' => AiConfiguration::contentCloneProviders(),
                 'textProviders' => AiConfiguration::textProviders(),
@@ -119,6 +142,25 @@ class AiSettingsController extends Controller
         $account->forceFill(['meta' => $meta])->save();
 
         session()->flash('flash.banner', "Đã lưu cấu hình AI chăm sóc cho page {$account->display_name}.");
+        session()->flash('flash.bannerStyle', 'success');
+
+        return back();
+    }
+
+    public function updateChannelAi(UpdatePageAiCareRequest $request, OmnichatChannel $channel): RedirectResponse
+    {
+        $workspace = $request->user()->currentWorkspace;
+        if (! $workspace || $channel->workspace_id !== $workspace->id) {
+            abort(SymfonyResponse::HTTP_FORBIDDEN);
+        }
+
+        $validated = $request->validated();
+        $settings = is_array($channel->settings) ? $channel->settings : [];
+        $settings['ai_care'] = $validated;
+
+        $channel->forceFill(['settings' => $settings])->save();
+
+        session()->flash('flash.banner', "Đã lưu cấu hình AI chăm sóc cho Telegram Bot {$channel->name}.");
         session()->flash('flash.bannerStyle', 'success');
 
         return back();
