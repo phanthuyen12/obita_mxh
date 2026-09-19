@@ -46,6 +46,7 @@ type Props = {
         channel: { provider: string };
         labels: Array<{ id: string; name: string; color: string }>;
         ai_paused?: boolean;
+        has_ai_care?: boolean;
     } | null;
     availableTags: Array<{ id: string; name: string; color: string }>;
 };
@@ -190,8 +191,11 @@ const toggleAiCare = () => {
                     >
                 </div>
 
-                <!-- AI Bot Handover Control -->
-                <div class="space-y-2 border-b border-border p-4 bg-muted/10">
+                <!-- AI Bot Handover Control — only shown when channel has AI Care enabled -->
+                <div
+                    v-if="conversation.has_ai_care"
+                    class="space-y-2 border-b border-border p-4 bg-muted/10"
+                >
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                             <IconRobot class="size-3.5 text-[#26A5E4]" />

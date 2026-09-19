@@ -262,6 +262,10 @@ class InboxController extends Controller
         $hasUnreadMessages = $conversation->messages()->where('direction', 'inbound')->whereNull('read_at')->exists();
         $unreadCount = max((int) data_get($conversation->meta, 'unread_count', 0), $hasUnreadMessages ? 1 : 0);
 
+        $hasAiCare = $conversation->socialAccount
+            ? filter_var(data_get($conversation->socialAccount->meta, 'ai_care.enabled', false), FILTER_VALIDATE_BOOLEAN)
+            : filter_var(data_get($conversation->channel?->settings ?? [], 'ai_care.enabled', false), FILTER_VALIDATE_BOOLEAN);
+
         return [
             'id' => $conversation->id,
             'contact' => [
@@ -275,6 +279,7 @@ class InboxController extends Controller
             'last_message_at' => $conversation->last_message_at?->toIso8601String(),
             'unread_count' => $unreadCount,
             'ai_paused' => (bool) data_get($conversation->meta, 'ai_paused', false),
+            'has_ai_care' => $hasAiCare,
             'status' => $conversation->status,
             'assigned_user' => $conversation->assignedUser ? [
                 'id' => $conversation->assignedUser->id,
@@ -290,6 +295,10 @@ class InboxController extends Controller
         $hasUnreadMessages = $conversation->messages()->where('direction', 'inbound')->whereNull('read_at')->exists();
         $unreadCount = max((int) data_get($conversation->meta, 'unread_count', 0), $hasUnreadMessages ? 1 : 0);
 
+        $hasAiCare = $conversation->socialAccount
+            ? filter_var(data_get($conversation->socialAccount->meta, 'ai_care.enabled', false), FILTER_VALIDATE_BOOLEAN)
+            : filter_var(data_get($conversation->channel?->settings ?? [], 'ai_care.enabled', false), FILTER_VALIDATE_BOOLEAN);
+
         return [
             'id' => $conversation->id,
             'workspace_id' => $conversation->workspace_id,
@@ -304,6 +313,7 @@ class InboxController extends Controller
             'last_message_at' => $conversation->last_message_at?->toIso8601String(),
             'unread_count' => $unreadCount,
             'ai_paused' => (bool) data_get($conversation->meta, 'ai_paused', false),
+            'has_ai_care' => $hasAiCare,
             'contact' => [
                 'id' => $conversation->contact->id,
                 'workspace_id' => $conversation->contact->workspace_id,
