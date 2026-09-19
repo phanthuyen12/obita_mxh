@@ -6,9 +6,11 @@ namespace App\Http\Controllers\App;
 
 use App\Actions\AccessToken\RevokeWorkspaceApiKeys;
 use App\Actions\Invite\CreateInvite;
+use App\Actions\Invite\CreateMemberAccount;
 use App\Actions\Invite\DeleteInvite;
 use App\Actions\Invite\RemoveMember;
 use App\Enums\UserWorkspace\Role as WorkspaceRole;
+use App\Http\Requests\App\Invite\CreateMemberAccountRequest;
 use App\Http\Requests\App\Invite\StoreWorkspaceInviteRequest;
 use App\Models\Invite;
 use App\Models\User;
@@ -89,6 +91,24 @@ class WorkspaceInviteController extends Controller
         CreateInvite::execute($workspace, $request->validated());
 
         session()->flash('flash.banner', __('settings.members.flash.invite_sent'));
+        session()->flash('flash.bannerStyle', 'success');
+
+        return back();
+    }
+
+    public function createAccount(CreateMemberAccountRequest $request): RedirectResponse
+    {
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('app.workspaces.create');
+        }
+
+        $this->authorize('inviteMember', $workspace);
+
+        CreateMemberAccount::execute($workspace, $request->validated());
+
+        session()->flash('flash.banner', 'Tài khoản thành viên đã được tạo thành công.');
         session()->flash('flash.bannerStyle', 'success');
 
         return back();
