@@ -113,7 +113,11 @@ class WorkspacePolicy
 
     public function viewAnalytics(User $user, Workspace $workspace): bool
     {
-        return $this->isOwnerOrWorkspaceAdmin($user, $workspace);
+        if ($this->isOwnerOrWorkspaceAdmin($user, $workspace)) {
+            return true;
+        }
+
+        return $this->hasFeaturePermission($user, $workspace, 'can_omnichat');
     }
 
     public function inviteMember(User $user, Workspace $workspace): bool
