@@ -56,6 +56,19 @@ class AiImageClient
         $prompt = $this->buildPrompt($keywords, $style, $language, $brandColor, $backgroundColor, $textColor, $brandDescription, $customPrompt, filled($logoPath));
 
         try {
+            // Ưu tiên 1: hhtechapi.com (nếu có key cấu hình)
+            if (filled(config('services.hhtechapi.key'))) {
+                $size = $this->resolveSize($orientation, $customAspectRatio);
+                $result = $this->generateWithHhtechapi($prompt, $size, $quality, $timeout);
+
+                if ($result !== null) {
+                    return $result;
+                }
+
+                Log::info('AiImageClient: hhtechapi failed, falling back to next provider.');
+            }
+
+            // Ưu tiên 2: Dify
             if (config('ai.default_for_images') === 'dify') {
                 return $this->generateWithDify($prompt, $orientation, $quality, $logoPath, $customResolution, $customAspectRatio, $timeout);
             }
@@ -136,6 +149,76 @@ class AiImageClient
 
             return null;
         }
+    }
+
+    /**
+     * Map orientation + aspect_ratio → OpenAI-compatible size string.
+     */
+    private function resolveSize(string $orientation, ?string $customAspectRatio): string
+    {
+        $ar = trim((string) $customAspectRatio);
+
+        return match (true) {
+            $ar === '1:1' => '1024x1024',
+            in_array($ar, ['9:16', '4:5'], true) => '1024x1792',
+            in_array($ar, ['16:9', '4:3'], true) => '1792x1024',
+            $orientation === 'landscape' => '1792x1024',
+            $orientation === 'portrait' => '1024x1792',
+            default => '1024x1024',
+        };
+    }
+
+    /**
+     * Generate an image via hhtechapi.com (OpenAI-compatible endpoint).
+     *
+     * @return array{bytes: string, provider: string, model: string}|null
+     */
+    private function generateWithHhtechapi(
+        string $prompt,
+        string $size = '1024x1024',
+        string $quality = 'medium',
+        int $timeout = 180,
+    ): ?array {
+        $key = config('services.hhtechapi.key');
+
+        if (blank($key)) {
+            return null;
+        }
+
+        try {
+            $response = Http::withToken($key)
+                ->baseUrl(config('services.hhtechapi.url', 'https://hhtechapi.com/v1'))
+                ->timeout($timeout)
+                ->post('/images/generations', [
+                    'model' => config('services.hhtechapi.model', 'gpt-image-2'),
+                    'prompt' => $prompt,
+                    'size' => $size,
+                    'quality' => $quality,
+                    'n' => 1,
+                    'response_format' => 'b64_json',
+                ]);
+
+            if ($response->successful()) {
+                $b64 = data_get($response->json(), 'data.0.b64_json');
+
+                if (filled($b64)) {
+                    return [
+                        'bytes' => base64_decode($b64),
+                        'provider' => 'hhtechapi',
+                        'model' => (string) config('services.hhtechapi.model', 'gpt-image-2'),
+                    ];
+                }
+            }
+
+            Log::warning('AiImageClient: hhtechapi request failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+        } catch (Throwable $e) {
+            Log::warning('AiImageClient: hhtechapi exception', ['error' => $e->getMessage()]);
+        }
+
+        return null;
     }
 
     /** @return array{bytes: string, provider: string, model: string}|null */

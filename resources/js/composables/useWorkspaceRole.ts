@@ -16,6 +16,10 @@ export const useWorkspaceRole = () => {
             (page.props.auth?.currentWorkspace?.role as string | null) ?? null,
     );
 
+    const currentWorkspace = computed(
+        () => page.props.auth?.currentWorkspace as Record<string, unknown> | null,
+    );
+
     const isOwner = computed(() => role.value === WorkspaceRole.Owner);
     const isAdminOrAbove = computed(
         () => isOwner.value || role.value === WorkspaceRole.Admin,
@@ -41,5 +45,15 @@ export const useWorkspaceRole = () => {
         canManageWorkspace: isAdminOrAbove,
         canManageBilling: isOwner,
         canCreateWorkspace: isOwner,
+        canViewContent: computed(
+            () =>
+                isAdminOrAbove.value ||
+                currentWorkspace.value?.can_content === true,
+        ),
+        canViewOmnichat: computed(
+            () =>
+                isAdminOrAbove.value ||
+                currentWorkspace.value?.can_omnichat === true,
+        ),
     };
 };

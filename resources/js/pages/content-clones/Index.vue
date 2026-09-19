@@ -39,6 +39,7 @@ import {
 import { computed, onUnmounted, reactive, ref, watch } from 'vue';
 
 import { edit as editPost } from '@/actions/App/Http/Controllers/App/PostController';
+import AiImageChatDialog from '@/components/ai/AiImageChatDialog.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import MediaPickerDialog from '@/components/posts/MediaPickerDialog.vue';
 import PlatformPreview from '@/components/posts/previews/PlatformPreview.vue';
@@ -194,6 +195,23 @@ const openMediaPickerForScene = (index: number) => {
     mediaPickerTarget.value = 'scene_image';
     mediaPickerSceneIndex.value = index;
     mediaPickerDialog.value?.open();
+};
+
+const showAiImageDialog = ref(false);
+const aiImageTargetSceneIndex = ref<number | null>(null);
+
+const openAiImageDialog = (index: number) => {
+    aiImageTargetSceneIndex.value = index;
+    showAiImageDialog.value = true;
+};
+
+const onAiImageSelected = (url: string) => {
+    const i = aiImageTargetSceneIndex.value;
+    if (i !== null && form.video_scenes[i]) {
+        form.video_scenes[i].start_image = url;
+        form.video_scenes[i].end_image = url;
+    }
+    showAiImageDialog.value = false;
 };
 
 const showCharacterDnaDetails = ref(false);
@@ -3875,6 +3893,14 @@ watch([searchTerm, statusFilter, perPage], () => {
                                                                         <div class="absolute top-1 right-1 flex items-center gap-1 bg-black/60 rounded-md p-0.5 backdrop-blur">
                                                                             <button
                                                                                 type="button"
+                                                                                @click.stop="openAiImageDialog(index)"
+                                                                                class="size-5 flex items-center justify-center rounded text-white hover:bg-white/20"
+                                                                                title="Chat tạo ảnh AI"
+                                                                            >
+                                                                                <IconSparkles class="size-3 text-violet-400" />
+                                                                            </button>
+                                                                            <button
+                                                                                type="button"
                                                                                 @click.stop="openMediaPickerForScene(index)"
                                                                                 class="size-5 flex items-center justify-center rounded text-white hover:bg-white/20"
                                                                                 title="Chọn ảnh từ thư viện"
@@ -6126,6 +6152,12 @@ watch([searchTerm, statusFilter, perPage], () => {
             <MediaPickerDialog
                 ref="mediaPickerDialog"
                 @select="handlePickedMedia"
+            />
+
+            <!-- AI Image Chat Dialog -->
+            <AiImageChatDialog
+                v-model:open="showAiImageDialog"
+                @select="onAiImageSelected"
             />
         </div>
     </AppLayout>

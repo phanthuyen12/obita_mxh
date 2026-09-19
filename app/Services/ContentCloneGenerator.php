@@ -242,53 +242,32 @@ class ContentCloneGenerator
             $hasAiImage = collect($outputMedia)->contains(fn ($m) => data_get($m, 'source') === 'ai' || str_contains((string) data_get($m, 'url', ''), 'files/tools'));
 
             if (! $hasAiImage) {
-                // 1. Try Dify with content_type: 'image'
-                try {
-                    $imageOutputs = $this->runDify($workspace, $sourcePost, $theme, $prompt, $platform, 'text_image', $aiImageCount, 'image');
-                    $difyImages = $this->mediaFromValue($imageOutputs);
-                    if (! empty($difyImages)) {
-                        $outputMedia = $difyImages;
+                // 1. hhtechapi (via AiImageClient) first when configured
+                $preferHhtechapi = filled(config('services.hhtechapi.key'));
+
+                $generatedImages = $preferHhtechapi
+                    ? $this->generateImagesViaAiClient($workspace, $aiImageCount, $theme, $prompt, $imagePrompt, $aiImageStyle, $aiImageAspectRatio, $aiLogoPath, $aiImageResolution, $platform)
+                    : [];
+
+                if ($generatedImages !== []) {
+                    $outputMedia = $generatedImages;
+                } else {
+                    // 2. Try Dify with content_type: 'image'
+                    try {
+                        $imageOutputs = $this->runDify($workspace, $sourcePost, $theme, $prompt, $platform, 'text_image', $aiImageCount, 'image');
+                        $difyImages = $this->mediaFromValue($imageOutputs);
+                        if (! empty($difyImages)) {
+                            $outputMedia = $difyImages;
+                        }
+                    } catch (\Throwable $e) {
+                        Log::warning('Dify image workflow failed: '.$e->getMessage());
                     }
-                } catch (\Throwable $e) {
-                    Log::warning('Dify image workflow failed: '.$e->getMessage());
                 }
 
-                // 2. Fallback to AiImageClient if Dify returned no images
+                // 3. Fallback to AiImageClient if Dify returned no images
                 $hasAiImageNow = collect($outputMedia)->contains(fn ($m) => data_get($m, 'source') === 'ai' || str_contains((string) data_get($m, 'url', ''), 'files/tools'));
-                if (! $hasAiImageNow) {
-                    $aiImage = app(AiImageClient::class);
-                    $finalImagePrompt = $this->buildFinalImagePrompt($workspace, $imagePrompt ?: $prompt, $theme, null, null);
-                    $orientation = $this->resolveOrientation($aiImageAspectRatio, $platform);
-                    $styleVal = $aiImageStyle ?? $workspace->image_style;
-                    $style = $styleVal instanceof ImageStyle ? $styleVal : (ImageStyle::tryFrom((string) $styleVal) ?? ImageStyle::DEFAULT);
-                    $generatedImages = [];
-
-                    for ($i = 0; $i < $aiImageCount; $i++) {
-                        $imageResult = $aiImage->generate(
-                            keywords: [$theme ?? 'King Coffee'],
-                            style: $style,
-                            orientation: $orientation,
-                            language: $workspace->content_language ?? 'en',
-                            customPrompt: $finalImagePrompt,
-                            logoPath: $aiLogoPath ?: null,
-                            customResolution: $aiImageResolution ?: null,
-                            customAspectRatio: $aiImageAspectRatio ?: null,
-                        );
-
-                        if ($imageResult !== null) {
-                            $imageBytes = $imageResult['bytes'];
-                            if (filled($aiLogoPath)) {
-                                $imageBytes = $this->overlayLogo($imageBytes, $aiLogoPath);
-                            }
-
-                            $savedMedia = $this->saveMediaToUserFolder(
-                                $workspace,
-                                $imageBytes,
-                                'king-coffee-ai-'.uniqid().'.jpg'
-                            );
-                            $generatedImages[] = $savedMedia;
-                        }
-                    }
+                if (! $hasAiImageNow && ! $preferHhtechapi) {
+                    $generatedImages = $this->generateImagesViaAiClient($workspace, $aiImageCount, $theme, $prompt, $imagePrompt, $aiImageStyle, $aiImageAspectRatio, $aiLogoPath, $aiImageResolution, $platform);
 
                     if (! empty($generatedImages)) {
                         $outputMedia = $generatedImages;
@@ -758,6 +737,61 @@ class ContentCloneGenerator
         imagedestroy($logo);
 
         return $outputBytes ?: $imageBytes;
+    }
+
+    /**
+     * Generate clone images via AiImageClient (hhtechapi-first) and save them
+     * into the user's media library folder.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function generateImagesViaAiClient(
+        Workspace $workspace,
+        int $aiImageCount,
+        ?string $theme,
+        ?string $prompt,
+        ?string $imagePrompt,
+        ?string $aiImageStyle,
+        ?string $aiImageAspectRatio,
+        ?string $aiLogoPath,
+        ?string $aiImageResolution,
+        string $platform,
+    ): array {
+        $aiImage = app(AiImageClient::class);
+        $finalImagePrompt = $this->buildFinalImagePrompt($workspace, $imagePrompt ?: $prompt, $theme, null, null);
+        $orientation = $this->resolveOrientation($aiImageAspectRatio, $platform);
+        $styleVal = $aiImageStyle ?? $workspace->image_style;
+        $style = $styleVal instanceof ImageStyle ? $styleVal : (ImageStyle::tryFrom((string) $styleVal) ?? ImageStyle::DEFAULT);
+        $generatedImages = [];
+
+        for ($i = 0; $i < $aiImageCount; $i++) {
+            $imageResult = $aiImage->generate(
+                keywords: [$theme ?? 'King Coffee'],
+                style: $style,
+                orientation: $orientation,
+                language: $workspace->content_language ?? 'en',
+                customPrompt: $finalImagePrompt,
+                logoPath: $aiLogoPath ?: null,
+                customResolution: $aiImageResolution ?: null,
+                customAspectRatio: $aiImageAspectRatio ?: null,
+            );
+
+            if ($imageResult !== null) {
+                $imageBytes = $imageResult['bytes'];
+                if (filled($aiLogoPath)) {
+                    $imageBytes = $this->overlayLogo($imageBytes, $aiLogoPath);
+                }
+
+                $savedMedia = $this->saveMediaToUserFolder(
+                    $workspace,
+                    $imageBytes,
+                    'king-coffee-ai-'.uniqid().'.jpg'
+                );
+                $generatedImages[] = $savedMedia;
+            }
+        }
+
+        return $generatedImages;
     }
 
     /**

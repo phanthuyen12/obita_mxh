@@ -127,6 +127,27 @@ const openLightbox = (i: number) => {
     lightbox.value?.openCollection(collection, i);
 };
 
+const selectedPlatform = ref<string | null>(null);
+
+const uniquePlatforms = computed(() => {
+    const seen = new Set<string>();
+    return enabledPlatforms.value.filter((pp) => {
+        if (seen.has(pp.platform)) {
+            return false;
+        }
+        seen.add(pp.platform);
+        return true;
+    });
+});
+
+const filteredPlatforms = computed(() =>
+    selectedPlatform.value
+        ? enabledPlatforms.value.filter(
+              (pp) => pp.platform === selectedPlatform.value,
+          )
+        : enabledPlatforms.value,
+);
+
 usePostEcho(props.post.id, '.post.platform.status.updated', () => {
     router.reload({ only: ['post'] });
 });
@@ -286,7 +307,72 @@ usePostEcho(props.post.id, '.post.platform.status.updated', () => {
                         >
                     </h2>
 
-                    <Card v-if="enabledPlatforms.length === 0" class="py-0">
+                    <!-- Platform filter pills -->
+                    <div
+                        v-if="enabledPlatforms.length > 1"
+                        class="flex flex-wrap gap-2"
+                    >
+                        <button
+                            type="button"
+                            class="inline-flex items-center gap-1.5 rounded-full border-2 px-3 py-1 text-xs font-semibold transition-all"
+                            :class="
+                                selectedPlatform === null
+                                    ? 'border-foreground bg-foreground text-background shadow-2xs'
+                                    : 'border-foreground/20 bg-card text-foreground/70 hover:border-foreground/50 hover:text-foreground'
+                            "
+                            @click="selectedPlatform = null"
+                        >
+                            Tất cả
+                            <span
+                                class="inline-flex size-4 items-center justify-center rounded-full text-[10px]"
+                                :class="
+                                    selectedPlatform === null
+                                        ? 'bg-background/20 text-background'
+                                        : 'bg-foreground/10 text-foreground/60'
+                                "
+                                >{{ enabledPlatforms.length }}</span
+                            >
+                        </button>
+                        <button
+                            v-for="up in uniquePlatforms"
+                            :key="up.platform"
+                            type="button"
+                            class="inline-flex items-center gap-1.5 rounded-full border-2 px-3 py-1 text-xs font-semibold transition-all"
+                            :class="
+                                selectedPlatform === up.platform
+                                    ? 'border-foreground bg-foreground text-background shadow-2xs'
+                                    : 'border-foreground/20 bg-card text-foreground/70 hover:border-foreground/50 hover:text-foreground'
+                            "
+                            @click="
+                                selectedPlatform =
+                                    selectedPlatform === up.platform
+                                        ? null
+                                        : up.platform
+                            "
+                        >
+                            <img
+                                :src="getPlatformLogo(up.platform)"
+                                :alt="up.platform"
+                                class="size-3.5 rounded-sm object-cover"
+                            />
+                            {{ getPlatformLabel(up.platform) }}
+                            <span
+                                class="inline-flex size-4 items-center justify-center rounded-full text-[10px]"
+                                :class="
+                                    selectedPlatform === up.platform
+                                        ? 'bg-background/20 text-background'
+                                        : 'bg-foreground/10 text-foreground/60'
+                                "
+                                >{{
+                                    enabledPlatforms.filter(
+                                        (pp) => pp.platform === up.platform,
+                                    ).length
+                                }}</span
+                            >
+                        </button>
+                    </div>
+
+                    <Card v-if="filteredPlatforms.length === 0 && enabledPlatforms.length === 0" class="py-0">
                         <CardContent
                             class="p-8 text-center text-sm font-medium text-foreground/60"
                         >
@@ -294,9 +380,17 @@ usePostEcho(props.post.id, '.post.platform.status.updated', () => {
                         </CardContent>
                     </Card>
 
+                    <Card v-else-if="filteredPlatforms.length === 0" class="py-0">
+                        <CardContent
+                            class="p-8 text-center text-sm font-medium text-foreground/60"
+                        >
+                            Không có kết quả nào cho bộ lọc này.
+                        </CardContent>
+                    </Card>
+
                     <div v-else class="space-y-3">
                         <Card
-                            v-for="pp in enabledPlatforms"
+                            v-for="pp in filteredPlatforms"
                             :key="pp.id"
                             class="overflow-hidden py-0"
                         >

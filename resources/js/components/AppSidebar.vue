@@ -101,6 +101,8 @@ const {
     canCreateWorkspace,
     canManageTeam,
     canManageBilling,
+    canViewContent,
+    canViewOmnichat,
 } = useWorkspaceRole();
 const { isMobile, state, toggleSidebar } = useSidebar();
 
@@ -347,14 +349,14 @@ const bottomNavItems = computed(() => [
 
             <!-- Omnichat -->
             <NavMain
-                v-if="currentWorkspace"
+                v-if="currentWorkspace && canViewOmnichat"
                 :items="omnichatNavItems"
                 label="Omnichat"
             />
 
             <!-- Content: Lịch, Bài viết, Clone, Luồng, Chữ ký, Nhãn -->
             <NavMain
-                v-if="currentWorkspace"
+                v-if="currentWorkspace && canViewContent"
                 :items="contentNavItems"
                 :label="$t('sidebar.groups.posts')"
             />

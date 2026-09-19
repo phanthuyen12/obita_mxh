@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\App\AiImageChatController;
 use App\Http\Controllers\App\AnalyticsController;
 use App\Http\Controllers\App\ApiKeyController;
 use App\Http\Controllers\App\AssetController;
@@ -79,6 +80,7 @@ use App\Http\Controllers\OmnichatChannelAccessController;
 use App\Http\Controllers\SocialAccountAccessController;
 use App\Http\Middleware\App\EnsureAccountReady;
 use App\Http\Middleware\App\EnsureHasWorkspace;
+use App\Http\Middleware\EnsureOmnichatAccess;
 use Illuminate\Support\Facades\Route;
 
 // Subscription selection (requires auth but not subscription)
@@ -241,8 +243,38 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
     Route::post('post-analytics/tiktok/sync-all', [PostAnalyticsController::class, 'syncAllTikTok'])->name('app.post-analytics.tiktok.sync-all');
 
     // Omnichat
-    Route::get('omnichat', [OmnichatInboxController::class, 'index'])->name('app.omnichat.index');
-    Route::get('omnichat/website-chat', [WebsiteChatController::class, 'index'])->name('app.omnichat.website-chat.index');
+    Route::middleware(EnsureOmnichatAccess::class)->group(function () {
+        Route::get('omnichat', [OmnichatInboxController::class, 'index'])->name('app.omnichat.index');
+        Route::get('omnichat/website-chat', [WebsiteChatController::class, 'index'])->name('app.omnichat.website-chat.index');
+        Route::post('omnichat/website-chat', [WebsiteChatController::class, 'store'])->name('app.omnichat.website-chat.store');
+        Route::put('omnichat/website-chat/{channel}', [WebsiteChatController::class, 'update'])->name('app.omnichat.website-chat.update');
+        Route::post('omnichat/website-chat/{channel}/rotate', [WebsiteChatController::class, 'rotate'])->name('app.omnichat.website-chat.rotate');
+        Route::delete('omnichat/website-chat/{channel}', [WebsiteChatController::class, 'destroy'])->name('app.omnichat.website-chat.destroy');
+        Route::get('omnichat/analytics', [OmnichatAnalyticsController::class, 'index'])->name('app.omnichat.analytics');
+        Route::get('omnichat/analytics/users/{user}', [OmnichatAnalyticsController::class, 'userShow'])->name('app.omnichat.analytics.user');
+        Route::get('omnichat/analytics/export', [OmnichatAnalyticsController::class, 'export'])->name('app.omnichat.analytics.export');
+        Route::put('omnichat/view', OmnichatViewController::class)->name('app.omnichat.view.update');
+        Route::get('omnichat/leads', [OmnichatLeadController::class, 'index'])->name('app.omnichat.leads.index');
+        Route::patch('omnichat/leads/{contact}', [OmnichatLeadController::class, 'update'])->name('app.omnichat.leads.update');
+        Route::post('omnichat/tags', [OmnichatTagController::class, 'store'])->name('app.omnichat.tags.store');
+        Route::delete('omnichat/tags/{tag}', [OmnichatTagController::class, 'destroy'])->name('app.omnichat.tags.destroy');
+        Route::put('omnichat/conversations/{conversation}/tags', [ConversationTagController::class, 'update'])->name('app.omnichat.conversations.tags.update');
+        Route::post('omnichat/conversations/{conversation}/messages', [OmnichatMessageController::class, 'store'])
+            ->middleware('throttle:120,1')
+            ->name('app.omnichat.messages.store');
+        Route::post('omnichat/shopee/{account}/sync', ShopeeSyncController::class)->middleware('throttle:10,1')->name('app.omnichat.shopee.sync');
+        Route::post('omnichat/conversations/{conversation}/read', ConversationReadController::class)->middleware('throttle:120,1')->name('app.omnichat.conversations.read');
+        Route::put('omnichat/conversations/{conversation}/assignment', [ConversationAssignmentController::class, 'update'])->name('app.omnichat.conversations.assignment.update');
+        Route::post('omnichat/conversations/{conversation}/ai-toggle', [ConversationAiToggleController::class, 'toggle'])->name('app.omnichat.conversations.ai-toggle');
+        Route::get('omnichat/telegram', [TelegramChannelController::class, 'index'])->name('app.omnichat.telegram.index');
+        Route::post('omnichat/telegram', [TelegramChannelController::class, 'store'])->name('app.omnichat.telegram.store');
+        Route::put('omnichat/telegram/{channel}', [TelegramChannelController::class, 'update'])->name('app.omnichat.telegram.update');
+        Route::delete('omnichat/telegram/{channel}', [TelegramChannelController::class, 'destroy'])->name('app.omnichat.telegram.destroy');
+        Route::post('omnichat/telegram/{channel}/sync-webhook', [TelegramChannelController::class, 'syncWebhook'])->name('app.omnichat.telegram.sync-webhook');
+        Route::get('omnichat/telegram/{channel}/webhook-info', [TelegramChannelController::class, 'webhookInfo'])->name('app.omnichat.telegram.webhook-info');
+        Route::get('omnichat/webhooks', [WebhookHubController::class, 'index'])->name('app.omnichat.webhooks.index');
+        Route::post('omnichat/webhooks/{event}/retry', [WebhookHubController::class, 'retry'])->name('app.omnichat.webhooks.retry');
+    });
 
     // WordPress Sites
     Route::get('wordpress/sites', [WordPressSiteController::class, 'index'])->name('app.wordpress.sites.index');
@@ -251,34 +283,6 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
     Route::delete('wordpress/sites/{site}', [WordPressSiteController::class, 'destroy'])->name('app.wordpress.sites.destroy');
     Route::post('wordpress/sites/{site}/test', [WordPressSiteController::class, 'testConnection'])->name('app.wordpress.sites.test');
     Route::post('wordpress/sites/{site}/sync', [WordPressSiteController::class, 'sync'])->name('app.wordpress.sites.sync');
-    Route::post('omnichat/website-chat', [WebsiteChatController::class, 'store'])->name('app.omnichat.website-chat.store');
-    Route::put('omnichat/website-chat/{channel}', [WebsiteChatController::class, 'update'])->name('app.omnichat.website-chat.update');
-    Route::post('omnichat/website-chat/{channel}/rotate', [WebsiteChatController::class, 'rotate'])->name('app.omnichat.website-chat.rotate');
-    Route::delete('omnichat/website-chat/{channel}', [WebsiteChatController::class, 'destroy'])->name('app.omnichat.website-chat.destroy');
-    Route::get('omnichat/analytics', [OmnichatAnalyticsController::class, 'index'])->name('app.omnichat.analytics');
-    Route::get('omnichat/analytics/users/{user}', [OmnichatAnalyticsController::class, 'userShow'])->name('app.omnichat.analytics.user');
-    Route::get('omnichat/analytics/export', [OmnichatAnalyticsController::class, 'export'])->name('app.omnichat.analytics.export');
-    Route::put('omnichat/view', OmnichatViewController::class)->name('app.omnichat.view.update');
-    Route::get('omnichat/leads', [OmnichatLeadController::class, 'index'])->name('app.omnichat.leads.index');
-    Route::patch('omnichat/leads/{contact}', [OmnichatLeadController::class, 'update'])->name('app.omnichat.leads.update');
-    Route::post('omnichat/tags', [OmnichatTagController::class, 'store'])->name('app.omnichat.tags.store');
-    Route::delete('omnichat/tags/{tag}', [OmnichatTagController::class, 'destroy'])->name('app.omnichat.tags.destroy');
-    Route::put('omnichat/conversations/{conversation}/tags', [ConversationTagController::class, 'update'])->name('app.omnichat.conversations.tags.update');
-    Route::post('omnichat/conversations/{conversation}/messages', [OmnichatMessageController::class, 'store'])
-        ->middleware('throttle:120,1')
-        ->name('app.omnichat.messages.store');
-    Route::post('omnichat/shopee/{account}/sync', ShopeeSyncController::class)->middleware('throttle:10,1')->name('app.omnichat.shopee.sync');
-    Route::post('omnichat/conversations/{conversation}/read', ConversationReadController::class)->middleware('throttle:120,1')->name('app.omnichat.conversations.read');
-    Route::put('omnichat/conversations/{conversation}/assignment', [ConversationAssignmentController::class, 'update'])->name('app.omnichat.conversations.assignment.update');
-    Route::post('omnichat/conversations/{conversation}/ai-toggle', [ConversationAiToggleController::class, 'toggle'])->name('app.omnichat.conversations.ai-toggle');
-    Route::get('omnichat/telegram', [TelegramChannelController::class, 'index'])->name('app.omnichat.telegram.index');
-    Route::post('omnichat/telegram', [TelegramChannelController::class, 'store'])->name('app.omnichat.telegram.store');
-    Route::put('omnichat/telegram/{channel}', [TelegramChannelController::class, 'update'])->name('app.omnichat.telegram.update');
-    Route::delete('omnichat/telegram/{channel}', [TelegramChannelController::class, 'destroy'])->name('app.omnichat.telegram.destroy');
-    Route::post('omnichat/telegram/{channel}/sync-webhook', [TelegramChannelController::class, 'syncWebhook'])->name('app.omnichat.telegram.sync-webhook');
-    Route::get('omnichat/telegram/{channel}/webhook-info', [TelegramChannelController::class, 'webhookInfo'])->name('app.omnichat.telegram.webhook-info');
-    Route::get('omnichat/webhooks', [WebhookHubController::class, 'index'])->name('app.omnichat.webhooks.index');
-    Route::post('omnichat/webhooks/{event}/retry', [WebhookHubController::class, 'retry'])->name('app.omnichat.webhooks.retry');
 
     Route::get('content-workflows', [ContentWorkflowController::class, 'index'])->name('app.content-workflows.index');
     Route::post('content-workflows', [ContentWorkflowController::class, 'store'])->name('app.content-workflows.store');
@@ -306,6 +310,10 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
         ->name('app.content-clones.stitch-video');
     Route::post('content-clones', [ContentCloneCampaignController::class, 'store'])->name('app.content-clones.store');
     Route::delete('content-clones/{campaign}', [ContentCloneCampaignController::class, 'destroy'])->name('app.content-clones.destroy');
+
+    // AI Image Chat (standalone)
+    Route::post('ai-image-chat/generate', [AiImageChatController::class, 'generate'])
+        ->name('app.ai-image-chat.generate');
 
     // Calendar
     Route::get('calendar', [PostController::class, 'calendar'])->name('app.calendar');

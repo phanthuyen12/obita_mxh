@@ -175,4 +175,11 @@ return [
         'api_key' => env('GEMINI_API_KEY'),
     ],
 
+    'hhtechapi' => [
+        'key' => env('HHTECHAPI_KEY'),
+        'url' => env('HHTECHAPI_URL', 'https://hhtechapi.com/v1'),
+        'model' => env('HHTECHAPI_MODEL', 'gpt-image-2'),
+        'quality' => env('HHTECHAPI_QUALITY', 'medium'),
+    ],
+
 ];
