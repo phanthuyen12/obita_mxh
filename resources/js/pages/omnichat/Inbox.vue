@@ -209,6 +209,39 @@ const handleSelectConversation = (conversationId: string) => {
                 unread: false,
             })
             .catch(() => undefined);
+
+        // 2. Auto-assign to current user if conversation is unassigned
+        const conv = localConversations.value.data.find(
+            (c) => c.id === conversationId,
+        );
+        if (
+            conv &&
+            !conv.assigned_user &&
+            props.permissions.assignConversations &&
+            !assigningConversation.value
+        ) {
+            assigningConversation.value = true;
+            const autoAssign = useHttp<{ user_id: string | null }, { assigned_user: { id: string; name: string; avatar_url: string | null } | null }>({ user_id: user.value.id });
+            autoAssign.user_id = user.value.id;
+            autoAssign
+                .put(
+                    ConversationAssignmentController.update.url(conversationId),
+                )
+                .then(() => {
+                    if (conv) {
+                        conv.assigned_user = {
+                            id: user.value.id,
+                            name: user.value.name,
+                            avatar_url: user.value.photo_url ?? null,
+                        };
+                    }
+                    router.reload({ only: ['conversations', 'selectedConversation'] });
+                })
+                .catch(() => undefined)
+                .finally(() => {
+                    assigningConversation.value = false;
+                });
+        }
     }
 
     router.get(
@@ -227,6 +260,7 @@ const handleSelectConversation = (conversationId: string) => {
         },
     );
 };
+
 
 const handleToggleRead = async () => {
     if (!props.selectedConversation) return;

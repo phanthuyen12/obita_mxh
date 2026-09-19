@@ -62,7 +62,7 @@ return [
         'newline_hint' => 'để xuống dòng',
     ],
     'conversation' => [
-        'assign' => 'Phân công cuộc trò chuyện',
+        'assign' => 'Phân công',
         'assign_to_me' => 'Giao cho tôi',
         'unassign' => 'Bỏ phân công',
         'online' => 'Trực tuyến',

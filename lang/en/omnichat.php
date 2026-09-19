@@ -60,7 +60,7 @@ return [
         'newline_hint' => 'for a new line',
     ],
     'conversation' => [
-        'assign' => 'Assign conversation',
+        'assign' => 'Assign',
         'assign_to_me' => 'Assign to me',
         'unassign' => 'Unassign',
         'online' => 'Online',
