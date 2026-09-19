@@ -218,24 +218,37 @@ class HandlePageAiCareAutoReply
             'has_api_key' => ! empty($difyApiKey),
         ]);
 
-        // Default or explicit Dify Provider
         if ($provider === 'dify' || ! empty($difyApiKey)) {
             try {
                 $difyConvId = data_get($conversation->meta, 'dify_conversation_id');
                 $userIdentifier = 'cust-'.($message->sender_contact_id ?? $conversation->external_id ?? 'guest');
 
-                $inputs = [];
-                if (! empty($aiCare['persona'])) {
-                    $inputs['persona'] = $aiCare['persona'];
-                }
-                if (! empty($aiCare['knowledge_base'])) {
-                    $inputs['knowledge_base'] = $aiCare['knowledge_base'];
-                }
+                // Restore session state from conversation meta
+                $sessionMeta = $conversation->meta ?? [];
+
+                /**
+                 * Build Dify inputs matching the bot's START node variables:
+                 *   - current_intent      : last detected intent (e.g. "mua_hang", "hoi_gia")
+                 *   - current_stage       : funnel stage (e.g. "awareness", "consideration", "decision")
+                 *   - lead_status         : contact lead stage or "new"
+                 *   - phone               : contact phone number
+                 *   - last_question_asked : the previous bot question to maintain conversation flow
+                 *   - session_memory      : a short JSON summary of key facts learned this session
+                 */
+                $inputs = [
+                    'current_intent' => (string) data_get($sessionMeta, 'dify_current_intent', ''),
+                    'current_stage' => (string) data_get($sessionMeta, 'dify_current_stage', 'awareness'),
+                    'lead_status' => (string) ($conversation->contact?->lead_stage ?? data_get($sessionMeta, 'dify_lead_status', 'new')),
+                    'phone' => (string) ($conversation->contact?->phone ?? ''),
+                    'last_question_asked' => (string) data_get($sessionMeta, 'dify_last_question_asked', ''),
+                    'session_memory' => (string) data_get($sessionMeta, 'dify_session_memory', ''),
+                ];
 
                 Log::info('[AI-Care] Calling DifyChatClient::sendMessage', [
                     'query' => $message->body,
                     'conversation_id' => $difyConvId,
                     'user' => $userIdentifier,
+                    'inputs' => $inputs,
                 ]);
 
                 $res = $this->difyChatClient->sendMessage(
@@ -247,19 +260,43 @@ class HandlePageAiCareAutoReply
                     baseUrl: $difyBaseUrl,
                 );
 
+                $answer = $res['answer'] ?? null;
+
                 Log::info('[AI-Care] Dify API Response received', [
-                    'answer' => $res['answer'] ?? null,
+                    'answer' => $answer,
                     'new_conversation_id' => $res['conversation_id'] ?? null,
                 ]);
 
+                // Persist new Dify conversation ID
                 $newConvId = $res['conversation_id'] ?? null;
                 if ($newConvId && $newConvId !== $difyConvId) {
-                    $meta = $conversation->meta ?? [];
-                    $meta['dify_conversation_id'] = $newConvId;
-                    $conversation->update(['meta' => $meta]);
+                    $sessionMeta['dify_conversation_id'] = $newConvId;
                 }
 
-                return $res['answer'] ?? null;
+                // Persist session state from Dify metadata response so next turn has context
+                $difyMeta = $res['metadata'] ?? [];
+                if (! empty($difyMeta['current_intent'])) {
+                    $sessionMeta['dify_current_intent'] = $difyMeta['current_intent'];
+                }
+                if (! empty($difyMeta['current_stage'])) {
+                    $sessionMeta['dify_current_stage'] = $difyMeta['current_stage'];
+                }
+                if (! empty($difyMeta['lead_status'])) {
+                    $sessionMeta['dify_lead_status'] = $difyMeta['lead_status'];
+                }
+                if (! empty($difyMeta['last_question_asked'])) {
+                    $sessionMeta['dify_last_question_asked'] = $difyMeta['last_question_asked'];
+                }
+                if (! empty($difyMeta['session_memory'])) {
+                    $sessionMeta['dify_session_memory'] = $difyMeta['session_memory'];
+                } elseif ($answer) {
+                    // Fallback: store last bot reply as minimal session memory
+                    $sessionMeta['dify_last_question_asked'] = mb_substr($answer, 0, 300);
+                }
+
+                $conversation->update(['meta' => $sessionMeta]);
+
+                return $answer;
             } catch (\Throwable $e) {
                 Log::error('[AI-Care] Dify AutoReply generation failed', [
                     'conversation_id' => $conversation->id,

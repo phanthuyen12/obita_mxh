@@ -1,0 +1,228 @@
+app:
+  description: Bot tư vấn sản phẩm cà phê King Coffee dựa trên Knowledge Base.
+  icon: ☕
+  icon_background: '#E8D5B5'
+  icon_type: emoji
+  mode: advanced-chat
+  name: BOT CHAT | KINGCONTENT
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: package
+  value:
+    plugin_unique_identifier: qceank/gemini:0.9.7@baff358c8c77425d6e22231058b60db0b9a59a5d37a917ea145758a4ce2f8634
+    version: null
+kind: app
+version: 0.7.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 10
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        skill_file_size_limit: 50
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: start-source-coffee_llm-target
+      selected: false
+      source: start
+      sourceHandle: source
+      target: coffee_llm
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: coffee_llm-source-final_answer-target
+      selected: false
+      source: coffee_llm
+      sourceHandle: source
+      target: final_answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: false
+        title: User Input
+        type: start
+        variables:
+        - hide: false
+          hint: ''
+          label: persona
+          max_length: 5000
+          options: []
+          placeholder: Tùy chỉnh Persona và kịch bản cho Bot...
+          required: false
+          type: paragraph
+          variable: persona
+        - hide: false
+          hint: ''
+          label: knowledge_base
+          max_length: 5000
+          options: []
+          placeholder: Thông tin bổ sung / Kiến thức riêng...
+          required: false
+          type: paragraph
+          variable: knowledge_base
+      height: 135
+      id: start
+      position:
+        x: 80
+        y: 200
+      positionAbsolute:
+        x: 80
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: false
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 10
+        model:
+          completion_params:
+            temperature: 0.3
+          mode: chat
+          name: gemini-2.5-flash
+          provider: qceank/gemini/google
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 'Bạn là  nhân viên tư vấn sản phẩm cà phê chuyên nghiệp của King Coffee.
+
+
+            {{#start.persona#}}
+
+
+            QUY TẮC TƯ VẤN:
+
+            1. Sử dụng thông tin trong Knowledge Base của Dify để trả lời. Không tự
+            bịa tên sản phẩm, giá, nguồn gốc, thành phần, khuyến mãi hoặc công dụng.
+
+            2. Website chính thức: https://kingcoffee.com.vn/
+
+            3. Luôn trả lời bằng tiếng Việt, thân thiện, lịch sự và ngắn gọn.
+
+            4. Nếu khách chưa biết chọn loại nào, hãy hỏi về khẩu vị (đậm/nhẹ/vừa),
+            cách pha (pha phin, pha máy, uống liền), dạng hạt/bột và ngân sách; mỗi
+            lượt chỉ hỏi 1 câu để khách dễ trả lời.
+
+            5. Khi có hình ảnh sản phẩm trong Knowledge Base, hiển thị bằng Markdown:
+            ![Tên sản phẩm](URL_ẢNH).
+
+            6. Khi nhắc đến sản phẩm, nếu có link mua hàng thì kèm Markdown link.
+
+            7. Nếu không có thông tin trong Knowledge Base, trả lời: "Dạ, thông tin
+            này hiện chưa có trong dữ liệu sản phẩm. Em sẽ chuyển yêu cầu cho nhân
+            viên tư vấn hỗ trợ mình ngay ạ."'
+        - id: user-prompt
+          role: user
+          text: '{{#sys.query#}}'
+        selected: false
+        title: Coffee Advisor LLM
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: coffee_llm
+      position:
+        x: 462
+        y: 200
+      positionAbsolute:
+        x: 462
+        y: 200
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#coffee_llm.text#}}'
+        desc: ''
+        selected: false
+        title: Answer
+        type: answer
+        variables: []
+      height: 102
+      id: final_answer
+      position:
+        x: 880
+        y: 200
+      positionAbsolute:
+        x: 880
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    viewport:
+      x: 101.99998730421089
+      y: 226.24999778717756
+      zoom: 1
+  rag_pipeline_variables: []
