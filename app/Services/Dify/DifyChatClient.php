@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Dify;
 
+use App\Exceptions\DifyConversationNotFoundException;
 use App\Exceptions\DifyWorkflowException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\UploadedFile;
@@ -48,6 +49,15 @@ class DifyChatClient
 
         if (! $response->successful()) {
             $message = (string) ($response->json('message') ?: $response->body());
+
+            // Dify returns 404 when the conversation_id no longer exists (deleted or expired)
+            if ($response->status() === 404 && str_contains($message, 'Conversation Not Exists')) {
+                Log::warning('Dify conversation not found, conversation_id is stale', [
+                    'conversation_id' => $conversationId,
+                ]);
+                throw new DifyConversationNotFoundException("Dify conversation not found: {$conversationId}");
+            }
+
             Log::error('Dify chat request failed', [
                 'status' => $response->status(),
                 'error' => $message,

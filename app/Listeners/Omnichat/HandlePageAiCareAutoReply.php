@@ -6,6 +6,7 @@ namespace App\Listeners\Omnichat;
 
 use App\Enums\Omnichat\ChannelProvider;
 use App\Events\OmnichatMessageCreated;
+use App\Exceptions\DifyConversationNotFoundException;
 use App\Models\OmnichatChannel;
 use App\Models\OmnichatConversation;
 use App\Models\OmnichatMessage;
@@ -251,14 +252,35 @@ class HandlePageAiCareAutoReply
                     'inputs' => $inputs,
                 ]);
 
-                $res = $this->difyChatClient->sendMessage(
-                    query: (string) $message->body,
-                    conversationId: $difyConvId,
-                    user: $userIdentifier,
-                    inputs: $inputs,
-                    apiKey: $difyApiKey,
-                    baseUrl: $difyBaseUrl,
-                );
+                try {
+                    $res = $this->difyChatClient->sendMessage(
+                        query: (string) $message->body,
+                        conversationId: $difyConvId,
+                        user: $userIdentifier,
+                        inputs: $inputs,
+                        apiKey: $difyApiKey,
+                        baseUrl: $difyBaseUrl,
+                    );
+                } catch (DifyConversationNotFoundException $e) {
+                    // Stale conversation_id — clear it and retry as a fresh conversation
+                    Log::warning('[AI-Care] Stale dify_conversation_id, retrying as new conversation', [
+                        'stale_id' => $difyConvId,
+                        'conversation_id' => $conversation->id,
+                    ]);
+
+                    unset($sessionMeta['dify_conversation_id']);
+                    $conversation->update(['meta' => $sessionMeta]);
+                    $difyConvId = null;
+
+                    $res = $this->difyChatClient->sendMessage(
+                        query: (string) $message->body,
+                        conversationId: null,
+                        user: $userIdentifier,
+                        inputs: $inputs,
+                        apiKey: $difyApiKey,
+                        baseUrl: $difyBaseUrl,
+                    );
+                }
 
                 $answer = $res['answer'] ?? null;
 
