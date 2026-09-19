@@ -58,6 +58,7 @@ import { getPlatformLogo } from '@/composables/usePlatformLogo';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { index as websiteChat } from '@/routes/app/omnichat/website-chat';
+import { index as telegramChannelsRoute } from '@/routes/app/omnichat/telegram';
 
 interface WorkspaceMember {
     id: string;
@@ -129,6 +130,17 @@ interface WebsiteChatChannel {
     >;
 }
 
+interface TelegramChannel {
+    id: string;
+    name: string;
+    username: string | null;
+    avatar_url: string | null;
+    status: string;
+    can_manage: boolean;
+    can_share: boolean;
+    shared_user_ids: string[];
+}
+
 export interface WordPressSiteItem {
     id: string;
     name: string;
@@ -154,6 +166,7 @@ const props = defineProps<{
     networkAccountCounts: Record<string, number>;
     accountFilters: AccountFilters;
     websiteChatChannels: WebsiteChatChannel[];
+    telegramChannels: TelegramChannel[];
     wordPressSites?: WordPressSiteItem[];
 }>();
 
@@ -874,6 +887,113 @@ const copyWebsiteSnippet = async (
                     @click="router.visit(websiteChat.url())"
                 >
                     Chưa có Website Live Chat. Nhấn để tạo kênh đầu tiên.
+                </button>
+            </section>
+
+            <!-- Telegram Channels Section -->
+            <section v-if="telegramChannels.length > 0 || canManageAccounts" class="grid gap-3">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <div
+                            class="grid size-6 place-items-center rounded-md bg-[#229ED9] text-[10px] font-bold text-white"
+                        >
+                            TG
+                        </div>
+                        <h2 class="text-lg font-semibold">Telegram Bot</h2>
+                        <Badge variant="secondary">{{ telegramChannels.length }}</Badge>
+                    </div>
+                    <Button
+                        v-if="canManageAccounts"
+                        size="sm"
+                        class="bg-[#229ED9] text-white hover:bg-[#1e8dc2]"
+                        @click="router.visit(telegramChannelsRoute.url())"
+                    >
+                        <IconPlus class="size-4" />
+                        Thêm hoặc quản lý bot
+                    </Button>
+                </div>
+                <p class="text-sm text-muted-foreground">
+                    Các Telegram Bot đã kết nối để nhận và trả lời tin nhắn qua Omnichat.
+                </p>
+
+                <div
+                    v-if="telegramChannels.length"
+                    class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"
+                >
+                    <article
+                        v-for="channel in telegramChannels"
+                        :key="channel.id"
+                        class="flex items-center gap-3 rounded-xl border bg-card p-4"
+                    >
+                        <div class="relative shrink-0">
+                            <img
+                                v-if="channel.avatar_url"
+                                :src="channel.avatar_url"
+                                :alt="channel.name"
+                                class="size-11 rounded-full object-cover"
+                            />
+                            <div
+                                v-else
+                                class="grid size-11 place-items-center rounded-full bg-[#229ED9]/10 text-lg font-bold text-[#229ED9]"
+                            >
+                                TG
+                            </div>
+                            <span
+                                class="absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-card"
+                                :class="
+                                    channel.status === 'connected'
+                                        ? 'bg-emerald-500'
+                                        : 'bg-rose-500'
+                                "
+                            />
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate font-medium">{{ channel.name }}</p>
+                            <p class="truncate text-sm text-muted-foreground">
+                                {{
+                                    channel.username
+                                        ? `@${channel.username}`
+                                        : 'Chưa có username'
+                                }}
+                            </p>
+                            <Badge
+                                class="mt-1"
+                                :variant="
+                                    channel.status === 'connected'
+                                        ? 'success'
+                                        : 'destructive'
+                                "
+                            >
+                                {{
+                                    channel.status === 'connected'
+                                        ? 'Đã kết nối'
+                                        : 'Mất kết nối'
+                                }}
+                            </Badge>
+                        </div>
+                        <div
+                            v-if="channel.can_manage"
+                            class="flex shrink-0 flex-col items-end gap-1.5"
+                        >
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                @click="router.visit(telegramChannelsRoute.url())"
+                            >
+                                <IconPencil class="size-3.5" />
+                                Quản lý
+                            </Button>
+                        </div>
+                    </article>
+                </div>
+
+                <button
+                    v-else-if="canManageAccounts"
+                    type="button"
+                    class="rounded-xl border border-dashed p-5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/50"
+                    @click="router.visit(telegramChannelsRoute.url())"
+                >
+                    Chưa có Telegram Bot nào. Nhấn để kết nối bot đầu tiên.
                 </button>
             </section>
 

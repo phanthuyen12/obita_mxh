@@ -216,6 +216,26 @@ class SocialController extends Controller
             'members' => $canManageAccounts
                 ? $workspace->members()->wherePivot('role', Role::Member->value)->orderBy('name')->get(['users.id', 'users.name', 'users.email'])
                 : [],
+            'telegramChannels' => OmnichatChannel::query()
+                ->where('workspace_id', $workspace->id)
+                ->where('provider', ChannelProvider::Telegram)
+                ->when(
+                    ! $canManageAccounts,
+                    fn ($query) => $query->whereHas('sharedUsers', fn ($query) => $query->whereKey($request->user()->id)),
+                )
+                ->with('sharedUsers:id')
+                ->orderBy('name')
+                ->get()
+                ->map(fn (OmnichatChannel $channel): array => [
+                    'id' => $channel->id,
+                    'name' => $channel->name,
+                    'username' => data_get($channel->settings, 'bot_username'),
+                    'avatar_url' => $channel->avatar_url,
+                    'status' => $channel->status->value,
+                    'can_manage' => $canManageAccounts,
+                    'can_share' => $canManageAccounts,
+                    'shared_user_ids' => $channel->sharedUsers->pluck('id')->values(),
+                ]),
         ]);
     }
 
