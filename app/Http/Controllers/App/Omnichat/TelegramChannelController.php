@@ -119,7 +119,12 @@ class TelegramChannelController extends Controller
         $settings = $channel->settings ?? [];
 
         if (isset($validated['ai_care'])) {
-            $settings['ai_care'] = array_merge($settings['ai_care'] ?? [], $validated['ai_care']);
+            // Replace entire ai_care block — do NOT merge so stale values (e.g. enabled=false) cannot persist
+            $existing = $settings['ai_care'] ?? [];
+            $settings['ai_care'] = array_merge($existing, $validated['ai_care']);
+
+            // Ensure enabled is always cast to a real boolean
+            $settings['ai_care']['enabled'] = (bool) ($settings['ai_care']['enabled'] ?? false);
         }
 
         $updateData = ['settings' => $settings];
