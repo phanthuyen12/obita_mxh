@@ -214,6 +214,17 @@ const websiteAccessForm = useForm<{
     permissions: Record<string, WebsitePermissionValues>;
 }>({ user_ids: [], permissions: {} });
 
+// ---- Telegram channel sharing ----
+const selectedTelegramChannel = ref<TelegramChannel | null>(null);
+const telegramMemberSearch = ref('');
+const telegramMemberFilter = ref<'all' | 'shared' | 'unshared'>('all');
+const telegramMemberPage = ref(1);
+const telegramMembersPerPage = 20;
+const telegramAccessForm = useForm<{
+    user_ids: string[];
+    permissions: Record<string, WebsitePermissionValues>;
+}>({ user_ids: [], permissions: {} });
+
 const syncingAccountIds = ref<string[]>(
     props.connectedAccounts?.filter((a) => a.is_syncing).map((a) => a.id) || [],
 );
@@ -569,6 +580,114 @@ const websiteChannelPermissions = [
     ['can_reply_omnichat', 'Trả lời khách'],
     ['can_assign_conversations', 'Phân công hội thoại'],
 ] as const;
+
+// ---- Telegram sharing computed ----
+const filteredTelegramMembers = computed(() => {
+    const search = telegramMemberSearch.value.trim().toLocaleLowerCase();
+
+    return props.members.filter((member) => {
+        const isShared = telegramAccessForm.user_ids.includes(member.id);
+        const matchesFilter =
+            telegramMemberFilter.value === 'all' ||
+            (telegramMemberFilter.value === 'shared' && isShared) ||
+            (telegramMemberFilter.value === 'unshared' && !isShared);
+
+        if (!matchesFilter) return false;
+        if (!search) return true;
+
+        return (
+            member.name.toLocaleLowerCase().includes(search) ||
+            member.email.toLocaleLowerCase().includes(search)
+        );
+    });
+});
+
+const telegramMemberLastPage = computed(() =>
+    Math.ceil(filteredTelegramMembers.value.length / telegramMembersPerPage),
+);
+const visibleTelegramMembers = computed(() => {
+    const offset = (telegramMemberPage.value - 1) * telegramMembersPerPage;
+
+    return filteredTelegramMembers.value.slice(
+        offset,
+        offset + telegramMembersPerPage,
+    );
+});
+
+watch([telegramMemberSearch, telegramMemberFilter], () => {
+    telegramMemberPage.value = 1;
+});
+watch(telegramMemberLastPage, (lastPage) => {
+    telegramMemberPage.value = Math.min(telegramMemberPage.value, lastPage);
+});
+
+const openTelegramSharing = (channel: TelegramChannel): void => {
+    selectedTelegramChannel.value = channel;
+    telegramMemberSearch.value = '';
+    telegramMemberFilter.value = 'all';
+    telegramMemberPage.value = 1;
+    telegramAccessForm.user_ids = [...channel.shared_user_ids];
+    telegramAccessForm.permissions = Object.fromEntries(
+        channel.shared_user_ids.map((userId) => [
+            userId,
+            {
+                can_view_omnichat: true,
+                can_reply_omnichat: true,
+                can_assign_conversations: false,
+            },
+        ]),
+    );
+    telegramAccessForm.clearErrors();
+};
+
+const toggleTelegramMember = (memberId: string, checked: boolean): void => {
+    if (checked) {
+        telegramAccessForm.user_ids = [
+            ...new Set([...telegramAccessForm.user_ids, memberId]),
+        ];
+        telegramAccessForm.permissions[memberId] ??= {
+            can_view_omnichat: true,
+            can_reply_omnichat: true,
+            can_assign_conversations: false,
+        };
+
+        return;
+    }
+
+    telegramAccessForm.user_ids = telegramAccessForm.user_ids.filter(
+        (id) => id !== memberId,
+    );
+    delete telegramAccessForm.permissions[memberId];
+};
+
+const toggleTelegramPermission = (
+    memberId: string,
+    permission: WebsitePermission,
+    checked: boolean,
+): void => {
+    telegramAccessForm.permissions[memberId] ??= {
+        can_view_omnichat: true,
+        can_reply_omnichat: true,
+        can_assign_conversations: false,
+    };
+    telegramAccessForm.permissions[memberId][permission] = checked;
+};
+
+const submitTelegramAccess = (): void => {
+    if (!selectedTelegramChannel.value) {
+        return;
+    }
+
+    telegramAccessForm.put(
+        updateWebsiteChannelAccess.url(selectedTelegramChannel.value.id),
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                selectedTelegramChannel.value = null;
+            },
+        },
+    );
+};
 
 const filteredWebsiteMembers = computed(() => {
     const search = websiteMemberSearch.value.trim().toLocaleLowerCase();
@@ -982,6 +1101,14 @@ const copyWebsiteSnippet = async (
                             >
                                 <IconPencil class="size-3.5" />
                                 Quản lý
+                            </Button>
+                            <Button
+                                v-if="channel.can_share"
+                                size="sm"
+                                variant="outline"
+                                @click="openTelegramSharing(channel)"
+                            >
+                                <IconShare3 class="size-4" /> Chia sẻ
                             </Button>
                         </div>
                     </article>
@@ -2116,6 +2243,218 @@ const copyWebsiteSnippet = async (
                             :disabled="websiteAccessForm.processing"
                             >{{
                                 websiteAccessForm.processing
+                                    ? 'Đang lưu...'
+                                    : 'Lưu phân quyền'
+                            }}</Button
+                        >
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+
+        <!-- Telegram Channel Sharing Dialog -->
+        <Dialog
+            :open="selectedTelegramChannel !== null"
+            @update:open="(open) => !open && (selectedTelegramChannel = null)"
+        >
+            <DialogContent
+                class="flex !w-[calc(100vw-2rem)] !max-w-6xl flex-col overflow-x-hidden sm:!w-[calc(100vw-3rem)]"
+            >
+                <DialogHeader>
+                    <DialogTitle>
+                        Chia sẻ {{ selectedTelegramChannel?.name }}
+                    </DialogTitle>
+                    <DialogDescription>
+                        Chọn thành viên được xem, trả lời hoặc phân công hội
+                        thoại của Telegram Bot này.
+                    </DialogDescription>
+                </DialogHeader>
+                <form
+                    v-if="selectedTelegramChannel"
+                    class="flex min-h-0 flex-1 flex-col gap-4"
+                    @submit.prevent="submitTelegramAccess"
+                >
+                    <div class="grid gap-3 sm:grid-cols-[1fr_auto]">
+                        <div class="relative">
+                            <IconSearch
+                                class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                            />
+                            <Input
+                                v-model="telegramMemberSearch"
+                                class="pl-9"
+                                placeholder="Tìm theo tên hoặc email..."
+                            />
+                        </div>
+                        <div
+                            class="flex rounded-lg border bg-muted/30 p-1 text-sm"
+                        >
+                            <button
+                                v-for="option in [
+                                    ['all', 'Tất cả'],
+                                    ['shared', 'Đã chia sẻ'],
+                                    ['unshared', 'Chưa chia sẻ'],
+                                ] as const"
+                                :key="option[0]"
+                                type="button"
+                                class="rounded-md px-3 py-1.5 transition-colors"
+                                :class="
+                                    telegramMemberFilter === option[0]
+                                        ? 'bg-background font-medium shadow-sm'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                "
+                                @click="telegramMemberFilter = option[0]"
+                            >
+                                {{ option[1] }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-muted-foreground">
+                            {{ filteredTelegramMembers.length }} thành viên
+                        </span>
+                        <Badge variant="secondary">
+                            {{ telegramAccessForm.user_ids.length }} được chia sẻ
+                        </Badge>
+                    </div>
+
+                    <div class="min-h-0 overflow-y-auto rounded-lg border">
+                        <div
+                            class="sticky top-0 z-10 hidden grid-cols-[minmax(12rem,1fr)_repeat(3,8rem)] gap-2 border-b bg-muted/95 px-3 py-2 text-xs font-medium backdrop-blur sm:grid"
+                        >
+                            <span>Thành viên</span>
+                            <span
+                                v-for="[, label] in websiteChannelPermissions"
+                                :key="label"
+                                class="text-center"
+                                >{{ label }}</span
+                            >
+                        </div>
+                        <div
+                            v-for="member in visibleTelegramMembers"
+                            :key="member.id"
+                            class="grid gap-3 border-b p-3 last:border-b-0 hover:bg-muted/50 sm:grid-cols-[minmax(12rem,1fr)_repeat(3,8rem)] sm:items-center"
+                        >
+                            <label
+                                class="flex cursor-pointer items-center gap-3"
+                            >
+                                <input
+                                    type="checkbox"
+                                    :checked="
+                                        telegramAccessForm.user_ids.includes(
+                                            member.id,
+                                        )
+                                    "
+                                    class="size-4 rounded border-input"
+                                    @change="
+                                        toggleTelegramMember(
+                                            member.id,
+                                            ($event.target as HTMLInputElement)
+                                                .checked,
+                                        )
+                                    "
+                                />
+                                <span class="min-w-0">
+                                    <span
+                                        class="block truncate text-sm font-medium"
+                                        >{{ member.name }}</span
+                                    >
+                                    <span
+                                        class="block truncate text-xs text-muted-foreground"
+                                        >{{ member.email }}</span
+                                    >
+                                </span>
+                            </label>
+                            <div
+                                class="grid grid-cols-2 gap-2 pl-7 text-xs sm:col-span-3 sm:contents"
+                            >
+                                <label
+                                    v-for="[
+                                        permission,
+                                        label,
+                                    ] in websiteChannelPermissions"
+                                    :key="permission"
+                                    class="flex items-center gap-2 sm:justify-center"
+                                    :class="{
+                                        'opacity-40':
+                                            !telegramAccessForm.user_ids.includes(
+                                                member.id,
+                                            ),
+                                    }"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        :disabled="
+                                            !telegramAccessForm.user_ids.includes(
+                                                member.id,
+                                            )
+                                        "
+                                        :checked="
+                                            telegramAccessForm.permissions[
+                                                member.id
+                                            ]?.[permission] ?? false
+                                        "
+                                        class="size-3.5 rounded border-input"
+                                        @change="
+                                            toggleTelegramPermission(
+                                                member.id,
+                                                permission,
+                                                (
+                                                    $event.target as HTMLInputElement
+                                                ).checked,
+                                            )
+                                        "
+                                    />
+                                    <span class="sm:hidden">{{ label }}</span>
+                                </label>
+                            </div>
+                        </div>
+                        <p
+                            v-if="visibleTelegramMembers.length === 0"
+                            class="p-8 text-center text-sm text-muted-foreground"
+                        >
+                            Không tìm thấy thành viên phù hợp.
+                        </p>
+                    </div>
+                    <div
+                        v-if="telegramMemberLastPage > 1"
+                        class="flex items-center justify-between gap-3"
+                    >
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            :disabled="telegramMemberPage === 1"
+                            @click="telegramMemberPage--"
+                            >Trang trước</Button
+                        >
+                        <span class="text-sm text-muted-foreground">
+                            Trang {{ telegramMemberPage }} /
+                            {{ telegramMemberLastPage }}
+                        </span>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            :disabled="
+                                telegramMemberPage === telegramMemberLastPage
+                            "
+                            @click="telegramMemberPage++"
+                            >Trang sau</Button
+                        >
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            @click="selectedTelegramChannel = null"
+                            >Huỷ</Button
+                        >
+                        <Button
+                            type="submit"
+                            :disabled="telegramAccessForm.processing"
+                            >{{
+                                telegramAccessForm.processing
                                     ? 'Đang lưu...'
                                     : 'Lưu phân quyền'
                             }}</Button
