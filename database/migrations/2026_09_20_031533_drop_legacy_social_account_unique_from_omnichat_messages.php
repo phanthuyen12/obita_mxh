@@ -22,20 +22,28 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('omnichat_messages', function (Blueprint $table): void {
-            // Drop ALL known legacy unique constraint names that conflict with Telegram channel_id-based messages.
-            // The exact name depends on how the DB was originally set up — we try all known variants.
-            $legacyConstraints = [
-                'omnichat_messages_external_id_unique',                          // standalone external_id unique
-                'omnichat_messages_social_account_id_external_id_unique',        // composite (social_account_id, external_id)
-            ];
+        // Drop the standalone external_id unique (no FK dependency — safe to drop directly)
+        if (Schema::hasIndex('omnichat_messages', 'omnichat_messages_external_id_unique')) {
+            Schema::table('omnichat_messages', function (Blueprint $table): void {
+                $table->dropUnique('omnichat_messages_external_id_unique');
+            });
+        }
 
-            foreach ($legacyConstraints as $indexName) {
-                if (Schema::hasIndex('omnichat_messages', $indexName)) {
-                    $table->dropUnique($indexName);
+        // Drop composite (social_account_id, external_id) unique.
+        // MySQL uses this index to support the social_account_id FK, so we must first
+        // add a plain index on social_account_id before dropping the composite unique.
+        if (Schema::hasIndex('omnichat_messages', 'omnichat_messages_social_account_id_external_id_unique')) {
+            Schema::table('omnichat_messages', function (Blueprint $table): void {
+                // Add a plain index on social_account_id to keep the FK happy
+                if (! Schema::hasIndex('omnichat_messages', 'omnichat_messages_social_account_id_index')) {
+                    $table->index('social_account_id');
                 }
-            }
-        });
+            });
+
+            Schema::table('omnichat_messages', function (Blueprint $table): void {
+                $table->dropUnique('omnichat_messages_social_account_id_external_id_unique');
+            });
+        }
     }
 
     public function down(): void
