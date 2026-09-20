@@ -15,6 +15,7 @@ use App\Support\Omnichat\PhoneNumberDetector;
 use App\Support\Omnichat\TelegramOmnichatClient;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -183,26 +184,36 @@ class ProcessTelegramOmnichatWebhook implements ShouldQueue
                     [$type, $attachments] = $this->parseAttachments($channel, $message, $telegramClient);
                     $sentAt = $this->parseSentAt($message);
 
-                    $storedMessage = OmnichatMessage::query()->firstOrCreate(
-                        [
+                    try {
+                        $storedMessage = OmnichatMessage::query()->firstOrCreate(
+                            [
+                                'channel_id' => $channel->id,
+                                'external_id' => $messageId,
+                            ],
+                            [
+                                'workspace_id' => $channel->workspace_id,
+                                'conversation_id' => $conversation->id,
+                                'sender_contact_id' => $contact->id,
+                                'direction' => 'inbound',
+                                'type' => $type,
+                                'body' => $body,
+                                'status' => 'delivered',
+                                'provider_payload' => [
+                                    'telegram' => $message,
+                                    'attachments' => $attachments,
+                                ],
+                                'sent_at' => $sentAt,
+                            ],
+                        );
+                    } catch (UniqueConstraintViolationException) {
+                        // Message already stored (duplicate webhook delivery) — fetch and skip
+                        Log::info('[TelegramOmnichat] Duplicate message skipped (already exists)', [
                             'channel_id' => $channel->id,
                             'external_id' => $messageId,
-                        ],
-                        [
-                            'workspace_id' => $channel->workspace_id,
-                            'conversation_id' => $conversation->id,
-                            'sender_contact_id' => $contact->id,
-                            'direction' => 'inbound',
-                            'type' => $type,
-                            'body' => $body,
-                            'status' => 'delivered',
-                            'provider_payload' => [
-                                'telegram' => $message,
-                                'attachments' => $attachments,
-                            ],
-                            'sent_at' => $sentAt,
-                        ],
-                    );
+                        ]);
+
+                        return;
+                    }
 
                     if ($storedMessage->wasRecentlyCreated) {
                         $phone = $phoneNumberDetector->detect($body ?? '');
