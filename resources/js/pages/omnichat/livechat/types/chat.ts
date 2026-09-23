@@ -25,6 +25,12 @@ export type ConversationTag =
 
 export type ChannelSource = 'facebook' | 'telegram' | 'zalo' | 'website';
 
+export interface AssignedUser {
+    id: string;
+    name: string;
+    avatar_url: string | null;
+}
+
 export interface ChatItem {
     id: string;
     name: string;
@@ -32,6 +38,9 @@ export interface ChatItem {
     channelName?: string;
     phone?: string;
     contactId?: string;
+    contactEmail?: string;
+    contactNotes?: string;
+    assignedUser?: AssignedUser | null;
     tags?: ConversationTag[];
     tagIds?: string[];
     folderCategory?: string[];

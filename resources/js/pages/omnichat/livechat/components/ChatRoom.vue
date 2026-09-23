@@ -9,6 +9,7 @@ import {
     documentAttachOutline,
     happyOutline,
     micOutline,
+    personCircleOutline,
     pricetagOutline,
     send,
     sparklesOutline,
@@ -26,6 +27,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     (e: 'back'): void;
+    (e: 'open-profile'): void;
     (
         e: 'send',
         payload: {
@@ -300,6 +302,15 @@ const persistConversationTags = async (): Promise<void> => {
             </div>
 
             <div class="header-right-actions">
+                <!-- Nút xem thông tin khách -->
+                <button
+                    class="profile-info-btn"
+                    title="Thông tin khách hàng"
+                    @click="emit('open-profile')"
+                >
+                    <ion-icon :icon="personCircleOutline"></ion-icon>
+                </button>
+
                 <!-- Nút bật/tắt AI Bot cho riêng hội thoại này -->
                 <button
                     :class="['ai-toggle-btn', { paused: aiPaused }]"
@@ -800,6 +811,26 @@ const persistConversationTags = async (): Promise<void> => {
 
 .ai-toggle-btn:active {
     transform: scale(0.92);
+}
+
+.profile-info-btn {
+    background: rgba(99, 102, 241, 0.12);
+    color: #818cf8;
+    border: 0.5px solid rgba(99, 102, 241, 0.3);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.2s, opacity 0.2s;
+}
+
+.profile-info-btn:active {
+    transform: scale(0.92);
+    background: rgba(99, 102, 241, 0.22);
 }
 
 /* Thanh trạng thái AI dưới header */

@@ -542,10 +542,10 @@ const saveSettings = async (): Promise<void> => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 16px 12px;
-    padding-top: max(env(safe-area-inset-top, 0px), 50px);
+    padding: 12px 16px 12px;
+    padding-top: max(env(safe-area-inset-top, 0px), 52px);
     background: #0c0c0f;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 0.5px solid rgba(255,255,255,0.07);
     flex-shrink: 0;
 }
 
@@ -561,26 +561,28 @@ const saveSettings = async (): Promise<void> => {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 7px 16px;
-    border-radius: 10px;
+    padding: 8px 18px;
+    border-radius: 20px;
     border: none;
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
-    background: #27272a;
-    color: #a1a1aa;
+    background: #6366f1;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(99,102,241,0.3);
 }
-.pf-save-btn:not(:disabled):hover {
-    background: #3f3f46;
-    color: #fafafa;
+.pf-save-btn:not(:disabled):active {
+    background: #4f46e5;
+    transform: scale(0.96);
 }
 .pf-save-btn.saved {
-    background: rgba(34,197,94,0.15);
+    background: rgba(34,197,94,0.18);
     color: #4ade80;
+    box-shadow: none;
+    border: 1px solid rgba(74,222,128,0.25);
 }
-.pf-save-btn:active { transform: scale(0.96); }
-.pf-save-btn:disabled { opacity: 0.5; cursor: default; }
+.pf-save-btn:disabled { opacity: 0.5; cursor: default; box-shadow: none; }
 .pf-save-btn ion-icon { font-size: 14px; }
 
 /* ── Scroll ─────────────────────────────────────────── */
@@ -588,20 +590,20 @@ const saveSettings = async (): Promise<void> => {
     flex: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding: 16px 14px 120px;
+    padding: 20px 14px max(120px, calc(env(safe-area-inset-bottom, 0px) + 100px));
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 6px;              /* breathing room giữa các label + card groups */
     min-height: 0;
 }
 
 /* ── Banner ─────────────────────────────────────────── */
 .pf-banner {
     position: relative;
-    border-radius: 18px;
+    border-radius: 20px;
     overflow: hidden;
-    margin-bottom: 22px;
-    padding: 0 16px 16px;
+    margin-bottom: 28px;   /* gap rõ hơn xuống section đầu tiên */
+    padding: 0 16px 18px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -715,14 +717,16 @@ const saveSettings = async (): Promise<void> => {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 700;
     color: #52525b;
     text-transform: uppercase;
     letter-spacing: 0.7px;
-    margin: 0 0 8px 4px;
-    padding-top: 4px;
+    margin: 14px 0 8px 4px;   /* top gap từ card trước, bottom gap vào card */
+    padding-top: 0;
 }
+/* Label đầu tiên ngay sau banner không cần top margin */
+.pf-scroll > .pf-section-label:first-of-type { margin-top: 4px; }
 .pf-section-label ion-icon { font-size: 12px; color: #6366f1; }
 .pf-count {
     margin-left: auto;
@@ -738,10 +742,10 @@ const saveSettings = async (): Promise<void> => {
 /* ── Card ─────────────────────────────────────────────  */
 .pf-card {
     background: #111115;
-    border: 1px solid rgba(255,255,255,0.07);
+    border: 0.5px solid rgba(255,255,255,0.08);
     border-radius: 16px;
     overflow: hidden;
-    margin-bottom: 20px;
+    margin-bottom: 4px;   /* gap nhỏ — section label phía trên đã có margin 14px */
 }
 
 .pf-divider { height: 1px; background: rgba(255,255,255,0.05); margin: 0; }

@@ -43,9 +43,11 @@ const currentWorkspaceId = computed(
 
 import AnalyticsPage from './livechat/components/AnalyticsPage.vue';
 import ChatRoom from './livechat/components/ChatRoom.vue';
+import ChatSidebarPanel from './livechat/components/ChatSidebarPanel.vue';
 import CustomersPage from './livechat/components/CustomersPage.vue';
 import ProfilePage from './livechat/components/ProfilePage.vue';
 import type {
+    AssignedUser,
     Attachment,
     ChannelSource,
     ChatItem,
@@ -64,6 +66,7 @@ type ConnectedChannel = {
 type Props = {
     workspaceId: string;
     connectedChannels: ConnectedChannel[];
+    assignees: AssignedUser[];
     labels: Array<{ id: string; name: string; color: string | null }>;
     permissions: {
         manageChannels: boolean;
@@ -109,6 +112,7 @@ const folders = [
 ];
 const activeTab = ref('chat');
 const selectedChat = ref<ChatItem | null>(null);
+const showSidebarPanel = ref(false);
 const searchQuery = ref('');
 const chats = ref<ChatItem[]>([]);
 const isLoading = ref(false);
@@ -137,13 +141,15 @@ type ConversationSummary = {
         display_name: string;
         avatar_url: string | null;
         phone?: string | null;
+        email?: string | null;
         notes?: string | null;
     };
-    channel: { provider: string };
+    channel: { provider: string; name?: string };
     last_message_preview: string | null;
     last_message_at: string | null;
     unread_count: number;
     ai_paused?: boolean;
+    assigned_user?: AssignedUser | null;
     labels: Array<{ id: string; name: string; color: string | null }>;
 };
 
@@ -156,6 +162,9 @@ const toChatItem = (conversation: ConversationSummary): ChatItem => {
         name,
         channelSource: source,
         phone: conversation.contact.phone ?? undefined,
+        contactEmail: conversation.contact.email ?? undefined,
+        contactNotes: conversation.contact.notes ?? undefined,
+        assignedUser: conversation.assigned_user ?? null,
         tags: conversation.labels.map(
             (label) => label.name,
         ) as ChatItem['tags'],
@@ -468,6 +477,7 @@ const toMessage = (message: MessagePayload): Message => {
 const openChat = async (chat: ChatItem): Promise<void> => {
     chat.unreadCount = undefined;
     selectedChat.value = { ...chat, messages: [] };
+    showSidebarPanel.value = false;
 
     // Xin quyền notification lần đầu khi user mở chat (gesture-triggered).
     requestNotificationPermission();
@@ -479,12 +489,25 @@ const openChat = async (chat: ChatItem): Promise<void> => {
 
     try {
         const { data } = await axios.get(livechatConversation.url(chat.id));
+        const conv = data.conversation as {
+            ai_paused?: boolean;
+            contact: {
+                id: string;
+                email?: string | null;
+                phone?: string | null;
+                notes?: string | null;
+            };
+            channel: { name?: string };
+            assigned_user?: AssignedUser | null;
+        };
         selectedChat.value = {
             ...chat,
-            contactId: data.conversation.contact.id as string,
-            aiPaused:
-                (data.conversation as { ai_paused?: boolean }).ai_paused ??
-                false,
+            contactId: conv.contact.id,
+            contactEmail: conv.contact.email ?? undefined,
+            contactNotes: conv.contact.notes ?? undefined,
+            assignedUser: conv.assigned_user ?? null,
+            channelName: conv.channel?.name ?? chat.channelName,
+            aiPaused: conv.ai_paused ?? false,
             messages: (data.messages.data as MessagePayload[]).map(toMessage),
         };
 
@@ -497,6 +520,32 @@ const openChat = async (chat: ChatItem): Promise<void> => {
     } catch {
         // Conversation may have been deleted; keep the optimistic room open.
     }
+};
+
+const handleProfileUpdated = (data: {
+    name: string;
+    phone: string;
+    email: string;
+    notes: string;
+}): void => {
+    if (!selectedChat.value) return;
+    selectedChat.value = {
+        ...selectedChat.value,
+        name: data.name || selectedChat.value.name,
+        phone: data.phone || selectedChat.value.phone,
+        contactEmail: data.email,
+        contactNotes: data.notes,
+    };
+    // Sync tên trong danh sách hội thoại
+    const inList = chats.value.find((c) => c.id === selectedChat.value?.id);
+    if (inList && data.name) {
+        inList.name = data.name;
+    }
+};
+
+const handleAssignUpdated = (assignedUser: AssignedUser | null): void => {
+    if (!selectedChat.value) return;
+    selectedChat.value = { ...selectedChat.value, assignedUser };
 };
 
 
@@ -638,9 +687,20 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
                 <ChatRoom
                     :chat="selectedChat"
                     :send-error="sendErrorMessage"
-                    @back="selectedChat = null"
+                    @back="selectedChat = null; showSidebarPanel = false"
                     @send="handleSend"
                     @update-last-message="handleUpdateLastMessage"
+                    @open-profile="showSidebarPanel = true"
+                />
+                <!-- Sidebar panel thông tin khách -->
+                <ChatSidebarPanel
+                    v-if="showSidebarPanel && selectedChat"
+                    :chat="selectedChat"
+                    :assignees="props.assignees"
+                    :can-assign="props.permissions.assignConversations"
+                    @close="showSidebarPanel = false"
+                    @profile-updated="handleProfileUpdated"
+                    @assign-updated="handleAssignUpdated"
                 />
             </template>
 
@@ -856,9 +916,17 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
                     </div>
 
                     <main class="chat-list-scrollable">
-                        <div v-if="isLoading" class="empty-state">
-                            Đang tải hội thoại...
-                        </div>
+                        <!-- Loading skeleton -->
+                        <template v-if="isLoading">
+                            <div v-for="i in 7" :key="i" class="skeleton-row">
+                                <div class="skeleton-av"></div>
+                                <div class="skeleton-lines">
+                                    <div class="skeleton-line w-60"></div>
+                                    <div class="skeleton-line w-80"></div>
+                                    <div class="skeleton-line w-40"></div>
+                                </div>
+                            </div>
+                        </template>
 
                         <div
                             v-for="item in filteredChats"
@@ -898,7 +966,7 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
                                         "
                                         >Z</span
                                     >
-                                    <span v-else>🌐</span>
+                                    <span v-else>w</span>
                                 </div>
                             </div>
 
@@ -924,11 +992,12 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
                                     class="chat-tags-row"
                                 >
                                     <span
-                                        v-for="tag in item.tags"
+                                        v-for="tag in item.tags.slice(0, 2)"
                                         :key="tag"
                                         class="conv-tag-badge"
-                                        >🏷️ {{ tag }}</span
+                                        >{{ tag }}</span
                                     >
+                                    <span v-if="item.tags.length > 2" class="conv-tag-badge">+{{ item.tags.length - 2 }}</span>
                                 </div>
 
                                 <div class="chat-bottom-row">
@@ -938,6 +1007,15 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
                                         }}</span>
                                     </div>
                                     <div class="chat-badges">
+                                        <!-- Assignee micro-avatar: memorable moment -->
+                                        <div
+                                            v-if="item.assignedUser"
+                                            class="chat-assignee-dot"
+                                            :style="{ background: avatarColorFor(item.assignedUser.id) }"
+                                            :title="item.assignedUser.name"
+                                        >
+                                            {{ item.assignedUser.name.charAt(0).toUpperCase() }}
+                                        </div>
                                         <ion-icon
                                             v-if="item.isPinned"
                                             :icon="pin"
@@ -945,7 +1023,7 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
                                         ></ion-icon>
                                         <span
                                             v-if="item.unreadCount"
-                                            class="unread-badge badge-blue"
+                                            :class="['unread-badge', item.unreadType === 'gray' ? 'badge-gray' : 'badge-blue']"
                                             >{{ item.unreadCount }}</span
                                         >
                                     </div>
@@ -953,15 +1031,23 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
                             </div>
                         </div>
 
+                        <!-- Empty: search no results -->
                         <div
-                            v-if="!isLoading && filteredChats.length === 0"
+                            v-if="!isLoading && filteredChats.length === 0 && searchQuery"
                             class="empty-state"
                         >
-                            <p>
-                                Không có cuộc trò chuyện nào trong thư mục "{{
-                                    activeFolder
-                                }}"
-                            </p>
+                            <div class="empty-state-icon">🔍</div>
+                            <p class="empty-state-title">Không tìm thấy kết quả</p>
+                            <p class="empty-state-sub">Thử tìm bằng tên, số điện thoại hoặc nội dung</p>
+                        </div>
+                        <!-- Empty: no conversations -->
+                        <div
+                            v-else-if="!isLoading && filteredChats.length === 0"
+                            class="empty-state"
+                        >
+                            <div class="empty-state-icon">💬</div>
+                            <p class="empty-state-title">Chưa có hội thoại nào</p>
+                            <p class="empty-state-sub">Hội thoại mới sẽ xuất hiện ở đây khi khách nhắn tin</p>
                         </div>
                     </main>
                 </template>
