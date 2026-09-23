@@ -706,6 +706,7 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
 
             <!-- Màn hình chính đa tab -->
             <template v-else>
+                <div class="tab-area">
                 <template v-if="activeTab === 'contacts'">
                     <CustomersPage @chat-with="handleChatWithCustomer" />
                 </template>
@@ -1052,6 +1053,8 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
                     </main>
                 </template>
 
+                </div><!-- /.tab-area -->
+                <!-- Floating dock: luôn hiển thị trên tất cả tabs -->
                 <div class="floating-dock-container">
                     <nav class="floating-dock">
                         <div
