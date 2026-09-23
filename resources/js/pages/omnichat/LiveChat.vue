@@ -4,6 +4,7 @@ import { IonApp, IonIcon } from '@ionic/vue';
 import { useEcho } from '@laravel/echo-vue';
 import axios from 'axios';
 import {
+    addOutline,
     chatbubbles,
     checkmarkDoneOutline,
     closeOutline,
@@ -12,6 +13,7 @@ import {
     notificationsOutline,
     people,
     pin,
+    pricetagOutline,
     searchOutline,
     statsChart,
     volumeMute,
@@ -137,7 +139,9 @@ const formatTime = (iso: string | null): string => {
 
 type ConversationSummary = {
     id: string;
+    contact_id?: string;
     contact: {
+        id?: string;
         display_name: string;
         avatar_url: string | null;
         phone?: string | null;
@@ -161,6 +165,7 @@ const toChatItem = (conversation: ConversationSummary): ChatItem => {
         id: conversation.id,
         name,
         channelSource: source,
+        contactId: conversation.contact_id ?? conversation.contact?.id,
         phone: conversation.contact.phone ?? undefined,
         contactEmail: conversation.contact.email ?? undefined,
         contactNotes: conversation.contact.notes ?? undefined,
@@ -179,6 +184,65 @@ const toChatItem = (conversation: ConversationSummary): ChatItem => {
     };
 };
 
+// ── Quản lý thẻ phân loại trên giao diện LiveChat ──
+const showTagManagementModal = ref(false);
+const workspaceTags = ref<Array<{ id: string; name: string; color: string | null }>>(
+    props.labels ? [...props.labels] : [],
+);
+const newTagNameMain = ref('');
+const newTagColorMain = ref('#6366f1');
+const isCreatingTagMain = ref(false);
+const PRESET_TAG_COLORS = [
+    '#6366f1',
+    '#0ea5e9',
+    '#10b981',
+    '#f59e0b',
+    '#ec4899',
+    '#8b5cf6',
+    '#ef4444',
+    '#14b8a6',
+];
+
+const loadWorkspaceTags = async (): Promise<void> => {
+    try {
+        const { data } = await axios.get('/omnichat/livechat/tags');
+        workspaceTags.value = data.data;
+    } catch {
+        // Keep current
+    }
+};
+
+const handleCreateTagMain = async (): Promise<void> => {
+    const name = newTagNameMain.value.trim();
+    if (!name || isCreatingTagMain.value) return;
+    isCreatingTagMain.value = true;
+    try {
+        const { data } = await axios.post('/omnichat/livechat/tags', {
+            name,
+            color: newTagColorMain.value,
+        });
+        const created = data.tag;
+        if (!workspaceTags.value.some((t) => t.id === created.id)) {
+            workspaceTags.value.push(created);
+        }
+        newTagNameMain.value = '';
+    } catch (e: any) {
+        alert(e.response?.data?.message || 'Không tạo được thẻ');
+    } finally {
+        isCreatingTagMain.value = false;
+    }
+};
+
+const handleDeleteTagMain = async (tag: { id: string; name: string }): Promise<void> => {
+    if (!confirm(`Bạn có chắc muốn xóa thẻ "${tag.name}" khỏi hệ thống?`)) return;
+    try {
+        await axios.delete(`/omnichat/livechat/tags/${tag.id}`);
+        workspaceTags.value = workspaceTags.value.filter((t) => t.id !== tag.id);
+    } catch {
+        alert('Không xóa được thẻ');
+    }
+};
+
 const loadConversations = async (): Promise<void> => {
     isLoading.value = true;
     try {
@@ -191,7 +255,10 @@ const loadConversations = async (): Promise<void> => {
     }
 };
 
-onMounted(loadConversations);
+onMounted(() => {
+    loadConversations();
+    loadWorkspaceTags();
+});
 
 // WebSocket (Laravel Reverb / Echo): nhận tin nhắn mới realtime cho mọi kênh đang chọn.
 type BroadcastAttachment = {
@@ -687,20 +754,24 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
                 <ChatRoom
                     :chat="selectedChat"
                     :send-error="sendErrorMessage"
+                    :all-tags="workspaceTags"
                     @back="selectedChat = null; showSidebarPanel = false"
                     @send="handleSend"
                     @update-last-message="handleUpdateLastMessage"
                     @open-profile="showSidebarPanel = true"
+                    @tag-created="loadWorkspaceTags"
                 />
                 <!-- Sidebar panel thông tin khách -->
                 <ChatSidebarPanel
                     v-if="showSidebarPanel && selectedChat"
                     :chat="selectedChat"
                     :assignees="props.assignees"
+                    :all-tags="workspaceTags"
                     :can-assign="props.permissions.assignConversations"
                     @close="showSidebarPanel = false"
                     @profile-updated="handleProfileUpdated"
                     @assign-updated="handleAssignUpdated"
+                    @tag-created="loadWorkspaceTags"
                 />
             </template>
 
@@ -774,6 +845,17 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
                                                 : unreadNotificationCount
                                         }}</span
                                     >
+                                </button>
+                                <!-- Quản lý thẻ phân loại -->
+                                <button
+                                    class="action-circle-btn"
+                                    title="Quản lý thẻ"
+                                    @click.stop="showTagManagementModal = true"
+                                >
+                                    <ion-icon
+                                        :icon="pricetagOutline"
+                                        class="action-icon-small"
+                                    ></ion-icon>
                                 </button>
                                 <button
                                     class="action-circle-btn"
@@ -1119,6 +1201,107 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
                     </nav>
                 </div>
             </template>
+
+            <!-- Bottom Sheet Modal Quản Lý Thẻ Phân Loại Trên LiveChat -->
+            <div
+                v-if="showTagManagementModal"
+                class="tag-mgmt-backdrop"
+                @click.self="showTagManagementModal = false"
+            >
+                <div class="tag-mgmt-sheet">
+                    <div class="sheet-drag-handle"></div>
+                    <div class="tag-mgmt-header">
+                        <div class="tag-mgmt-title-col">
+                            <span class="sheet-main-title">Quản Lý Thẻ Phân Loại</span>
+                            <span class="sheet-sub-title">Tạo và quản lý các thẻ gắn cho khách hàng</span>
+                        </div>
+                        <button
+                            class="sheet-done-btn"
+                            @click="showTagManagementModal = false"
+                        >
+                            Đóng
+                        </button>
+                    </div>
+
+                    <div class="tag-mgmt-body">
+                        <!-- Tạo thẻ mới trực tiếp -->
+                        <div class="create-tag-box">
+                            <span class="create-tag-box-title">Tạo thẻ mới:</span>
+                            <div class="create-tag-input-row">
+                                <span
+                                    class="tag-color-preview-badge"
+                                    :style="{ backgroundColor: newTagColorMain }"
+                                ></span>
+                                <input
+                                    v-model="newTagNameMain"
+                                    type="text"
+                                    class="new-tag-input"
+                                    placeholder="Tên thẻ (vd: Chốt đơn, Khách VIP...)"
+                                    maxlength="40"
+                                    @keyup.enter="handleCreateTagMain"
+                                />
+                                <button
+                                    class="create-tag-action-btn"
+                                    :disabled="!newTagNameMain.trim() || isCreatingTagMain"
+                                    @click="handleCreateTagMain"
+                                >
+                                    <ion-icon v-if="!isCreatingTagMain" :icon="addOutline"></ion-icon>
+                                    <span>{{ isCreatingTagMain ? '...' : '+ Tạo thẻ' }}</span>
+                                </button>
+                            </div>
+                            <div class="color-palette-bar">
+                                <span class="color-palette-label">Màu:</span>
+                                <div class="color-palette-dots">
+                                    <button
+                                        v-for="c in PRESET_TAG_COLORS"
+                                        :key="c"
+                                        type="button"
+                                        class="palette-dot-btn"
+                                        :class="{ active: newTagColorMain === c }"
+                                        :style="{ backgroundColor: c }"
+                                        @click="newTagColorMain = c"
+                                    ></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Danh sách các thẻ hiện có -->
+                        <div class="tags-list-section-header">
+                            <span class="select-label">Danh sách thẻ đang có:</span>
+                            <span class="tags-count-badge">{{ workspaceTags.length }} thẻ</span>
+                        </div>
+
+                        <div v-if="workspaceTags.length === 0" class="no-tags-prompt">
+                            Chưa có thẻ nào trong hệ thống. Hãy nhập tên ở trên và nhấn "+ Tạo thẻ"!
+                        </div>
+
+                        <div v-else class="tag-mgmt-grid">
+                            <div
+                                v-for="tag in workspaceTags"
+                                :key="tag.id"
+                                class="tag-mgmt-pill"
+                                :style="{
+                                    borderColor: (tag.color || '#6366f1') + '66',
+                                    backgroundColor: (tag.color || '#6366f1') + '1f',
+                                }"
+                            >
+                                <span
+                                    class="tag-bullet"
+                                    :style="{ backgroundColor: tag.color || '#6366f1' }"
+                                ></span>
+                                <span class="tag-text">{{ tag.name }}</span>
+                                <button
+                                    class="delete-tag-btn"
+                                    title="Xóa thẻ"
+                                    @click.stop="handleDeleteTagMain(tag)"
+                                >
+                                    <ion-icon :icon="closeOutline"></ion-icon>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </ion-app>
 </template>

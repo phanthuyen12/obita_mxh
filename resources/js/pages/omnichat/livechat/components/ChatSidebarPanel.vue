@@ -2,16 +2,18 @@
 import { IonIcon } from '@ionic/vue';
 import axios from 'axios';
 import {
+    addOutline,
+    alertCircleOutline,
     callOutline,
     checkmarkCircle,
     closeOutline,
     createOutline,
     mailOutline,
     personOutline,
+    pricetagOutline,
     saveOutline,
-    alertCircleOutline,
 } from 'ionicons/icons';
-import { ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 
 import type { AssignedUser, ChatItem } from '../types/chat';
 
@@ -19,12 +21,14 @@ const props = defineProps<{
     chat: ChatItem;
     assignees: AssignedUser[];
     canAssign: boolean;
+    allTags?: Array<{ id: string; name: string; color: string | null }>;
 }>();
 
 const emit = defineEmits<{
     (e: 'close'): void;
     (e: 'profile-updated', data: { name: string; phone: string; email: string; notes: string }): void;
     (e: 'assign-updated', assignedUser: AssignedUser | null): void;
+    (e: 'tag-created', tag: { id: string; name: string; color: string | null }): void;
 }>();
 
 // ── Edit state ────────────────────────────────────────────
@@ -121,6 +125,84 @@ const avatarColor = (id: string): string => {
     let h = 0;
     for (let i = 0; i < id.length; i++) h = id.charCodeAt(i) + ((h << 5) - h);
     return COLORS[Math.abs(h) % COLORS.length];
+};
+// ── Tags logic ──────────────────────────────────────────
+const availableTags = ref<Array<{ id: string; name: string; color?: string | null }>>([]);
+const isManagingTags = ref(false);
+const newTagName = ref('');
+const newTagColor = ref('#6366f1');
+const isCreatingTag = ref(false);
+const PRESET_TAG_COLORS = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#ef4444', '#14b8a6'];
+
+const loadTags = async () => {
+    try {
+        const { data } = await axios.get('/omnichat/livechat/tags');
+        availableTags.value = data.data;
+    } catch {
+        if (props.allTags) availableTags.value = props.allTags;
+    }
+};
+
+watch(() => props.allTags, (tags) => {
+    if (tags && tags.length > 0) availableTags.value = tags;
+}, { immediate: true });
+
+onMounted(loadTags);
+
+const getTagColor = (tagName: string): string => {
+    return availableTags.value.find(t => t.name === tagName)?.color || '#6366f1';
+};
+
+const toggleTag = async (tag: { id: string; name: string }) => {
+    if (!props.chat.tags) props.chat.tags = [];
+    if (!props.chat.tagIds) props.chat.tagIds = [];
+    const nIdx = props.chat.tags.indexOf(tag.name as any);
+    const iIdx = props.chat.tagIds.indexOf(tag.id);
+    if (nIdx > -1) {
+        props.chat.tags.splice(nIdx, 1);
+        if (iIdx > -1) props.chat.tagIds.splice(iIdx, 1);
+    } else {
+        props.chat.tags.push(tag.name as any);
+        if (iIdx === -1 && tag.id) props.chat.tagIds.push(tag.id);
+    }
+    try {
+        if (props.chat.contactId) {
+            await axios.put(`/omnichat/livechat/contacts/${props.chat.contactId}/conversation-tags`, {
+                conversation_id: props.chat.id,
+                tag_ids: props.chat.tagIds ?? [],
+            });
+        } else if (!props.chat.id.startsWith('contact_')) {
+            await axios.put(`/omnichat/conversations/${props.chat.id}/tags`, {
+                tag_ids: props.chat.tagIds ?? [],
+            });
+        }
+    } catch {
+        // optimistic
+    }
+};
+
+const createTag = async () => {
+    const name = newTagName.value.trim();
+    if (!name || isCreatingTag.value) return;
+    isCreatingTag.value = true;
+    try {
+        const { data } = await axios.post('/omnichat/livechat/tags', {
+            name,
+            color: newTagColor.value,
+        });
+        const created = data.tag;
+        if (!availableTags.value.some(t => t.id === created.id)) {
+            availableTags.value.push(created);
+        }
+        await toggleTag(created);
+        emit('tag-created', created);
+        newTagName.value = '';
+        showToast('Đã tạo và gắn thẻ!', 'ok');
+    } catch {
+        showToast('Không tạo được thẻ', 'err');
+    } finally {
+        isCreatingTag.value = false;
+    }
 };
 </script>
 
@@ -221,6 +303,100 @@ const avatarColor = (id: string): string => {
                     <ion-icon :icon="saveOutline" />
                     {{ isSaving ? 'Đang lưu…' : 'Lưu thay đổi' }}
                 </button>
+            </div>
+
+            <!-- ── Tags / Thẻ phân loại ── -->
+            <div class="csp-section">
+                <div class="csp-section-hdr">
+                    <p class="csp-section-label">Thẻ phân loại</p>
+                    <button class="csp-tag-toggle-btn" @click="isManagingTags = !isManagingTags">
+                        {{ isManagingTags ? 'Thu gọn' : '+ Gắn / Tạo thẻ' }}
+                    </button>
+                </div>
+
+                <!-- Active tags chips -->
+                <div class="csp-tags-list">
+                    <span
+                        v-for="t in chat.tags"
+                        :key="t"
+                        class="csp-tag-chip"
+                        :style="{
+                            backgroundColor: getTagColor(t) + '22',
+                            borderColor: getTagColor(t) + '55',
+                            color: getTagColor(t),
+                        }"
+                    >
+                        <span class="csp-tag-dot" :style="{ backgroundColor: getTagColor(t) }"></span>
+                        {{ t }}
+                        <ion-icon
+                            :icon="closeOutline"
+                            class="csp-tag-del"
+                            @click="toggleTag({ id: chat.tagIds?.[chat.tags?.indexOf(t) ?? -1] ?? '', name: t })"
+                        />
+                    </span>
+                    <span v-if="!chat.tags || chat.tags.length === 0" class="csp-no-tags">
+                        Chưa có thẻ phân loại
+                    </span>
+                </div>
+
+                <!-- Tag Management & Quick Create Drawer -->
+                <div v-if="isManagingTags" class="csp-tag-manager">
+                    <!-- Inline create form -->
+                    <div class="csp-create-tag-row">
+                        <span class="csp-create-dot" :style="{ backgroundColor: newTagColor }"></span>
+                        <input
+                            v-model="newTagName"
+                            type="text"
+                            class="csp-tag-input"
+                            placeholder="Tên thẻ mới..."
+                            maxlength="40"
+                            @keyup.enter="createTag"
+                        />
+                        <button
+                            class="csp-tag-add-btn"
+                            :disabled="!newTagName.trim() || isCreatingTag"
+                            @click="createTag"
+                        >
+                            {{ isCreatingTag ? '...' : '+ Thêm' }}
+                        </button>
+                    </div>
+
+                    <!-- Colors -->
+                    <div class="csp-palette-row">
+                        <button
+                            v-for="c in PRESET_TAG_COLORS"
+                            :key="c"
+                            type="button"
+                            class="csp-palette-dot"
+                            :class="{ active: newTagColor === c }"
+                            :style="{ backgroundColor: c }"
+                            @click="newTagColor = c"
+                        ></button>
+                    </div>
+
+                    <!-- Available tags to toggle -->
+                    <div class="csp-available-tags">
+                        <span class="csp-avail-lbl">Chạm để chọn thẻ:</span>
+                        <div class="csp-avail-chips">
+                            <button
+                                v-for="tag in availableTags"
+                                :key="tag.id"
+                                type="button"
+                                class="csp-avail-chip"
+                                :class="{ active: chat.tags?.includes(tag.name as any) }"
+                                :style="chat.tags?.includes(tag.name as any) ? {
+                                    backgroundColor: (tag.color || '#6366f1') + '33',
+                                    borderColor: tag.color || '#6366f1',
+                                    color: '#ffffff',
+                                } : {}"
+                                @click="toggleTag(tag)"
+                            >
+                                <span class="csp-tag-dot" :style="{ backgroundColor: tag.color || '#6366f1' }"></span>
+                                {{ tag.name }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- ── Assign ── -->
@@ -508,6 +684,162 @@ const avatarColor = (id: string): string => {
 }
 .csp-assign-select:focus { border-color: rgba(99, 102, 241, 0.4); }
 .csp-assign-select:disabled { opacity: 0.5; cursor: default; }
+
+/* ── Tags in sidebar ── */
+.csp-section-hdr {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+.csp-tag-toggle-btn {
+    background: transparent;
+    border: none;
+    color: #818cf8;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.csp-tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 28px;
+    align-items: center;
+}
+.csp-tag-chip {
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 10px;
+    border-width: 0.5px;
+    border-style: solid;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.csp-tag-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.csp-tag-del {
+    font-size: 13px;
+    cursor: pointer;
+    color: #ef4444;
+}
+.csp-tag-del:hover {
+    opacity: 0.8;
+}
+.csp-no-tags {
+    font-size: 12px;
+    color: #52525b;
+    font-style: italic;
+}
+.csp-tag-manager {
+    margin-top: 10px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.csp-create-tag-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.csp-create-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.csp-tag-input {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.4);
+    border: 0.5px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 6px 8px;
+    color: #ffffff;
+    font-size: 12px;
+    outline: none;
+}
+.csp-tag-input:focus {
+    border-color: #6366f1;
+}
+.csp-tag-add-btn {
+    background: #6366f1;
+    border: none;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.csp-tag-add-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.csp-palette-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+.csp-palette-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    padding: 0;
+}
+.csp-palette-dot.active {
+    border-color: #ffffff;
+    transform: scale(1.2);
+}
+.csp-available-tags {
+    margin-top: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.csp-avail-lbl {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #71717a;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.csp-avail-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-height: 120px;
+    overflow-y: auto;
+}
+.csp-avail-chip {
+    background: rgba(255, 255, 255, 0.05);
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+    color: #a1a1aa;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s;
+}
+.csp-avail-chip.active {
+    border-color: #6366f1;
+    color: #ffffff;
+}
 
 /* ── Toast ── */
 .csp-toast {

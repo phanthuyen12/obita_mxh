@@ -27,10 +27,13 @@ class ConversationPresenter
 
         return [
             'id' => $conversation->id,
+            'contact_id' => $conversation->contact_id,
             'contact' => [
+                'id' => $conversation->contact->id,
                 'display_name' => $conversation->contact->display_name,
                 'avatar_url' => $conversation->contact->avatar_url,
                 'phone' => $conversation->contact->phone,
+                'email' => $conversation->contact->email,
                 'notes' => $conversation->contact->notes,
             ],
             'channel' => ['provider' => $conversation->socialAccount?->platform?->network() ?? $conversation->channel?->provider->value ?? 'website'],

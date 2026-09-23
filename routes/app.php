@@ -269,6 +269,7 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
         Route::put('omnichat/livechat/contacts/{contact}', [LiveChatContactController::class, 'update'])->name('app.omnichat.livechat.contacts.update');
         Route::get('omnichat/livechat/tags', [LiveChatContactController::class, 'tags'])->name('app.omnichat.livechat.tags.index');
         Route::post('omnichat/livechat/tags', [LiveChatContactController::class, 'storeTag'])->name('app.omnichat.livechat.tags.store');
+        Route::delete('omnichat/livechat/tags/{tag}', [LiveChatContactController::class, 'destroyTag'])->name('app.omnichat.livechat.tags.destroy');
         Route::put('omnichat/livechat/contacts/{contact}/conversation-tags', [LiveChatContactController::class, 'updateConversationTags'])->name('app.omnichat.livechat.contacts.conversation-tags.update');
         Route::get('omnichat/website-chat', [WebsiteChatController::class, 'index'])->name('app.omnichat.website-chat.index');
         Route::post('omnichat/website-chat', [WebsiteChatController::class, 'store'])->name('app.omnichat.website-chat.store');

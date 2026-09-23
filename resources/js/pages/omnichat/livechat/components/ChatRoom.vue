@@ -2,10 +2,13 @@
 import { IonIcon } from '@ionic/vue';
 import axios from 'axios';
 import {
+    addOutline,
     attachOutline,
+    checkmark,
     checkmarkDone,
     chevronBack,
     closeCircle,
+    closeOutline,
     documentAttachOutline,
     happyOutline,
     micOutline,
@@ -13,6 +16,7 @@ import {
     pricetagOutline,
     send,
     sparklesOutline,
+    trashOutline,
 } from 'ionicons/icons';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
@@ -23,6 +27,7 @@ import type { Attachment, ChatItem, Message } from '../types/chat';
 const props = defineProps<{
     chat: ChatItem;
     sendError?: string;
+    allTags?: Array<{ id: string; name: string; color: string | null }>;
 }>();
 
 const emit = defineEmits<{
@@ -40,6 +45,10 @@ const emit = defineEmits<{
     (
         e: 'update-last-message',
         payload: { id: string; text: string; time: string },
+    ): void;
+    (
+        e: 'tag-created',
+        tag: { id: string; name: string; color: string | null },
     ): void;
 }>();
 
@@ -190,10 +199,23 @@ const sendMessage = () => {
     scrollToBottom();
 };
 
-// Logic Gắn Tag Cuộc Hội Thoại — đồng bộ với backend qua API
+// Logic Gắn & Tạo Tag Cuộc Hội Thoại — đồng bộ với backend qua API
 const showTagModal = ref(false);
-const availableConvTags = ref<Array<{ id: string; name: string }>>([]);
+const availableConvTags = ref<Array<{ id: string; name: string; color?: string | null }>>([]);
 const isSavingTags = ref(false);
+const isCreatingTag = ref(false);
+const newTagName = ref('');
+const PRESET_TAG_COLORS = [
+    '#6366f1', // Indigo
+    '#0ea5e9', // Sky blue
+    '#10b981', // Emerald
+    '#f59e0b', // Amber
+    '#ec4899', // Pink
+    '#8b5cf6', // Purple
+    '#ef4444', // Rose Red
+    '#14b8a6', // Teal
+];
+const newTagColor = ref(PRESET_TAG_COLORS[0]);
 
 type TagPayload = { id: string; name: string; color?: string | null };
 
@@ -203,19 +225,87 @@ const loadTags = async (): Promise<void> => {
         availableConvTags.value = (data.data as TagPayload[]).map((t) => ({
             id: t.id,
             name: t.name,
+            color: t.color || '#6366f1',
         }));
     } catch {
-        availableConvTags.value = [];
+        if (props.allTags && props.allTags.length > 0) {
+            availableConvTags.value = props.allTags.map((t) => ({
+                id: t.id,
+                name: t.name,
+                color: t.color || '#6366f1',
+            }));
+        }
     }
 };
 
+watch(
+    () => props.allTags,
+    (tags) => {
+        if (tags && tags.length > 0 && availableConvTags.value.length === 0) {
+            availableConvTags.value = tags.map((t) => ({
+                id: t.id,
+                name: t.name,
+                color: t.color || '#6366f1',
+            }));
+        }
+    },
+    { immediate: true },
+);
+
 onMounted(loadTags);
 
-const selectedTagIds = computed(() =>
-    (props.chat.tagIds ?? [])
-        .map((name) => availableConvTags.value.find((t) => t.name === name)?.id)
-        .filter((id): id is string => Boolean(id)),
-);
+const getTagColor = (tagName: string): string => {
+    const found = availableConvTags.value.find((t) => t.name === tagName);
+    return found?.color || '#6366f1';
+};
+
+const handleCreateTag = async (): Promise<void> => {
+    const name = newTagName.value.trim();
+    if (!name || isCreatingTag.value) return;
+    isCreatingTag.value = true;
+    try {
+        const { data } = await axios.post('/omnichat/livechat/tags', {
+            name,
+            color: newTagColor.value,
+        });
+        const created = data.tag as TagPayload;
+        const exists = availableConvTags.value.find((t) => t.id === created.id);
+        if (!exists) {
+            availableConvTags.value.push({
+                id: created.id,
+                name: created.name,
+                color: created.color || newTagColor.value,
+            });
+        }
+        // Auto-assign to current conversation if not already assigned
+        if (!props.chat.tags?.includes(created.name)) {
+            toggleConversationTag({ id: created.id, name: created.name });
+        }
+        emit('tag-created', created);
+        newTagName.value = '';
+    } catch (e: any) {
+        alert(e.response?.data?.message || 'Không tạo được thẻ. Thử lại sau.');
+    } finally {
+        isCreatingTag.value = false;
+    }
+};
+
+const handleDeleteTag = async (tag: { id: string; name: string }): Promise<void> => {
+    if (!confirm(`Bạn có chắc muốn xóa thẻ "${tag.name}" khỏi hệ thống?`)) return;
+    try {
+        await axios.delete(`/omnichat/livechat/tags/${tag.id}`);
+        availableConvTags.value = availableConvTags.value.filter((t) => t.id !== tag.id);
+        if (props.chat.tags?.includes(tag.name)) {
+            const nameIdx = props.chat.tags.indexOf(tag.name);
+            if (nameIdx > -1) props.chat.tags.splice(nameIdx, 1);
+            const idIdx = props.chat.tagIds?.indexOf(tag.id) ?? -1;
+            if (idIdx > -1 && props.chat.tagIds) props.chat.tagIds.splice(idIdx, 1);
+            persistConversationTags();
+        }
+    } catch {
+        alert('Không xóa được thẻ');
+    }
+};
 
 const toggleConversationTag = (tag: { id: string; name: string }) => {
     if (!props.chat.tags) props.chat.tags = [];
@@ -231,7 +321,7 @@ const toggleConversationTag = (tag: { id: string; name: string }) => {
     }
     if (idIdx > -1) {
         props.chat.tagIds.splice(idIdx, 1);
-    } else {
+    } else if (tag.id) {
         props.chat.tagIds.push(tag.id);
     }
 
@@ -239,19 +329,31 @@ const toggleConversationTag = (tag: { id: string; name: string }) => {
 };
 
 const persistConversationTags = async (): Promise<void> => {
-    if (!props.chat.contactId) return;
     isSavingTags.value = true;
     try {
-        const { data } = await axios.put(
-            `/omnichat/livechat/contacts/${props.chat.contactId}/conversation-tags`,
-            {
-                conversation_id: props.chat.id,
-                tag_ids: props.chat.tagIds ?? [],
-            },
-        );
-        const serverTags = (data.tags as TagPayload[]).map((t) => t.name);
-        props.chat.tags = serverTags as ChatItem['tags'];
-        props.chat.tagIds = (data.tags as TagPayload[]).map((t) => t.id);
+        let serverTags: TagPayload[] = [];
+        if (props.chat.contactId) {
+            const { data } = await axios.put(
+                `/omnichat/livechat/contacts/${props.chat.contactId}/conversation-tags`,
+                {
+                    conversation_id: props.chat.id,
+                    tag_ids: props.chat.tagIds ?? [],
+                },
+            );
+            serverTags = data.tags as TagPayload[];
+        } else if (!props.chat.id.startsWith('contact_')) {
+            const { data } = await axios.put(
+                `/omnichat/conversations/${props.chat.id}/tags`,
+                {
+                    tag_ids: props.chat.tagIds ?? [],
+                },
+            );
+            serverTags = data.tags as TagPayload[];
+        }
+        if (serverTags && serverTags.length >= 0) {
+            props.chat.tags = serverTags.map((t) => t.name) as ChatItem['tags'];
+            props.chat.tagIds = serverTags.map((t) => t.id);
+        }
     } catch {
         // Keep optimistic state; reload restores server truth on next open.
     } finally {
@@ -383,10 +485,23 @@ const persistConversationTags = async (): Promise<void> => {
 
         <!-- Dải hiển thị Tags cuộc hội thoại đang gắn -->
         <div v-if="chat.tags && chat.tags.length > 0" class="chat-tags-subbar">
-            <span class="tags-subbar-label">Tags:</span>
+            <span class="tags-subbar-label">Thẻ:</span>
             <div class="tags-pill-scroll">
-                <span v-for="t in chat.tags" :key="t" class="conv-tag-pill">
-                    🏷️ {{ t }}
+                <span
+                    v-for="t in chat.tags"
+                    :key="t"
+                    class="conv-tag-pill"
+                    :style="{
+                        backgroundColor: getTagColor(t) + '22',
+                        borderColor: getTagColor(t) + '55',
+                        color: getTagColor(t),
+                    }"
+                >
+                    <span
+                        class="conv-tag-dot"
+                        :style="{ backgroundColor: getTagColor(t) }"
+                    ></span>
+                    {{ t }}
                     <ion-icon
                         :icon="closeCircle"
                         class="remove-conv-tag"
@@ -577,7 +692,7 @@ const persistConversationTags = async (): Promise<void> => {
             </button>
         </footer>
 
-        <!-- MODAL GẮN TAG CUỘC HỘI THOẠI (BOTTOM SHEET) -->
+        <!-- MODAL GẮN & TẠO THẺ CUỘC HỘI THOẠI (BOTTOM SHEET) -->
         <div
             v-if="showTagModal"
             class="conv-tag-backdrop"
@@ -587,7 +702,7 @@ const persistConversationTags = async (): Promise<void> => {
                 <div class="sheet-drag-handle"></div>
                 <div class="conv-sheet-header">
                     <div class="conv-sheet-title-col">
-                        <span class="sheet-main-title">Gắn Tag Hội Thoại</span>
+                        <span class="sheet-main-title">Gắn & Tạo Thẻ Phân Loại</span>
                         <span class="sheet-sub-title">{{ chat.name }}</span>
                     </div>
                     <button
@@ -599,22 +714,92 @@ const persistConversationTags = async (): Promise<void> => {
                 </div>
 
                 <div class="conv-sheet-body">
-                    <span class="select-label"
-                        >Chạm để chọn / bỏ chọn tag phân loại:</span
-                    >
-                    <div class="conv-tags-grid">
-                        <button
+                    <!-- KHU VỰC TẠO THẺ MỚI TRỰC TIẾP -->
+                    <div class="create-tag-box">
+                        <span class="create-tag-box-title">Tạo thẻ mới:</span>
+                        <div class="create-tag-input-row">
+                            <span
+                                class="tag-color-preview-badge"
+                                :style="{ backgroundColor: newTagColor }"
+                            ></span>
+                            <input
+                                v-model="newTagName"
+                                type="text"
+                                class="new-tag-input"
+                                placeholder="Tên thẻ mới (vd: Chốt đơn, Khách VIP...)"
+                                maxlength="40"
+                                @keyup.enter="handleCreateTag"
+                            />
+                            <button
+                                class="create-tag-action-btn"
+                                :disabled="!newTagName.trim() || isCreatingTag"
+                                @click="handleCreateTag"
+                            >
+                                <ion-icon v-if="!isCreatingTag" :icon="addOutline"></ion-icon>
+                                <span>{{ isCreatingTag ? '...' : '+ Thêm thẻ' }}</span>
+                            </button>
+                        </div>
+
+                        <!-- Bảng chọn màu sắc cho thẻ mới -->
+                        <div class="color-palette-bar">
+                            <span class="color-palette-label">Màu thẻ:</span>
+                            <div class="color-palette-dots">
+                                <button
+                                    v-for="c in PRESET_TAG_COLORS"
+                                    :key="c"
+                                    type="button"
+                                    class="palette-dot-btn"
+                                    :class="{ active: newTagColor === c }"
+                                    :style="{ backgroundColor: c }"
+                                    @click="newTagColor = c"
+                                ></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tags-list-section-header">
+                        <span class="select-label">Chạm để gắn/bỏ gắn thẻ cho khách hàng này:</span>
+                        <span class="tags-count-badge">{{ availableConvTags.length }} thẻ</span>
+                    </div>
+
+                    <div v-if="availableConvTags.length === 0" class="no-tags-prompt">
+                        Chưa có thẻ nào. Hãy nhập tên ở trên và nhấn "+ Thêm thẻ" để tạo thẻ đầu tiên!
+                    </div>
+
+                    <div v-else class="conv-tags-grid">
+                        <div
                             v-for="tag in availableConvTags"
                             :key="tag.id"
                             :class="[
                                 'tag-select-pill',
                                 { active: chat.tags?.includes(tag.name) },
                             ]"
+                            :style="chat.tags?.includes(tag.name) ? {
+                                backgroundColor: (tag.color || '#6366f1') + '2a',
+                                borderColor: tag.color || '#6366f1',
+                                color: '#ffffff',
+                                boxShadow: '0 2px 10px ' + (tag.color || '#6366f1') + '40'
+                            } : {}"
                             @click="toggleConversationTag(tag)"
                         >
-                            <span class="tag-bullet">•</span>
-                            {{ tag.name }}
-                        </button>
+                            <span
+                                class="tag-bullet"
+                                :style="{ backgroundColor: tag.color || '#6366f1' }"
+                            ></span>
+                            <span class="tag-text">{{ tag.name }}</span>
+                            <ion-icon
+                                v-if="chat.tags?.includes(tag.name)"
+                                :icon="checkmark"
+                                class="tag-check-icon"
+                            ></ion-icon>
+                            <button
+                                class="delete-tag-btn"
+                                title="Xóa thẻ khỏi hệ thống"
+                                @click.stop="handleDeleteTag(tag)"
+                            >
+                                <ion-icon :icon="closeOutline"></ion-icon>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -915,33 +1100,51 @@ const persistConversationTags = async (): Promise<void> => {
 }
 
 .conv-tag-pill {
-    background: rgba(56, 189, 248, 0.15);
-    color: #38bdf8;
-    border: 0.5px solid rgba(56, 189, 248, 0.3);
     font-size: 11px;
     font-weight: 600;
-    padding: 2px 8px;
+    padding: 3px 8px;
     border-radius: 10px;
-    display: flex;
+    border-width: 0.5px;
+    border-style: solid;
+    display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
     white-space: nowrap;
+    transition: all 0.15s;
+}
+
+.conv-tag-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
 }
 
 .remove-conv-tag {
     font-size: 13px;
     cursor: pointer;
     color: #ef4444;
+    transition: opacity 0.15s;
+}
+.remove-conv-tag:hover {
+    opacity: 0.75;
 }
 
 .add-more-tag-btn {
-    background: transparent;
-    border: none;
-    color: #2a8bf2;
-    font-size: 11.5px;
-    font-weight: 600;
+    background: rgba(99, 102, 241, 0.15);
+    border: 0.5px solid rgba(99, 102, 241, 0.35);
+    color: #a5b4fc;
+    font-size: 11px;
+    font-weight: 700;
     cursor: pointer;
     white-space: nowrap;
+    padding: 3px 10px;
+    border-radius: 10px;
+    transition: all 0.15s;
+}
+.add-more-tag-btn:hover {
+    background: rgba(99, 102, 241, 0.25);
+    color: #ffffff;
 }
 
 /* Bottom Sheet Modal Gắn Tag */
@@ -962,15 +1165,27 @@ const persistConversationTags = async (): Promise<void> => {
 
 .conv-tag-sheet {
     width: 100%;
-    background: #181b22;
-    border-top-left-radius: 22px;
-    border-top-right-radius: 22px;
+    max-height: 85vh;
+    background: #141720;
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
     border: 0.5px solid rgba(255, 255, 255, 0.12);
-    padding: 10px 16px 24px;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.6);
+    padding: 10px 16px 28px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    animation: slideUp 0.2s ease-out;
+    gap: 14px;
+    animation: slideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow-y: auto;
+}
+
+.sheet-drag-handle {
+    width: 36px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    align-self: center;
+    margin-bottom: 2px;
 }
 
 .conv-sheet-header {
@@ -978,77 +1193,256 @@ const persistConversationTags = async (): Promise<void> => {
     justify-content: space-between;
     align-items: center;
     border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
-    padding-bottom: 8px;
+    padding-bottom: 10px;
 }
 
 .conv-sheet-title-col {
     display: flex;
     flex-direction: column;
+    gap: 2px;
 }
 
 .sheet-main-title {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 700;
     color: #ffffff;
+    letter-spacing: -0.2px;
 }
 
 .sheet-sub-title {
     font-size: 12px;
-    color: #8e8e93;
+    color: #94a3b8;
 }
 
 .sheet-done-btn {
-    background: #2a8bf2;
+    background: #6366f1;
     border: none;
     color: #ffffff;
     font-size: 13px;
     font-weight: 700;
-    padding: 4px 14px;
-    border-radius: 14px;
+    padding: 6px 16px;
+    border-radius: 16px;
     cursor: pointer;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+    transition: all 0.15s;
+}
+.sheet-done-btn:active {
+    transform: scale(0.96);
 }
 
 .conv-sheet-body {
     display: flex;
     flex-direction: column;
+    gap: 14px;
+}
+
+/* Khu vực tạo thẻ mới trực tiếp */
+.create-tag-box {
+    background: rgba(26, 30, 42, 0.7);
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
     gap: 10px;
+}
+
+.create-tag-box-title {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #818cf8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.create-tag-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tag-color-preview-badge {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 8px currentColor;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.new-tag-input {
+    flex: 1;
+    background: rgba(15, 17, 24, 0.8);
+    border: 0.5px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+    padding: 8px 12px;
+    color: #ffffff;
+    font-size: 13.5px;
+    outline: none;
+    transition: all 0.15s;
+}
+.new-tag-input:focus {
+    border-color: #6366f1;
+    background: rgba(15, 17, 24, 1);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+}
+.new-tag-input::placeholder {
+    color: #64748b;
+}
+
+.create-tag-action-btn {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border: none;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 8px 14px;
+    border-radius: 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+    transition: all 0.15s;
+}
+.create-tag-action-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+.create-tag-action-btn:not(:disabled):active {
+    transform: scale(0.96);
+}
+
+.color-palette-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 2px;
+}
+
+.color-palette-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.color-palette-dots {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.palette-dot-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.15s;
+}
+.palette-dot-btn.active {
+    transform: scale(1.18);
+    border-color: #ffffff;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+}
+
+.tags-list-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 4px;
 }
 
 .select-label {
     font-size: 12px;
-    color: #a1a1aa;
+    font-weight: 600;
+    color: #94a3b8;
+}
+
+.tags-count-badge {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.no-tags-prompt {
+    font-size: 13px;
+    color: #64748b;
+    text-align: center;
+    padding: 18px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    border: 0.5px dashed rgba(255, 255, 255, 0.1);
 }
 
 .conv-tags-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+    padding-right: 2px;
 }
 
 .tag-select-pill {
-    background: #232730;
+    background: rgba(26, 30, 42, 0.85);
     border: 0.5px solid rgba(255, 255, 255, 0.12);
-    color: #d1d5db;
+    color: #e2e8f0;
     font-size: 13px;
     font-weight: 600;
-    padding: 6px 14px;
+    padding: 6px 12px;
     border-radius: 16px;
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
     transition: all 0.15s;
+    user-select: none;
 }
-
-.tag-select-pill.active {
-    background: #2563eb;
-    color: #ffffff;
-    border-color: #3b82f6;
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+.tag-select-pill:active {
+    transform: scale(0.97);
 }
 
 .tag-bullet {
-    font-size: 16px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.tag-text {
+    flex: 1;
+}
+
+.tag-check-icon {
+    font-size: 14px;
+    color: #38bdf8;
+    margin-left: 2px;
+}
+
+.delete-tag-btn {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-size: 13px;
+    padding: 2px;
+    margin-left: 2px;
+    cursor: pointer;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s;
+}
+.delete-tag-btn:hover {
+    color: #f87171;
 }
 
 .avatar-orange-bg {
@@ -1083,64 +1477,76 @@ const persistConversationTags = async (): Promise<void> => {
     font-size: 20px;
 }
 
-/* 2. Phần Tin Nhắn Cuộn Tự Nhiên (Scrollable Area) */
+/* 2. Phần Tin Nhắn Cuộn Tự Nhiên (Scrollable Area) - Nền Chat Ambient Mesh Cao Cấp */
 .chat-scroll-area {
     flex: 1;
     overflow-y: auto;
     position: relative;
     overscroll-behavior-y: contain;
-    background-color: #0b0c10;
+    background-color: #07080c;
+    background-image:
+        radial-gradient(ellipse 70% 60% at 15% 10%, rgba(99, 102, 241, 0.14) 0%, transparent 65%),
+        radial-gradient(ellipse 65% 55% at 85% 85%, rgba(168, 85, 247, 0.12) 0%, transparent 65%),
+        radial-gradient(ellipse 55% 45% at 50% 50%, rgba(14, 165, 233, 0.06) 0%, transparent 60%),
+        linear-gradient(180deg, #07080c 0%, #0d0f18 50%, #08090e 100%);
+    background-attachment: fixed;
 }
 
-/* Hình nền hoa văn Telegram (Doodle pattern) chuẩn ảnh */
+/* Hình nền hoa văn Vector Telegram cao cấp (Doodle pattern tinh xảo) */
 .doodle-pattern-overlay {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    opacity: 0.16;
-    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.4' fill-rule='evenodd'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 22h18a4 4 0 0 1 4 4v12a4 4 0 0 1-4 4h-8l-6 5v-5h-4a4 4 0 0 1-4-4V26a4 4 0 0 1 4-4z'/%3E%3Ccircle cx='20' cy='32' r='1' fill='%23ffffff'/%3E%3Ccircle cx='24' cy='32' r='1' fill='%23ffffff'/%3E%3Ccircle cx='28' cy='32' r='1' fill='%23ffffff'/%3E%3Cpath d='M85 20l24 9-24 9 5-9-5-9z'/%3E%3Cpath d='M85 29l10 0'/%3E%3Cpath d='M25 80l2 4 4 2-4 2-2 4-2-4-4-2 4-2 2-4z'/%3E%3Cpath d='M95 75c-3-4-8-2-8 2 0 4 7 8 8 9 1-1 8-5 8-9 0-4-5-6-8-2z'/%3E%3Ccircle cx='55' cy='18' r='1.5' fill='%23ffffff'/%3E%3Ccircle cx='62' cy='25' r='1' fill='%23ffffff'/%3E%3Ccircle cx='105' cy='48' r='1.5' fill='%23ffffff'/%3E%3Ccircle cx='45' cy='95' r='1.5' fill='%23ffffff'/%3E%3Ccircle cx='80' cy='105' r='1' fill='%23ffffff'/%3E%3Ccircle cx='12' cy='105' r='1' fill='%23ffffff'/%3E%3Ccircle cx='60' cy='70' r='9'/%3E%3Ccircle cx='57' cy='68' r='1' fill='%23ffffff'/%3E%3Ccircle cx='63' cy='68' r='1' fill='%23ffffff'/%3E%3Cpath d='M56 73c1 2 3 2 4 2s3 0 4-2'/%3E%3C/g%3E%3C/svg%3E");
     pointer-events: none;
 }
 
 .messages-inner-wrapper {
     position: relative;
     z-index: 2;
-    padding: 14px 12px 24px;
+    padding: 16px 14px 28px;
     display: flex;
     flex-direction: column;
-    gap: 7px;
+    gap: 8px;
 }
 
 /* Dividers */
 .system-divider-row {
     display: flex;
     justify-content: center;
-    margin: 6px 0;
+    margin: 8px 0;
 }
 .system-pill-badge {
-    background: rgba(30, 32, 38, 0.85);
-    color: #ffffff;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 3px 14px;
-    border-radius: 14px;
-    backdrop-filter: blur(10px);
+    background: rgba(22, 25, 35, 0.85);
+    color: #e4e4e7;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 16px;
+    border-radius: 16px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.2px;
 }
 
 .system-divider-unread-row {
     width: 100%;
-    background: rgba(22, 24, 30, 0.88);
+    background: rgba(22, 25, 34, 0.88);
     border-top: 0.5px solid rgba(255, 255, 255, 0.08);
     border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
     text-align: center;
-    padding: 4px 0;
-    margin: 8px 0;
+    padding: 5px 0;
+    margin: 10px 0;
 }
 .unread-banner-text {
     font-size: 12px;
-    color: #8e8e93;
+    font-weight: 600;
+    color: #94a3b8;
+    letter-spacing: 0.3px;
 }
 
 /* Message Rows */
@@ -1155,29 +1561,35 @@ const persistConversationTags = async (): Promise<void> => {
     justify-content: flex-end;
 }
 
-/* Message Bubbles */
+/* Message Bubbles - Thiết kế Glassmorphism Tinh Xảo */
 .msg-bubble {
     max-width: 82%;
-    border-radius: 16px;
-    padding: 7px 12px 6px;
+    border-radius: 18px;
+    padding: 8px 14px 7px;
     position: relative;
-    font-size: 15px;
-    line-height: 1.32;
+    font-size: 14.5px;
+    line-height: 1.4;
     word-break: break-word;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    letter-spacing: -0.01em;
 }
 
-/* Tin nhắn đối phương: màu nâu xám tối chuẩn ảnh */
+/* Tin nhắn đối phương: Dark Glass sang trọng */
 .bubble-dark {
-    background-color: #232225;
-    color: #ffffff;
+    background: rgba(26, 29, 39, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    color: #f4f4f5;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
     border-bottom-left-radius: 4px;
 }
 
-/* Tin nhắn của mình: màu tím gradient chuẩn ảnh */
+/* Tin nhắn của mình: Gradient Tím - Indigo rực rỡ với ánh phát quang */
 .bubble-purple {
-    background: #8b3aed;
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 45%, #7c3aed 100%);
     color: #ffffff;
+    border: 0.5px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.25);
     border-bottom-right-radius: 4px;
 }
 
@@ -1188,22 +1600,23 @@ const persistConversationTags = async (): Promise<void> => {
 .bubble-meta {
     display: inline-flex;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
     float: right;
-    margin-left: 8px;
+    margin-left: 10px;
     margin-top: 4px;
 }
 
 .bubble-time {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.55);
+    color: rgba(255, 255, 255, 0.65);
+    font-variant-numeric: tabular-nums;
 }
 
 .bubble-ticks {
     display: inline-flex;
     align-items: center;
     font-size: 14px;
-    color: rgba(255, 255, 255, 0.85);
+    color: #38bdf8;
 }
 
 /* Attachments */

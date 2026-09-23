@@ -187,12 +187,31 @@ class ContactController extends Controller
             'color' => ['nullable', 'string', 'max:16'],
         ]);
 
-        $tag = OmnichatTag::query()->create([
-            'workspace_id' => $workspace->id,
-            ...$validated,
-        ]);
+        $tag = OmnichatTag::query()->firstOrCreate(
+            [
+                'workspace_id' => $workspace->id,
+                'name' => trim($validated['name']),
+            ],
+            [
+                'color' => $validated['color'] ?? '#6366f1',
+            ]
+        );
 
         return response()->json(['tag' => $tag->only(['id', 'name', 'color'])], 201);
+    }
+
+    /**
+     * Delete a tag.
+     */
+    public function destroyTag(Request $request, OmnichatTag $tag): JsonResponse
+    {
+        $workspace = $request->user()->currentWorkspace;
+        $this->authorize('view', $workspace);
+        abort_unless($tag->workspace_id === $workspace->id, 404);
+
+        $tag->delete();
+
+        return response()->json(['success' => true]);
     }
 
     /**
