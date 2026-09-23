@@ -10,21 +10,24 @@ import {
   pin,
   people,
   chatbubbles,
-  powerOutline,
-  addCircleOutline,
   closeOutline,
   statsChart,
+  notificationsOutline,
+  logOutOutline,
+  checkmarkDoneOutline,
 } from 'ionicons/icons'
 import { computed, onMounted, ref } from 'vue'
 
-const page = usePage()
-const authUser = computed(() => page.props.auth?.user ?? { name: '', email: '' })
-
+import dayjs from '@/dayjs'
 import { store as storeMessage } from '@/actions/App/Http/Controllers/App/Omnichat/MessageController'
 import ConversationReadController from '@/actions/App/Http/Controllers/App/Omnichat/ConversationReadController'
-import dayjs from '@/dayjs'
 import { logout } from '@/routes'
+import { archiveAll, index as notificationsIndex, read as notificationRead, readAll as notificationsReadAll } from '@/routes/app/notifications'
 import { index as livechatConversations, show as livechatConversation } from '@/routes/app/omnichat/livechat/conversations'
+
+const page = usePage()
+const authUser = computed(() => page.props.auth?.user ?? { name: '', email: '' })
+const currentWorkspaceId = computed(() => page.props.auth?.currentWorkspace?.id ?? null)
 
 import ChatRoom from './livechat/components/ChatRoom.vue'
 import CustomersPage from './livechat/components/CustomersPage.vue'
@@ -199,6 +202,103 @@ for (const channel of props.connectedChannels) {
   )
 }
 
+// ── Thông báo realtime (Notification) ────────────────────────────────
+type AppNotification = {
+  id: string
+  title: string
+  body: string | null
+  type: string
+  read_at: string | null
+  created_at: string
+}
+
+const notifications = ref<AppNotification[]>([])
+const unreadNotificationCount = ref(0)
+const showNotificationPanel = ref(false)
+
+const notificationChannelName = computed(() =>
+  currentWorkspaceId.value && authUser.value?.id
+    ? `workspace.${currentWorkspaceId.value}.user.${authUser.value.id}`
+    : null,
+)
+
+const loadNotifications = async (): Promise<void> => {
+  try {
+    const response = await axios.get(notificationsIndex.url())
+    notifications.value = (response.data.data ?? response.data.notifications ?? []) as AppNotification[]
+    unreadNotificationCount.value = notifications.value.filter((n) => !n.read_at).length
+  } catch {
+    // Non-blocking: notifications should never break the page.
+  }
+}
+
+const markNotificationRead = async (notification: AppNotification): Promise<void> => {
+  if (notification.read_at) return
+  try {
+    await axios.put(notificationRead.url(notification.id))
+    notification.read_at = new Date().toISOString()
+    unreadNotificationCount.value = Math.max(0, unreadNotificationCount.value - 1)
+  } catch {
+    // Ignore.
+  }
+}
+
+const markAllNotificationsRead = async (): Promise<void> => {
+  try {
+    await axios.post(notificationsReadAll.url())
+    notifications.value = notifications.value.map((n) => ({ ...n, read_at: n.read_at ?? new Date().toISOString() }))
+    unreadNotificationCount.value = 0
+  } catch {
+    // Ignore.
+  }
+}
+
+const archiveAllNotifications = async (): Promise<void> => {
+  try {
+    await axios.post(archiveAll.url())
+    notifications.value = []
+    unreadNotificationCount.value = 0
+  } catch {
+    // Ignore.
+  }
+}
+
+const notificationTime = (iso: string): string => {
+  const value = dayjs(iso)
+  return value.isSame(dayjs(), 'day') ? value.format('HH:mm') : value.format('DD/MM')
+}
+
+onMounted(loadNotifications)
+
+// Realtime: nhận thông báo mới qua WebSocket.
+if (notificationChannelName.value) {
+  useEcho<{ notification: AppNotification }>(
+    notificationChannelName.value,
+    '.notification.created',
+    ({ notification }) => {
+      const exists = notifications.value.some((n) => n.id === notification.id)
+      if (exists) return
+
+      notifications.value = [notification, ...notifications.value]
+      if (!notification.read_at) {
+        unreadNotificationCount.value += 1
+      }
+    },
+  )
+}
+
+// Đóng panel khi chạm ngoài.
+const closeNotificationPanel = (event: MouseEvent): void => {
+  const target = event.target as HTMLElement
+  if (!target.closest('.notification-panel') && !target.closest('.notification-bell-btn')) {
+    showNotificationPanel.value = false
+  }
+}
+
+const handleLogout = (): void => {
+  router.post(logout.url())
+}
+
 const filteredChats = computed(() =>
   chats.value.filter((chat) => {
     const matchFolder =
@@ -285,10 +385,6 @@ const handleUpdateLastMessage = ({ id, text, time }: { id: string; text: string;
   }
 }
 
-const handleLogout = (): void => {
-  router.post(logout.url())
-}
-
 type CustomerLike = {
   id: string
   name: string
@@ -354,14 +450,14 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
 
         <template v-else-if="activeTab === 'settings'">
           <ProfilePage
-            :user="{ name: currentUser.name, avatar_url: currentUser.avatar_url }"
+            :user="{ name: props.currentUser.name, avatar_url: props.currentUser.avatar_url }"
             :channels="props.connectedChannels"
             @logout="handleLogout"
           />
         </template>
 
         <template v-else>
-          <div class="top-sticky-wrapper">
+          <div class="top-sticky-wrapper" @click="closeNotificationPanel">
             <header class="telegram-header">
               <button class="header-btn-text">Sửa</button>
               <div class="header-title">
@@ -373,15 +469,64 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
                 <span class="title-text">Chat</span>
               </div>
               <div class="header-actions">
-                <button class="action-circle-btn" title="Trạng thái">
-                  <ion-icon :icon="powerOutline" class="action-icon-small"></ion-icon>
+                <!-- Chuông thông báo realtime -->
+                <button
+                  class="action-circle-btn notification-bell-btn"
+                  title="Thông báo"
+                  @click.stop="showNotificationPanel = !showNotificationPanel"
+                >
+                  <ion-icon :icon="notificationsOutline" class="action-icon-small"></ion-icon>
+                  <span v-if="unreadNotificationCount > 0" class="notification-badge">{{ unreadNotificationCount > 99 ? '99+' : unreadNotificationCount }}</span>
                 </button>
-                <button class="action-circle-btn" title="Thêm">
-                  <ion-icon :icon="addCircleOutline" class="action-icon-small"></ion-icon>
+                <button class="action-circle-btn" title="Đăng xuất" @click.stop="handleLogout">
+                  <ion-icon :icon="logOutOutline" class="action-icon-small"></ion-icon>
                 </button>
                 <button class="action-icon-btn" title="Soạn tin">
                   <ion-icon :icon="createOutline"></ion-icon>
                 </button>
+              </div>
+
+              <!-- Panel thông báo -->
+              <div v-if="showNotificationPanel" class="notification-panel" @click.stop>
+                <div class="notification-panel-header">
+                  <span class="notification-panel-title">Thông báo</span>
+                  <div class="notification-panel-actions">
+                    <button
+                      v-if="unreadNotificationCount > 0"
+                      class="notification-panel-btn"
+                      title="Đánh dấu tất cả đã đọc"
+                      @click="markAllNotificationsRead"
+                    >
+                      <ion-icon :icon="checkmarkDoneOutline"></ion-icon>
+                    </button>
+                    <button
+                      class="notification-panel-btn"
+                      title="Xóa tất cả"
+                      @click="archiveAllNotifications"
+                    >
+                      <ion-icon :icon="closeOutline"></ion-icon>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="notification-list">
+                  <div
+                    v-for="notification in notifications.slice(0, 30)"
+                    :key="notification.id"
+                    :class="['notification-item', { unread: !notification.read_at }]"
+                    @click="markNotificationRead(notification)"
+                  >
+                    <div class="notification-item-top">
+                      <span class="notification-item-title">{{ notification.title }}</span>
+                      <span class="notification-item-time">{{ notificationTime(notification.created_at) }}</span>
+                    </div>
+                    <p v-if="notification.body" class="notification-item-body">{{ notification.body }}</p>
+                  </div>
+
+                  <div v-if="notifications.length === 0" class="notification-empty">
+                    Chưa có thông báo nào
+                  </div>
+                </div>
               </div>
             </header>
 
