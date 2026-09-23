@@ -18,6 +18,9 @@
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  overflow-x: hidden;
+  touch-action: pan-y;
+  overscroll-behavior-x: none;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
   color: #fff;
   box-shadow: 0 20px 60px rgba(0,0,0,.8);

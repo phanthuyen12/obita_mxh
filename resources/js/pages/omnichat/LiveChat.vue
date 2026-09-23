@@ -1307,3 +1307,24 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
 </template>
 
 <style scoped src="./livechat/theme/livechat.css"></style>
+
+<style>
+/* Khóa cứng cuộn ngang/kéo ngang đàn hồi trên điện thoại di động */
+html,
+body {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  touch-action: pan-y;
+  overscroll-behavior-x: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+ion-app {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  touch-action: pan-y;
+  overscroll-behavior-x: none;
+}
+</style>

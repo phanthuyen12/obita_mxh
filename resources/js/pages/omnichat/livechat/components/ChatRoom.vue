@@ -364,6 +364,11 @@ const persistConversationTags = async (): Promise<void> => {
 
 <template>
     <div class="chat-room-page">
+        <!-- Nền chat Ambient Mesh + Doodle Vector cố định 100% không trôi khi cuộn -->
+        <div class="chat-wallpaper-fixed" aria-hidden="true">
+            <div class="doodle-pattern-overlay"></div>
+        </div>
+
         <!-- 1. Header CỐ ĐỊNH CỨNG chuẩn ảnh: Nút pill "< 69067", Title pill "KHOA LOL / hoạt động 1 phút trước", Avatar tròn -->
         <header class="chat-header-ios">
             <!-- Nút Back kiểu iOS Capsule: < [badge] -->
@@ -404,15 +409,6 @@ const persistConversationTags = async (): Promise<void> => {
             </div>
 
             <div class="header-right-actions">
-                <!-- Nút xem thông tin khách -->
-                <button
-                    class="profile-info-btn"
-                    title="Thông tin khách hàng"
-                    @click="emit('open-profile')"
-                >
-                    <ion-icon :icon="personCircleOutline"></ion-icon>
-                </button>
-
                 <!-- Nút bật/tắt AI Bot cho riêng hội thoại này -->
                 <button
                     :class="['ai-toggle-btn', { paused: aiPaused }]"
@@ -436,8 +432,14 @@ const persistConversationTags = async (): Promise<void> => {
                     <ion-icon :icon="pricetagOutline"></ion-icon>
                 </button>
 
-                <!-- Avatar tròn góc phải có ảnh cam hoặc theo chat -->
-                <div class="header-avatar-circle" @click="showTagModal = true">
+                <!-- Avatar tròn góc phải: chạm để mở thông tin khách hàng -->
+                <div
+                    class="header-avatar-circle"
+                    title="Thông tin khách hàng"
+                    role="button"
+                    tabindex="0"
+                    @click="emit('open-profile')"
+                >
                     <div
                         v-if="chat.avatarType === 'text'"
                         class="avatar-text-fill"
@@ -522,10 +524,8 @@ const persistConversationTags = async (): Promise<void> => {
             </button>
         </div>
 
-        <!-- 2. Phần Tin Nhắn Cuộn Tự Nhiên (Scrollable Area với Telegram Doodle Pattern) -->
+        <!-- 2. Phần Tin Nhắn Cuộn Tự Nhiên (Scrollable Area) -->
         <div ref="messagesContainerRef" class="chat-scroll-area">
-            <div class="doodle-pattern-overlay"></div>
-
             <div class="messages-inner-wrapper">
                 <template v-for="msg in messages" :key="msg.id">
                     <!-- Divider "Hôm nay" -->
@@ -814,11 +814,17 @@ const persistConversationTags = async (): Promise<void> => {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #0b0e14;
+    width: 100%;
+    max-width: 100%;
+    background-color: #07080c;
     display: flex;
     flex-direction: column;
     z-index: 2000;
     overflow: hidden;
+    overflow-x: hidden;
+    touch-action: pan-y;
+    overscroll-behavior-x: none;
+    box-sizing: border-box;
     font-family:
         -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue',
         sans-serif;
@@ -830,13 +836,16 @@ const persistConversationTags = async (): Promise<void> => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: calc(8px + max(env(safe-area-inset-top, 0px), 44px)) 12px 8px;
-    background: rgba(18, 20, 26, 0.95);
+    padding: calc(6px + max(env(safe-area-inset-top, 0px), 44px)) 10px 6px;
+    background: rgba(18, 20, 26, 0.96);
     backdrop-filter: blur(25px);
     -webkit-backdrop-filter: blur(25px);
     border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
-    min-height: 52px;
-    box-sizing: content-box;
+    min-height: 50px;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
     flex-shrink: 0;
     z-index: 100;
 }
@@ -946,7 +955,7 @@ const persistConversationTags = async (): Promise<void> => {
 .header-right-actions {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     flex-shrink: 0;
 }
 
@@ -962,6 +971,7 @@ const persistConversationTags = async (): Promise<void> => {
     justify-content: center;
     font-size: 16px;
     cursor: pointer;
+    flex-shrink: 0;
 }
 
 /* Nút bật/tắt AI Bot từng hội thoại */
@@ -977,6 +987,7 @@ const persistConversationTags = async (): Promise<void> => {
     justify-content: center;
     font-size: 16px;
     cursor: pointer;
+    flex-shrink: 0;
     transition:
         background 0.2s,
         color 0.2s,
@@ -996,26 +1007,6 @@ const persistConversationTags = async (): Promise<void> => {
 
 .ai-toggle-btn:active {
     transform: scale(0.92);
-}
-
-.profile-info-btn {
-    background: rgba(99, 102, 241, 0.12);
-    color: #818cf8;
-    border: 0.5px solid rgba(99, 102, 241, 0.3);
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background 0.2s, opacity 0.2s;
-}
-
-.profile-info-btn:active {
-    transform: scale(0.92);
-    background: rgba(99, 102, 241, 0.22);
 }
 
 /* Thanh trạng thái AI dưới header */
@@ -1056,35 +1047,45 @@ const persistConversationTags = async (): Promise<void> => {
 
 /* Avatar tròn góc phải */
 .header-avatar-circle {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     overflow: hidden;
     background-color: #2c2c2e;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    border: 1.5px solid rgba(255, 255, 255, 0.18);
     flex-shrink: 0;
     cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s;
+}
+.header-avatar-circle:active {
+    transform: scale(0.92);
+    border-color: rgba(99, 102, 241, 0.6);
 }
 
 /* Dải hiển thị Tags cuộc hội thoại */
 .chat-tags-subbar {
     background: rgba(18, 20, 26, 0.98);
     border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
-    padding: 6px 12px;
+    padding: 6px 10px;
     display: flex;
     align-items: center;
     gap: 8px;
     z-index: 90;
     flex-shrink: 0;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .tags-subbar-label {
     font-size: 11.5px;
     font-weight: 700;
     color: #71717a;
+    flex-shrink: 0;
 }
 
 .tags-pill-scroll {
@@ -1094,6 +1095,8 @@ const persistConversationTags = async (): Promise<void> => {
     overflow-x: auto;
     scrollbar-width: none;
     flex: 1;
+    min-width: 0;
+    -webkit-overflow-scrolling: touch;
 }
 .tags-pill-scroll::-webkit-scrollbar {
     display: none;
@@ -1477,40 +1480,57 @@ const persistConversationTags = async (): Promise<void> => {
     font-size: 20px;
 }
 
-/* 2. Phần Tin Nhắn Cuộn Tự Nhiên (Scrollable Area) - Nền Chat Ambient Mesh Cao Cấp */
-.chat-scroll-area {
-    flex: 1;
-    overflow-y: auto;
-    position: relative;
-    overscroll-behavior-y: contain;
+/* Nền chat cố định toàn khung nhìn — không bị mất/trôi khi cuộn tin nhắn */
+.chat-wallpaper-fixed {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
     background-color: #07080c;
     background-image:
-        radial-gradient(ellipse 70% 60% at 15% 10%, rgba(99, 102, 241, 0.14) 0%, transparent 65%),
-        radial-gradient(ellipse 65% 55% at 85% 85%, rgba(168, 85, 247, 0.12) 0%, transparent 65%),
-        radial-gradient(ellipse 55% 45% at 50% 50%, rgba(14, 165, 233, 0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 70% 60% at 15% 10%, rgba(99, 102, 241, 0.16) 0%, transparent 65%),
+        radial-gradient(ellipse 65% 55% at 85% 85%, rgba(168, 85, 247, 0.14) 0%, transparent 65%),
+        radial-gradient(ellipse 55% 45% at 50% 50%, rgba(14, 165, 233, 0.08) 0%, transparent 60%),
         linear-gradient(180deg, #07080c 0%, #0d0f18 50%, #08090e 100%);
-    background-attachment: fixed;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
 /* Hình nền hoa văn Vector Telegram cao cấp (Doodle pattern tinh xảo) */
 .doodle-pattern-overlay {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    opacity: 0.05;
+    inset: 0;
+    opacity: 0.055;
     background-image: url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 22h18a4 4 0 0 1 4 4v12a4 4 0 0 1-4 4h-8l-6 5v-5h-4a4 4 0 0 1-4-4V26a4 4 0 0 1 4-4z'/%3E%3Ccircle cx='20' cy='32' r='1' fill='%23ffffff'/%3E%3Ccircle cx='24' cy='32' r='1' fill='%23ffffff'/%3E%3Ccircle cx='28' cy='32' r='1' fill='%23ffffff'/%3E%3Cpath d='M85 20l24 9-24 9 5-9-5-9z'/%3E%3Cpath d='M85 29l10 0'/%3E%3Cpath d='M25 80l2 4 4 2-4 2-2 4-2-4-4-2 4-2 2-4z'/%3E%3Cpath d='M95 75c-3-4-8-2-8 2 0 4 7 8 8 9 1-1 8-5 8-9 0-4-5-6-8-2z'/%3E%3Ccircle cx='55' cy='18' r='1.5' fill='%23ffffff'/%3E%3Ccircle cx='62' cy='25' r='1' fill='%23ffffff'/%3E%3Ccircle cx='105' cy='48' r='1.5' fill='%23ffffff'/%3E%3Ccircle cx='45' cy='95' r='1.5' fill='%23ffffff'/%3E%3Ccircle cx='80' cy='105' r='1' fill='%23ffffff'/%3E%3Ccircle cx='12' cy='105' r='1' fill='%23ffffff'/%3E%3Ccircle cx='60' cy='70' r='9'/%3E%3Ccircle cx='57' cy='68' r='1' fill='%23ffffff'/%3E%3Ccircle cx='63' cy='68' r='1' fill='%23ffffff'/%3E%3Cpath d='M56 73c1 2 3 2 4 2s3 0 4-2'/%3E%3C/g%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 140px 140px;
     pointer-events: none;
+}
+
+/* 2. Phần Tin Nhắn Cuộn Tự Nhiên (Scrollable Area) */
+.chat-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+    z-index: 2;
+    overscroll-behavior-y: contain;
+    background: transparent;
+    -webkit-overflow-scrolling: touch;
 }
 
 .messages-inner-wrapper {
     position: relative;
     z-index: 2;
-    padding: 16px 14px 28px;
+    padding: 16px 12px 28px;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 /* Dividers */
@@ -1718,7 +1738,9 @@ const persistConversationTags = async (): Promise<void> => {
     flex-shrink: 0;
     position: relative;
     z-index: 100;
-    box-sizing: content-box;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
 }
 
 .hidden-file-input {
