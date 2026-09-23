@@ -124,18 +124,21 @@ const onFileSelected = (event: Event) => {
                 type: 'image',
                 url: previewUrl,
             };
-        } else {
+        } else if (file.size <= 50 * 1024 * 1024) {
+            // Tệp không phải ảnh: chỉ cho phép ≤ 50 MB
             selectedAttachment.value = {
                 name: file.name,
                 size: sizeFormatted,
                 type: 'file',
             };
+        } else {
+            alert('Tệp quá lớn. Vui lòng chọn tệp nhỏ hơn 50 MB.');
         }
     }
 };
 
-const removeAttachment = () => {
-    if (selectedAttachment.value?.url) {
+const removeAttachment = (revokeUrl = true) => {
+    if (revokeUrl && selectedAttachment.value?.url) {
         URL.revokeObjectURL(selectedAttachment.value.url);
     }
     selectedAttachment.value = null;
@@ -177,7 +180,9 @@ const sendMessage = () => {
     });
 
     inputText.value = '';
-    selectedAttachment.value = null;
+    // Không revoke URL ngay: parent handleSend() cần fetch() nó bất đồng bộ.
+    // Sử dụng revokeUrl=false để chỉ xóa reference, URL sẽ tự giải phóng sau.
+    removeAttachment(false);
     if (fileInputRef.value) fileInputRef.value.value = '';
 
     scrollToBottom();
@@ -520,6 +525,7 @@ const persistConversationTags = async (): Promise<void> => {
                 ref="fileInputRef"
                 type="file"
                 class="hidden-file-input"
+                accept="image/*,application/pdf,video/mp4,video/quicktime"
                 @change="onFileSelected"
             />
 

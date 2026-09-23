@@ -185,6 +185,13 @@ const loadConversations = async (): Promise<void> => {
 onMounted(loadConversations);
 
 // WebSocket (Laravel Reverb / Echo): nhận tin nhắn mới realtime cho mọi kênh đang chọn.
+type BroadcastAttachment = {
+    id: string;
+    type: string;
+    url?: string;
+    original_name?: string;
+};
+
 type BroadcastMessage = {
     id: string;
     conversation_id: string;
@@ -194,12 +201,7 @@ type BroadcastMessage = {
     status: string;
     client_id: string | null;
     sender: { id: string; name: string; avatar_url: string | null } | null;
-    attachments: Array<{
-        id: string;
-        type: string;
-        url?: string;
-        original_name?: string;
-    }>;
+    attachments: BroadcastAttachment[];
     sent_at: string | null;
     created_at: string;
 };
@@ -233,11 +235,30 @@ const applyIncomingMessage = (message: BroadcastMessage): void => {
                 created_at: message.created_at,
                 read_at:
                     message.direction === 'outbound' ? message.sent_at : null,
+                attachments: message.attachments ?? [],
             };
             selectedChat.value = {
                 ...selectedChat.value,
                 messages: [...selectedChat.value.messages, toMessage(payload)],
             };
+        }
+
+        // Browser push notification khi có tin nhắn đến và tab không focused.
+        if (
+            message.direction === 'inbound' &&
+            document.visibilityState === 'hidden' &&
+            Notification.permission === 'granted'
+        ) {
+            const senderName =
+                message.sender?.name ??
+                chats.value.find((c) => c.id === message.conversation_id)
+                    ?.name ??
+                'Tin nhắn mới';
+            new Notification(senderName, {
+                body: message.body ?? '[Hình ảnh]',
+                icon: '/apple-touch-icon.png',
+                tag: `omnichat-${message.conversation_id}`,
+            });
         }
     }
 
@@ -416,19 +437,40 @@ type MessagePayload = {
     sent_at: string | null;
     created_at: string;
     read_at: string | null;
+    attachments?: BroadcastAttachment[];
 };
 
-const toMessage = (message: MessagePayload): Message => ({
-    id: message.id,
-    sender: message.direction === 'outbound' ? 'me' : 'other',
-    text: message.body ?? undefined,
-    time: formatTime(message.sent_at ?? message.created_at),
-    isRead: message.read_at !== null,
-});
+const toMessage = (message: MessagePayload): Message => {
+    // Lấy attachment đầu tiên (Telegram gửi ảnh, tài liệu, v.v.)
+    const firstAttachment = message.attachments?.[0];
+    const attachment: Attachment | undefined = firstAttachment
+        ? {
+              name: firstAttachment.original_name ?? 'file',
+              type:
+                  firstAttachment.type === 'image' ||
+                  firstAttachment.type === 'photo'
+                      ? 'image'
+                      : 'file',
+              url: firstAttachment.url,
+          }
+        : undefined;
+
+    return {
+        id: message.id,
+        sender: message.direction === 'outbound' ? 'me' : 'other',
+        text: message.body ?? undefined,
+        time: formatTime(message.sent_at ?? message.created_at),
+        isRead: message.read_at !== null,
+        attachment,
+    };
+};
 
 const openChat = async (chat: ChatItem): Promise<void> => {
     chat.unreadCount = undefined;
     selectedChat.value = { ...chat, messages: [] };
+
+    // Xin quyền notification lần đầu khi user mở chat (gesture-triggered).
+    requestNotificationPermission();
 
     // Placeholder từ tab Khách hàng chưa có hội thoại thật — bỏ qua API.
     if (chat.id.startsWith('contact_')) {
@@ -457,6 +499,7 @@ const openChat = async (chat: ChatItem): Promise<void> => {
     }
 };
 
+
 const sendErrorMessage = ref('');
 let sendErrorTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -482,8 +525,22 @@ const handleSend = async ({
     payload.append('client_id', clientId);
 
     if (attachment?.url && attachment.type === 'image') {
-        const blob = await (await fetch(attachment.url)).blob();
-        payload.append('image', blob, attachment.name);
+        try {
+            const response = await fetch(attachment.url);
+            if (!response.ok) {
+                throw new Error(`fetch failed: ${response.status}`);
+            }
+            const blob = await response.blob();
+            payload.append('image', blob, attachment.name);
+        } catch {
+            sendErrorMessage.value =
+                'Không đọc được file ảnh. Vui lòng chọn lại.';
+            clearTimeout(sendErrorTimer);
+            sendErrorTimer = setTimeout(() => {
+                sendErrorMessage.value = '';
+            }, 4000);
+            return;
+        }
     }
 
     try {
@@ -500,6 +557,16 @@ const handleSend = async ({
         sendErrorTimer = setTimeout(() => {
             sendErrorMessage.value = '';
         }, 4000);
+    }
+};
+
+// Xin quyền push notification (chạy 1 lần sau khi user tương tác).
+const requestNotificationPermission = (): void => {
+    if (
+        'Notification' in window &&
+        Notification.permission === 'default'
+    ) {
+        Notification.requestPermission();
     }
 };
 

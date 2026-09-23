@@ -1,0 +1,26 @@
+{
+    "name": "King Hub Social",
+    "short_name": "King Hub",
+    "description": "Quản lý kênh mạng xã hội và livechat tập trung",
+    "start_url": "/omnichat/livechat",
+    "display": "standalone",
+    "background_color": "#0b0e14",
+    "theme_color": "#7c3aed",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/favicon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        }
+    ],
+    "categories": ["business", "productivity"],
+    "lang": "vi"
+}
