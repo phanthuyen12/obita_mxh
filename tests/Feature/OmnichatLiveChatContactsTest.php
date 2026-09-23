@@ -83,6 +83,19 @@ it('filters livechat contacts that have a phone', function () use ($makeContactW
         ->assertJsonPath('data.0.id', $withPhone->id);
 });
 
+it('filters livechat contacts tagged as vip', function () use ($makeContactWithConversation): void {
+    $vipTag = OmnichatTag::factory()->create(['workspace_id' => $this->workspace->id, 'name' => 'VIP']);
+    $vipContact = $makeContactWithConversation();
+    $vipContact->conversations()->first()->tags()->attach($vipTag->id);
+    $makeContactWithConversation();
+
+    $this->actingAs($this->user->fresh())
+        ->getJson(route('app.omnichat.livechat.contacts.index', ['filter' => 'vip']))
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $vipContact->id);
+});
+
 it('updates a livechat contact and syncs its tags', function () use ($makeContactWithConversation): void {
     $contact = $makeContactWithConversation();
     $tag = OmnichatTag::factory()->create(['workspace_id' => $this->workspace->id]);

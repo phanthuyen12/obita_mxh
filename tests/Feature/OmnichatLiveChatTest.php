@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Enums\Omnichat\ChannelProvider;
 use App\Enums\UserWorkspace\Role;
+use App\Models\OmnichatChannel;
 use App\Models\OmnichatContact;
 use App\Models\OmnichatConversation;
 use App\Models\OmnichatMessage;
@@ -45,7 +47,7 @@ it('renders the livechat inertia page', function (): void {
 
 it('requires authentication to view the livechat page', function (): void {
     $this->get(route('app.omnichat.livechat.index'))
-        ->assertRedirect(route('login'));
+        ->assertRedirect(route('login.livechat'));
 });
 
 it('lists accessible conversations as json with pagination meta', function () use ($makeConversation): void {
@@ -147,7 +149,50 @@ it('shows a conversation with its paginated messages', function () use ($makeCon
         ]);
 });
 
-it('forbids viewing a conversation from another workspace', function () use ($makeConversation): void {
+it('lists telegram bot conversations in livechat', function (): void {
+    $telegramChannel = OmnichatChannel::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'provider' => ChannelProvider::Telegram,
+        'name' => 'Annalytrader_bot',
+    ]);
+    $conversation = OmnichatConversation::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'social_account_id' => null,
+        'channel_id' => $telegramChannel->id,
+        'contact_id' => OmnichatContact::factory()->create(['workspace_id' => $this->workspace->id])->id,
+        'last_message_preview' => 'loo',
+    ]);
+
+    $this->actingAs($this->user->fresh())
+        ->getJson(route('app.omnichat.livechat.conversations.index'))
+        ->assertOk()
+        ->assertJsonPath('data.0.id', $conversation->id)
+        ->assertJsonPath('data.0.channel.provider', 'telegram');
+});
+
+it('returns the newest messages first when a conversation exceeds the page size', function () use ($makeConversation): void {
+    config(['app.pagination.default' => 3]);
+
+    $conversation = $makeConversation();
+    foreach (range(1, 5) as $index) {
+        OmnichatMessage::factory()->create([
+            'conversation_id' => $conversation->id,
+            'body' => "msg-{$index}",
+            'sent_at' => now()->addMinutes($index),
+        ]);
+    }
+
+    $this->actingAs($this->user->fresh())
+        ->getJson(route('app.omnichat.livechat.conversations.show', $conversation))
+        ->assertOk()
+        ->assertJsonCount(3, 'messages.data')
+        ->assertJsonPath('messages.data.0.body', 'msg-3')
+        ->assertJsonPath('messages.data.1.body', 'msg-4')
+        ->assertJsonPath('messages.data.2.body', 'msg-5')
+        ->assertJsonPath('messages.meta.has_next_page', true);
+});
+
+it('forbids viewing a conversation from another workspace', function (): void {
     $foreignChannel = SocialAccount::factory()->facebook()->create();
     $foreignConversation = OmnichatConversation::factory()->create([
         'workspace_id' => $foreignChannel->workspace_id,
@@ -157,5 +202,5 @@ it('forbids viewing a conversation from another workspace', function () use ($ma
 
     $this->actingAs($this->user->fresh())
         ->getJson(route('app.omnichat.livechat.conversations.show', $foreignConversation))
-        ->assertForbidden();
+        ->assertNotFound();
 });

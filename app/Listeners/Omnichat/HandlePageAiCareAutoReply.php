@@ -7,6 +7,7 @@ namespace App\Listeners\Omnichat;
 use App\Enums\Omnichat\ChannelProvider;
 use App\Events\OmnichatMessageCreated;
 use App\Exceptions\DifyConversationNotFoundException;
+use App\Models\AiBot;
 use App\Models\OmnichatChannel;
 use App\Models\OmnichatConversation;
 use App\Models\OmnichatMessage;
@@ -212,6 +213,24 @@ class HandlePageAiCareAutoReply
         $provider = $aiCare['provider'] ?? 'dify';
         $difyApiKey = $aiCare['dify_api_key'] ?? null;
         $difyBaseUrl = $aiCare['dify_base_url'] ?: 'https://kingai.tnicorporation.com/v1';
+
+        // Bot resolution order: the admin's per-channel bot assignment wins,
+        // then a channel-specific key, then the workspace default bot.
+        $assignedBotId = $aiCare['bot_id'] ?? null;
+        $assignedBot = ! empty($assignedBotId)
+            ? AiBot::query()->where('workspace_id', $conversation->workspace_id)->whereKey($assignedBotId)->first()
+            : null;
+
+        if ($assignedBot !== null) {
+            $difyApiKey = $assignedBot->dify_api_key;
+            $difyBaseUrl = $assignedBot->dify_base_url ?: $difyBaseUrl;
+        } elseif (empty($difyApiKey)) {
+            $defaultBot = AiBot::defaultFor($conversation->workspace_id);
+            if ($defaultBot !== null) {
+                $difyApiKey = $defaultBot->dify_api_key;
+                $difyBaseUrl = $defaultBot->dify_base_url ?: $difyBaseUrl;
+            }
+        }
 
         Log::info('[AI-Care] Generating reply via provider', [
             'provider' => $provider,

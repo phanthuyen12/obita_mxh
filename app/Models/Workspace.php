@@ -87,6 +87,11 @@ class Workspace extends Model
         return $this->hasMany(OmnichatChannel::class);
     }
 
+    public function aiBots(): HasMany
+    {
+        return $this->hasMany(AiBot::class);
+    }
+
     public function contentWorkflows(): HasMany
     {
         return $this->hasMany(ContentWorkflow::class);

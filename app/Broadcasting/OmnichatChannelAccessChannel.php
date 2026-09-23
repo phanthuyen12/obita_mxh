@@ -24,7 +24,7 @@ class OmnichatChannelAccessChannel
         $channel = OmnichatChannel::query()
             ->whereKey($channelId)
             ->where('workspace_id', $user->current_workspace_id)
-            ->where('provider', ChannelProvider::Website)
+            ->whereIn('provider', [ChannelProvider::Website, ChannelProvider::Telegram])
             ->first();
 
         return $channel !== null && $user->can('viewOmnichat', $channel);

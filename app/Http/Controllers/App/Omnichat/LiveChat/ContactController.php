@@ -7,13 +7,17 @@ namespace App\Http\Controllers\App\Omnichat\LiveChat;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\Omnichat\LiveChat\UpdateContactRequest;
 use App\Models\OmnichatContact;
+use App\Models\OmnichatConversation;
 use App\Models\OmnichatTag;
+use App\Support\Omnichat\ConversationPresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class ContactController extends Controller
 {
+    public function __construct(private readonly ConversationPresenter $presenter) {}
+
     /**
      * Paginated customer list for the mobile LiveChat "Khách hàng" tab.
      */
@@ -94,6 +98,50 @@ class ContactController extends Controller
                 'has_next_page' => $contacts->hasMorePages(),
                 'total' => $contacts->total(),
             ],
+        ]);
+    }
+
+    /**
+     * Detailed customer profile for the LiveChat customer sheet:
+     * contact info plus every conversation across channels.
+     */
+    public function show(Request $request, OmnichatContact $contact): JsonResponse
+    {
+        $workspace = $request->user()->currentWorkspace;
+        $this->authorize('view', $workspace);
+        abort_unless($contact->workspace_id === $workspace->id, 404);
+
+        $contact->load([
+            'conversations' => fn ($query) => $query
+                ->with(['socialAccount', 'channel', 'tags', 'contact'])
+                ->latest('last_message_at'),
+        ]);
+
+        $conversations = $contact->conversations
+            ->map(fn (OmnichatConversation $conversation): array => $this->presenter->conversationSummary($conversation))
+            ->values();
+
+        return response()->json([
+            'contact' => [
+                'id' => $contact->id,
+                'display_name' => $contact->display_name,
+                'avatar_url' => $contact->avatar_url,
+                'phone' => $contact->phone,
+                'email' => $contact->email,
+                'notes' => $contact->notes,
+                'lead_stage' => $contact->lead_stage,
+                'is_lead' => $contact->is_lead,
+                'last_seen_at' => $contact->last_seen_at?->toIso8601String(),
+                'tags' => $contact->conversations
+                    ->flatMap->tags
+                    ->unique('id')
+                    ->map(fn (OmnichatTag $tag): array => [
+                        'id' => $tag->id,
+                        'name' => $tag->name,
+                        'color' => $tag->color,
+                    ])->values()->all(),
+            ],
+            'conversations' => $conversations,
         ]);
     }
 

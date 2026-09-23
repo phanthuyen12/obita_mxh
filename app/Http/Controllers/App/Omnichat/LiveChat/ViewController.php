@@ -35,6 +35,7 @@ class ViewController extends Controller
                 'assignConversations' => $user->can('assignConversations', $workspace),
                 'sendMessages' => $user->can('viewOmnichat', $workspace),
                 'editContacts' => true,
+                'manageAiSettings' => $user->isAccountOwner() || $user->can('manageTeam', $workspace),
             ],
             'currentUser' => [
                 'id' => $user->id,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\App\Omnichat;
 
+use App\Enums\Omnichat\ChannelProvider;
 use App\Models\OmnichatConversation;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
@@ -23,9 +24,17 @@ class StoreMessageRequest extends FormRequest
     public function rules(): array
     {
         $conversation = $this->route('conversation');
+
         $attachmentMaxKilobytes = $conversation instanceof OmnichatConversation
             && $conversation->socialAccount?->platform?->value === 'facebook'
             ? 25 * 1024
+            : 1024;
+
+        // Telegram Bot API accepts photos up to 10 MB — phone photos usually
+        // weigh 2-5 MB, so the old blanket 1 MB cap silently rejected them.
+        $imageMaxKilobytes = $conversation instanceof OmnichatConversation
+            && $conversation->channel?->provider === ChannelProvider::Telegram
+            ? 10 * 1024
             : 1024;
 
         return [
@@ -47,7 +56,7 @@ class StoreMessageRequest extends FormRequest
                 'file',
                 'image',
                 'mimes:jpeg,jpg,png,gif',
-                'max:1024',
+                "max:{$imageMaxKilobytes}",
             ],
             'client_id' => ['required', 'uuid'],
             'mode' => ['required', Rule::in(['reply', 'internal'])],

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Omnichat;
 
+use App\Enums\Omnichat\ChannelProvider;
 use App\Models\OmnichatChannel;
 use App\Models\OmnichatContact;
 use App\Models\OmnichatConversation;
@@ -19,6 +20,9 @@ use Illuminate\Support\Facades\DB;
 
 class OmnichatAnalyticsService
 {
+    /** Chart colors used by the mobile LiveChat statistics top-channels list. */
+    private const CHANNEL_CHART_COLORS = ['#ff6259', '#38bdf8', '#1e3a8a', '#a855f7', '#22c55e', '#f59e0b', '#c084fc', '#10b981'];
+
     /** @return array<string, mixed> */
     public function index(string $workspaceId, array $filters): array
     {
@@ -90,10 +94,10 @@ class OmnichatAnalyticsService
 
         $websiteOptions = $websiteChannels->map(fn (OmnichatChannel $c): array => [
             'id' => $c->id,
-            'name' => $c->name ?: ($c->platform === 'website_chat' ? 'Website Live Chat' : strtoupper($c->platform)),
+            'name' => $c->name ?: ($c->provider === ChannelProvider::Website ? 'Website Live Chat' : strtoupper($c->provider->value)),
             'platform' => $c->platform,
             'avatar_url' => null,
-            'ai_enabled' => (bool) ($c->meta['ai_care']['enabled'] ?? false),
+            'ai_enabled' => (bool) (data_get($c->settings, 'ai_care.enabled', false)),
         ]);
 
         return [
@@ -120,6 +124,63 @@ class OmnichatAnalyticsService
                 'ai_mode' => $aiMode,
                 'per_page' => $perPage,
             ]),
+        ];
+    }
+
+    /**
+     * Real-time overview for the mobile LiveChat "Thống kê" tab.
+     *
+     * @return array<string, mixed>
+     */
+    public function liveChatOverview(string $workspaceId, string $period = 'today'): array
+    {
+        $workspace = Workspace::query()->findOrFail($workspaceId);
+        $accounts = SocialAccount::query()->where('workspace_id', $workspaceId)->where('is_active', true)->get();
+        $channels = OmnichatChannel::query()->where('workspace_id', $workspaceId)->get();
+
+        [$startDate, $endDate] = match ($period) {
+            'week' => [Carbon::now()->startOfWeek()->startOfDay(), Carbon::now()->endOfDay()],
+            'month' => [Carbon::now()->startOfMonth()->startOfDay(), Carbon::now()->endOfDay()],
+            default => [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()],
+        };
+
+        $from = $startDate->toDateTimeString();
+        $to = $endDate->toDateTimeString();
+
+        $summary = $this->calculateRealSummary($workspaceId, $accounts, $channels, $from, $to, 'all', 'all');
+        $channelMetrics = $this->calculateRealChannelMetrics($workspaceId, $accounts, $channels, $from, $to);
+
+        $newCustomers = OmnichatContact::query()
+            ->where('workspace_id', $workspaceId)
+            ->whereBetween('created_at', [$from, $to])
+            ->count();
+
+        $totalChannelMessages = (int) collect($channelMetrics)->sum('total_messages');
+
+        $topChannels = collect($channelMetrics)
+            ->filter(fn (array $channel): bool => $channel['total_messages'] > 0 || $channel['total_conversations'] > 0)
+            ->sortByDesc('total_messages')
+            ->values()
+            ->map(fn (array $channel, int $index): array => [
+                'name' => $channel['display_name'],
+                'platform' => $channel['platform'],
+                'conversations' => $channel['total_conversations'],
+                'messages' => $channel['total_messages'],
+                'value' => $totalChannelMessages > 0 ? round(($channel['total_messages'] / $totalChannelMessages) * 100, 1) : 0.0,
+                'color' => self::CHANNEL_CHART_COLORS[$index % count(self::CHANNEL_CHART_COLORS)],
+            ])->all();
+
+        return [
+            'period' => $period,
+            'from' => $startDate->toIso8601String(),
+            'to' => $endDate->toIso8601String(),
+            'messages' => $summary['messages'],
+            'conversations' => $summary['conversations'],
+            'new_customers' => $newCustomers,
+            'avg_response_display' => $summary['avg_response_display'],
+            'ai_handled_rate' => $summary['ai_handled_rate'],
+            'ai_enabled' => $summary['ai_enabled'],
+            'top_channels' => $topChannels,
         ];
     }
 
@@ -372,7 +433,7 @@ class OmnichatAnalyticsService
 
         // Check if ANY active page or channel in this workspace actually has AI enabled
         $anyAiEnabled = $accounts->contains(fn ($acc) => (bool) ($acc->meta['ai_care']['enabled'] ?? false))
-            || $websiteChannels->contains(fn ($ch) => (bool) ($ch->meta['ai_care']['enabled'] ?? false));
+            || $websiteChannels->contains(fn ($ch) => (bool) (data_get($ch->settings, 'ai_care.enabled', false)));
 
         $aiHandledRate = ($anyAiEnabled && $outbound > 0) ? round(($aiOutbound / $outbound) * 100, 1) : 0.0;
         $resolvedRate = $totalConversations > 0 ? round(($resolvedConversations / $totalConversations) * 100, 1) : 0.0;
@@ -449,8 +510,9 @@ class OmnichatAnalyticsService
         });
 
         $channelMetrics = $websiteChannels->map(function (OmnichatChannel $channel) use ($workspaceId, $from, $to) {
-            $meta = $channel->meta['ai_care'] ?? [];
-            $isAiEnabled = (bool) ($meta['enabled'] ?? false);
+            // Telegram bot AI settings live in `settings`, not `meta`.
+            $aiCare = $channel->settings['ai_care'] ?? [];
+            $isAiEnabled = (bool) ($aiCare['enabled'] ?? false);
 
             $convs = OmnichatConversation::query()
                 ->where('workspace_id', $workspaceId)
@@ -478,13 +540,13 @@ class OmnichatAnalyticsService
 
             return [
                 'account_id' => $channel->id,
-                'display_name' => $channel->name ?: ($channel->platform === 'website_chat' ? 'Website Live Chat' : strtoupper($channel->platform)),
+                'display_name' => $channel->name ?: ($channel->provider === ChannelProvider::Website ? 'Website Live Chat' : strtoupper($channel->provider->value)),
                 'username' => null,
-                'platform' => $channel->platform,
+                'platform' => $channel->provider->value,
                 'avatar_url' => null,
                 'ai_care_enabled' => $isAiEnabled,
-                'bot_name' => $isAiEnabled ? ($meta['bot_name'] ?? 'AI Chatbot') : 'Chưa bật AI',
-                'schedule_mode' => $isAiEnabled ? ($meta['operating_hours']['mode'] ?? '24/7') : 'Tắt',
+                'bot_name' => $isAiEnabled ? ($aiCare['bot_name'] ?? 'AI Chatbot') : 'Chưa bật AI',
+                'schedule_mode' => $isAiEnabled ? ($aiCare['operating_hours']['mode'] ?? '24/7') : 'Tắt',
                 'total_conversations' => $convs,
                 'total_messages' => $totalMsgs,
                 'inbound' => $inbound,

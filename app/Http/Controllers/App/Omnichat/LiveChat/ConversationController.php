@@ -88,13 +88,15 @@ class ConversationController extends Controller
 
         $messages = $conversation->messages()
             ->with(['senderContact', 'senderUser'])
-            ->oldest('sent_at')
+            ->latest('sent_at')
             ->paginate((int) config('app.pagination.default'));
 
         return response()->json([
             'conversation' => $this->presenter->conversationData($conversation),
             'messages' => [
                 'data' => $messages->getCollection()
+                    ->reverse()
+                    ->values()
                     ->map(fn (OmnichatMessage $message): array => $this->presenter->messageData($message))
                     ->all(),
                 'meta' => [
