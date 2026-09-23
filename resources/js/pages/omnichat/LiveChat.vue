@@ -234,22 +234,36 @@ const openChat = async (chat: ChatItem): Promise<void> => {
   chat.unreadCount = undefined
   selectedChat.value = { ...chat, messages: [] }
 
-  const { data } = await axios.get(livechatConversation.url(chat.id))
-  selectedChat.value = {
-    ...chat,
-    contactId: data.conversation.contact.id as string,
-    messages: (data.messages.data as MessagePayload[]).map(toMessage),
+  // Placeholder từ tab Khách hàng chưa có hội thoại thật — bỏ qua API.
+  if (chat.id.startsWith('contact_')) {
+    return
   }
 
-  // Mark the conversation read once opened.
   try {
-    await axios.post(ConversationReadController.url(chat.id))
+    const { data } = await axios.get(livechatConversation.url(chat.id))
+    selectedChat.value = {
+      ...chat,
+      contactId: data.conversation.contact.id as string,
+      messages: (data.messages.data as MessagePayload[]).map(toMessage),
+    }
+
+    // Mark the conversation read once opened.
+    try {
+      await axios.post(ConversationReadController.url(chat.id))
+    } catch {
+      // Non-blocking: read receipts should never break opening a chat.
+    }
   } catch {
-    // Non-blocking: read receipts should never break opening a chat.
+    // Conversation may have been deleted; keep the optimistic room open.
   }
 }
 
-const handleSend = async ({ text, attachment, clientId }: { id: string; text: string; attachment: Attachment | null; clientId: string }): Promise<void> => {
+const handleSend = async ({ id, text, attachment, clientId }: { id: string; text: string; attachment: Attachment | null; clientId: string }): Promise<void> => {
+  // Placeholder chưa có hội thoại thật trên server — không gửi được.
+  if (id.startsWith('contact_')) {
+    return
+  }
+
   const payload = new FormData()
   payload.append('body', text)
   payload.append('mode', 'reply')
@@ -282,6 +296,7 @@ type CustomerLike = {
   avatarText: string
   avatarBg: string
   tags?: string[]
+  latestConversationId?: string | null
   notes?: string
   lastActive?: string
 }
@@ -296,9 +311,10 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
   }
 
   const placeholder: ChatItem = {
-    id: `contact_${customer.id}`,
+    id: customer.latestConversationId ?? `contact_${customer.id}`,
     name: customer.name,
     phone: customer.phone,
+    contactId: customer.id,
     avatarType: 'text',
     avatarText: customer.avatarText,
     avatarBg: customer.avatarBg,

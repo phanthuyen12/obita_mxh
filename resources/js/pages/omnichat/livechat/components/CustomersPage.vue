@@ -21,6 +21,7 @@ export interface Customer {
   tag: 'VIP' | 'Đã mua' | 'Tiềm năng' | 'Chưa liên hệ'
   tags?: string[]
   tagIds?: string[]
+  latestConversationId?: string | null
   totalSpent: string
   lastActive: string
   notes?: string
@@ -97,6 +98,7 @@ const toCustomer = (contact: ContactPayload): Customer => {
     tag: STAGE_LABEL[contact.lead_stage ?? 'new'] ?? (tagNames.some(t => t.startsWith('VIP')) ? 'VIP' : 'Chưa liên hệ'),
     tags: tagNames,
     tagIds: contact.tags.map(t => t.id),
+    latestConversationId: contact.latest_conversation_id,
     totalSpent: contact.conversation_count > 0 ? `${contact.conversation_count} hội thoại` : '0 hội thoại',
     lastActive: relativeTime(contact.last_seen_at ?? contact.last_message_at),
     notes: contact.notes ?? undefined,
