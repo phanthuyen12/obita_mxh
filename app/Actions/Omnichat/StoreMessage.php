@@ -59,16 +59,14 @@ class StoreMessage
             } elseif ($conversation->channel?->provider === ChannelProvider::Telegram) {
                 [$externalId, $providerPayload] = $this->sendTelegramMessage($conversation, $body, $image);
             } elseif ($conversation->channel_id !== null && $image !== null) {
-                $diskName = config('filesystems.default');
-                $disk = Storage::disk($diskName);
-                $path = $image->store('omnichat/website-chat', ['disk' => $diskName, 'visibility' => 'public']);
-                $publicUrl = $disk->url($path);
+                // Website chat: lưu như base64 data URI — không cần disk/S3.
+                $base64 = 'data:'.$image->getMimeType().';base64,'.base64_encode($image->getContent());
                 $providerPayload = [
                     'source' => 'website',
                     'attachments' => [[
                         'id' => (string) Str::uuid(),
                         'type' => $this->messageType($image),
-                        'url' => $publicUrl,
+                        'url' => $base64,
                         'file_name' => $image->getClientOriginalName(),
                         'original_name' => $image->getClientOriginalName(),
                         'mime_type' => (string) $image->getMimeType(),
@@ -151,9 +149,9 @@ class StoreMessage
         }
 
         [$width, $height] = getimagesize($image->getRealPath()) ?: [0, 0];
-        $diskName = config('filesystems.default');
-        $disk = Storage::disk($diskName);
-        $path = $image->store('omnichat/lazada', ['disk' => $diskName, 'visibility' => 'public']);
+        // Lazada API y\u00eau c\u1ea7u public URL \u2014 d\u00f9ng local public disk (kh\u00f4ng ph\u1ea3i S3).
+        $disk = Storage::disk('public');
+        $path = $image->store('omnichat/lazada', 'public');
         $publicUrl = $disk->url($path);
         $response = $this->lazadaClient->sendImage($account, $conversation->external_id, $publicUrl, $width, $height);
         $messageId = (string) data_get($response, 'data.message_id', data_get($response, 'message_id'));

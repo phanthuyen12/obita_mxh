@@ -8,7 +8,6 @@ use App\Models\SocialAccount;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
 
@@ -27,26 +26,33 @@ class FacebookMessengerClient
             throw new RuntimeException('Facebook Messenger attachment is empty or invalid.');
         }
 
-        $path = 'omnichat/facebook/'.Str::random(40).'.'.($file->guessExtension() ?: 'bin');
-        $diskName = config('filesystems.default');
-        $disk = Storage::disk($diskName);
-        $disk->putFileAs('omnichat/facebook', $file, basename($path), 'public');
-
-        $attachment = $this->attachmentMetadata($diskName, $path, $file, hash('sha256', $path));
-        $attachmentId = $this->uploadAttachment($account, $file, $attachment['type']);
+        $type = $this->attachmentType((string) $file->getMimeType());
+        $attachmentId = $this->uploadAttachment($account, $file, $type);
         $result = $this->send($account, $recipientId, [
             'attachment' => [
-                'type' => $attachment['type'],
+                'type' => $type,
                 'payload' => [
                     'attachment_id' => $attachmentId,
                 ],
             ],
         ]);
 
+        // URL sẽ được Facebook trả về qua webhook sau khi gửi — tạm dùng attachment_id làm id.
+        $attachment = [
+            'id' => $attachmentId,
+            'type' => $type,
+            'url' => '',
+            'original_name' => $file->getClientOriginalName(),
+            'mime_type' => (string) $file->getMimeType(),
+            'size' => (int) $file->getSize(),
+        ];
+
         return [...$result, 'attachment' => $attachment];
     }
 
     /**
+     * Trả về URL CDN của Facebook trực tiếp, không tải xuống hoặc lưu vào disk.
+     *
      * @param  array<string, mixed>  $attachment
      * @return array{id: string, type: string, url: string, original_name: string, mime_type: string, size: int}|null
      */
@@ -59,27 +65,13 @@ class FacebookMessengerClient
 
         $type = $this->attachmentType((string) data_get($attachment, 'type'));
 
-        try {
-            $response = Http::accept('*/*')->timeout(20)->retry(2, 250)->get($url)->throw();
-        } catch (\Throwable) {
-            return $this->remoteAttachmentMetadata($attachment, $url, $type);
-        }
-
-        $mimeType = (string) ($response->header('content-type') ?: 'application/octet-stream');
-        $extension = Str::lower((string) Str::of($mimeType)->after('/')->before(';'));
-        $path = 'omnichat/facebook/inbound/'.Str::random(40).'.'.($extension !== '' ? $extension : 'bin');
-
-        $diskName = config('filesystems.default');
-        $disk = Storage::disk($diskName);
-        $disk->put($path, $response->body(), 'public');
-
         return [
-            'id' => hash('sha256', $path),
+            'id' => (string) data_get($attachment, 'payload.attachment_id', hash('sha256', $url)),
             'type' => $type,
-            'url' => $disk->url($path),
+            'url' => $url,
             'original_name' => $this->originalName($attachment, $url),
-            'mime_type' => $mimeType,
-            'size' => strlen($response->body()),
+            'mime_type' => 'application/octet-stream',
+            'size' => 0,
         ];
     }
 
@@ -154,7 +146,7 @@ class FacebookMessengerClient
         return [
             'id' => $id,
             'type' => $this->attachmentType((string) $file->getMimeType()),
-            'url' => Storage::disk($diskName)->url($path),
+            'url' => '',
             'original_name' => $file->getClientOriginalName(),
             'mime_type' => (string) $file->getMimeType(),
             'size' => (int) $file->getSize(),

@@ -9,7 +9,6 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
 
@@ -200,25 +199,7 @@ class TelegramOmnichatClient
         }
 
         $token = (string) $channel->access_token;
-        $diskName = config('filesystems.default');
-        $disk = Storage::disk($diskName);
-        $extension = $file->guessExtension() ?: 'jpg';
-        $storedPath = $file->storeAs('omnichat/telegram/outbound', Str::random(40).'.'.$extension, [
-            'disk' => $diskName,
-            'visibility' => 'public',
-        ]);
-        $publicUrl = $disk->url($storedPath);
 
-        $attachment = [
-            'id' => hash('sha256', $storedPath),
-            'type' => 'image',
-            'url' => $publicUrl,
-            'original_name' => $file->getClientOriginalName(),
-            'mime_type' => (string) $file->getMimeType(),
-            'size' => (int) $file->getSize(),
-        ];
-
-        // Send via multipart upload
         $request = Http::timeout(30)->attach(
             'photo',
             fopen($file->getRealPath(), 'r'),
@@ -245,6 +226,29 @@ class TelegramOmnichatClient
 
         $messageId = (string) data_get($response->json(), 'result.message_id');
 
+        // Lấy file_id lớn nhất từ ảnh vừa gửi để tạo URL CDN.
+        $photos = data_get($response->json(), 'result.photo', []);
+        $biggestPhoto = is_array($photos) && ! empty($photos) ? end($photos) : null;
+        $sentFileId = data_get($biggestPhoto, 'file_id');
+
+        $cdnUrl = null;
+        if (is_string($sentFileId)) {
+            $fileRes = Http::timeout(10)->get("{$this->baseUrl}/bot{$token}/getFile", ['file_id' => $sentFileId]);
+            $filePath = data_get($fileRes->json(), 'result.file_path');
+            if (is_string($filePath) && $filePath !== '') {
+                $cdnUrl = "{$this->baseUrl}/file/bot{$token}/{$filePath}";
+            }
+        }
+
+        $attachment = [
+            'id' => $sentFileId ?? hash('sha256', $messageId),
+            'type' => 'image',
+            'url' => $cdnUrl ?? '',
+            'original_name' => $file->getClientOriginalName(),
+            'mime_type' => (string) $file->getMimeType(),
+            'size' => (int) $file->getSize(),
+        ];
+
         return [
             'id' => $messageId,
             'payload' => $response->json() ?? [],
@@ -253,7 +257,8 @@ class TelegramOmnichatClient
     }
 
     /**
-     * Download an inbound file/media from Telegram and store it on system disk.
+     * Lấy URL CDN trực tiếp từ Telegram cho file/media nhận vào.
+     * Không lưu gì xuống disk.
      *
      * @return array{id: string, type: string, url: string, original_name: string, mime_type: string, size: int}|null
      */
@@ -279,32 +284,26 @@ class TelegramOmnichatClient
                 return null;
             }
 
-            $downloadUrl = "{$this->baseUrl}/file/bot{$token}/{$filePath}";
-            $downloadResponse = Http::timeout(30)->get($downloadUrl);
-
-            if (! $downloadResponse->successful()) {
-                return null;
-            }
-
-            $diskName = config('filesystems.default');
-            $disk = Storage::disk($diskName);
+            // URL CDN Telegram — có hiệu lực trong ~1 giờ, đủ để hiển thị trong chat.
+            $cdnUrl = "{$this->baseUrl}/file/bot{$token}/{$filePath}";
             $extension = pathinfo($filePath, PATHINFO_EXTENSION) ?: 'bin';
-            $localName = Str::random(40).'.'.$extension;
-            $savePath = "omnichat/telegram/inbound/{$localName}";
-
-            $disk->put($savePath, $downloadResponse->body(), 'public');
-            $publicUrl = $disk->url($savePath);
-
-            $mimeType = (string) ($downloadResponse->header('content-type') ?: 'application/octet-stream');
-            $fileSize = strlen($downloadResponse->body());
+            $mimeType = match (strtolower($extension)) {
+                'jpg', 'jpeg' => 'image/jpeg',
+                'png' => 'image/png',
+                'gif' => 'image/gif',
+                'webp' => 'image/webp',
+                'mp4' => 'video/mp4',
+                'pdf' => 'application/pdf',
+                default => 'application/octet-stream',
+            };
 
             return [
-                'id' => hash('sha256', $savePath),
+                'id' => hash('sha256', $fileId),
                 'type' => $type,
-                'url' => $publicUrl,
+                'url' => $cdnUrl,
                 'original_name' => $fileName ?: basename($filePath),
                 'mime_type' => $mimeType,
-                'size' => $fileSize,
+                'size' => (int) data_get($fileResponse->json(), 'result.file_size', 0),
             ];
         } catch (Throwable $e) {
             Log::warning('[TelegramOmnichat] downloadInboundFile failed', ['error' => $e->getMessage()]);

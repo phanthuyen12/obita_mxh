@@ -9,7 +9,6 @@ use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\Format;
@@ -106,10 +105,6 @@ class ZaloOaClient
             throw new RuntimeException('Zalo OA file upload is empty or invalid.');
         }
 
-        $path = 'omnichat/zalo/'.str()->random(40).'-'.Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)).'.'.($file->guessExtension() ?: 'bin');
-        $diskName = config('filesystems.default');
-        $disk = Storage::disk($diskName);
-        $disk->putFileAs('omnichat/zalo', $file, basename($path), 'public');
         $handle = fopen($file->getRealPath(), 'rb');
 
         if ($handle === false) {
@@ -144,7 +139,14 @@ class ZaloOaClient
         }
 
         $sent = $this->send($account, $userId, $message);
-        $sent['attachment'] = $this->attachmentMetadata($diskName, $path, $file, $token);
+        $sent['attachment'] = [
+            'id' => $token,
+            'type' => 'document',
+            'url' => '',
+            'original_name' => $file->getClientOriginalName(),
+            'mime_type' => (string) $file->getMimeType(),
+            'size' => (int) $file->getSize(),
+        ];
 
         return $sent;
     }
@@ -156,22 +158,14 @@ class ZaloOaClient
             throw new RuntimeException('Zalo OA inbound attachment URL is invalid.');
         }
 
-        $response = Http::accept('*/*')->withHeaders(['access_token' => (string) $account->access_token])->timeout(20)->retry(2, 250)->get($url)->throw();
-        $mimeType = (string) ($response->header('content-type') ?: 'application/octet-stream');
-        $extension = Str::lower((string) Str::of($mimeType)->after('/')->before(';'));
-        $extension = $extension === 'jpeg' ? 'jpg' : ($extension !== '' ? $extension : 'bin');
-        $path = 'omnichat/zalo/inbound/'.str()->random(40).'.'.$extension;
-        $diskName = config('filesystems.default');
-        $disk = Storage::disk($diskName);
-        $disk->put($path, $response->body(), 'public');
-
+        // Trả về URL Zalo CDN trực tiếp, không lưu xuống disk.
         return [
-            'id' => hash('sha256', $path),
+            'id' => hash('sha256', $url),
             'type' => $type === 'media' ? 'image' : $type,
-            'url' => $disk->url($path),
-            'original_name' => $name ?: basename(parse_url($url, PHP_URL_PATH) ?: $path),
-            'mime_type' => $mimeType,
-            'size' => strlen($response->body()),
+            'url' => $url,
+            'original_name' => $name ?: basename((string) parse_url($url, PHP_URL_PATH)),
+            'mime_type' => 'application/octet-stream',
+            'size' => 0,
         ];
     }
 
@@ -182,18 +176,14 @@ class ZaloOaClient
             throw new RuntimeException('Zalo OA image upload is empty or invalid.');
         }
 
-        $path = 'omnichat/zalo/'.str()->random(40).'.jpg';
         $encodedImage = ImageManager::usingDriver(GdDriver::class)
             ->decodePath($image->getRealPath())
             ->orient()
             ->scaleDown(width: 2048, height: 2048)
             ->encodeUsingFormat(Format::JPEG, quality: 85);
-        $diskName = config('filesystems.default');
-        $disk = Storage::disk($diskName);
-        $disk->put($path, $encodedImage->toString(), 'public');
 
         $upload = $this->authenticatedMultipart($account->access_token)
-            ->attach('file', $encodedImage->toString(), basename($path), ['Content-Type' => 'image/jpeg'])
+            ->attach('file', $encodedImage->toString(), 'image.jpg', ['Content-Type' => 'image/jpeg'])
             ->post($this->apiUrl('/v2.0/oa/upload/image'))
             ->throw()
             ->json();
@@ -228,7 +218,12 @@ class ZaloOaClient
 
         $sent = $this->send($account, $userId, $message);
         $sent['attachment'] = [
-            ...$this->attachmentMetadata($diskName, $path, $image, $attachmentId),
+            'id' => $attachmentId,
+            'type' => 'image',
+            'url' => '',
+            'original_name' => $image->getClientOriginalName(),
+            'mime_type' => 'image/jpeg',
+            'size' => (int) $image->getSize(),
         ];
 
         return $sent;
@@ -333,7 +328,7 @@ class ZaloOaClient
         return [
             'id' => $id,
             'type' => $this->isImage($file) ? 'image' : 'document',
-            'url' => Storage::disk($diskName)->url($path),
+            'url' => '',
             'original_name' => $file->getClientOriginalName(),
             'mime_type' => (string) $file->getMimeType(),
             'size' => (int) $file->getSize(),

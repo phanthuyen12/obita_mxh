@@ -120,8 +120,8 @@ class LeadController extends Controller
                 },
             ]);
 
-        $providers = $socialAccountProviders
-            ->merge($channelProviders)
+        $providers = collect($socialAccountProviders)
+            ->merge(collect($channelProviders))
             ->unique('value')
             ->values();
 
