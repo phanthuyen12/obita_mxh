@@ -27,7 +27,7 @@ class ViewController extends Controller
         $assignees = User::query()
             ->whereHas('workspaces', fn ($q) => $q->where('workspaces.id', $workspace->id))
             ->orderBy('name')
-            ->get(['id', 'name', 'profile_photo_path'])
+            ->get(['id', 'name'])
             ->map(fn (User $u): array => [
                 'id' => $u->id,
                 'name' => $u->name,
