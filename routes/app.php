@@ -23,6 +23,8 @@ use App\Http\Controllers\App\Omnichat\ConversationReadController;
 use App\Http\Controllers\App\Omnichat\ConversationTagController;
 use App\Http\Controllers\App\Omnichat\InboxController as OmnichatInboxController;
 use App\Http\Controllers\App\Omnichat\LeadController as OmnichatLeadController;
+use App\Http\Controllers\App\Omnichat\LiveChat\ConversationController as LiveChatConversationController;
+use App\Http\Controllers\App\Omnichat\LiveChat\ViewController as LiveChatViewController;
 use App\Http\Controllers\App\Omnichat\MessageController as OmnichatMessageController;
 use App\Http\Controllers\App\Omnichat\ShopeeSyncController;
 use App\Http\Controllers\App\Omnichat\TagController as OmnichatTagController;
@@ -245,6 +247,9 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
     // Omnichat
     Route::middleware(EnsureOmnichatAccess::class)->group(function () {
         Route::get('omnichat', [OmnichatInboxController::class, 'index'])->name('app.omnichat.index');
+        Route::get('omnichat/livechat', [LiveChatViewController::class, 'index'])->name('app.omnichat.livechat.index');
+        Route::get('omnichat/livechat/conversations', [LiveChatConversationController::class, 'index'])->name('app.omnichat.livechat.conversations.index');
+        Route::get('omnichat/livechat/conversations/{conversation}', [LiveChatConversationController::class, 'show'])->name('app.omnichat.livechat.conversations.show');
         Route::get('omnichat/website-chat', [WebsiteChatController::class, 'index'])->name('app.omnichat.website-chat.index');
         Route::post('omnichat/website-chat', [WebsiteChatController::class, 'store'])->name('app.omnichat.website-chat.store');
         Route::put('omnichat/website-chat/{channel}', [WebsiteChatController::class, 'update'])->name('app.omnichat.website-chat.update');

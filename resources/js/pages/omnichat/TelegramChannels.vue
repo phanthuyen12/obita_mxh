@@ -46,6 +46,14 @@ interface Channel {
     id: string;
     name: string;
     username?: string;
+    mode?: 'bot' | 'business';
+    business?: {
+        connection_id?: string;
+        is_enabled?: boolean;
+        user_id?: string;
+        user_name?: string;
+        user_username?: string;
+    } | null;
     avatar_url?: string | null;
     status: string;
     webhook_url?: string;
@@ -88,6 +96,7 @@ const webhookInfoModal = ref<{
 
 const connectForm = useForm({
     token: '',
+    mode: 'bot' as 'bot' | 'business',
 });
 
 const handleConnect = () => {
@@ -296,7 +305,86 @@ const handleCheckWebhook = async (channel: Channel) => {
                         </div>
                     </div>
 
+                    <!-- Business mode extra steps -->
+                    <div
+                        v-if="connectForm.mode === 'business'"
+                        class="grid gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm"
+                    >
+                        <span class="font-semibold text-foreground">
+                            Yêu cầu cho Telegram cá nhân:
+                        </span>
+                        <p class="text-xs leading-relaxed text-muted-foreground">
+                            1. Trong
+                            <a
+                                href="https://t.me/BotFather"
+                                target="_blank"
+                                class="font-medium text-[#26A5E4] hover:underline"
+                                >@BotFather</a
+                            >, bật <strong>Secretary Mode</strong> cho bot (lệnh
+                            <code>/mybots</code> → Bot Settings → Business
+                            Mode).
+                        </p>
+                        <p class="text-xs leading-relaxed text-muted-foreground">
+                            2. Sau khi tạo kênh, trên tài khoản Telegram cá
+                            nhân của bạn (cần bật
+                            <strong>Telegram Business</strong> — Premium): mở
+                            <strong>Settings → Telegram Business → Chatbots → Add
+                            Bot</strong> và chọn bot vừa kết nối. Hệ thống sẽ tự
+                            nhận kết nối qua webhook và bắt đầu nhận tin nhắn
+                            khách.
+                        </p>
+                        <p class="text-xs leading-relaxed text-muted-foreground">
+                            Lưu ý: trả lời qua Telegram cá nhân chỉ khả dụng
+                            trong 24h kể từ tin nhắn cuối của khách.
+                        </p>
+                    </div>
+
                     <form class="grid gap-4" @submit.prevent="handleConnect">
+                        <div class="grid gap-2">
+                            <Label class="font-medium">Loại kênh</Label>
+                            <div class="grid gap-2 sm:grid-cols-2">
+                                <button
+                                    type="button"
+                                    class="flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-colors"
+                                    :class="
+                                        connectForm.mode === 'bot'
+                                            ? 'border-[#26A5E4] bg-[#26A5E4]/5'
+                                            : 'hover:bg-muted/50'
+                                    "
+                                    @click="connectForm.mode = 'bot'"
+                                >
+                                    <span class="text-sm font-semibold"
+                                        >Telegram Bot</span
+                                    >
+                                    <span
+                                        class="text-xs text-muted-foreground"
+                                        >Khách nhắn tin trực tiếp vào bot của
+                                        bạn.</span
+                                    >
+                                </button>
+                                <button
+                                    type="button"
+                                    class="flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-colors"
+                                    :class="
+                                        connectForm.mode === 'business'
+                                            ? 'border-[#26A5E4] bg-[#26A5E4]/5'
+                                            : 'hover:bg-muted/50'
+                                    "
+                                    @click="connectForm.mode = 'business'"
+                                >
+                                    <span class="text-sm font-semibold"
+                                        >Telegram cá nhân</span
+                                    >
+                                    <span
+                                        class="text-xs text-muted-foreground"
+                                        >Khách nhắn tin vào tài khoản Telegram
+                                        cá nhân của bạn (cần Telegram
+                                        Business).</span
+                                    >
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="grid gap-2">
                             <Label for="bot-token" class="font-medium"
                                 >Bot Token từ BotFather</Label
@@ -369,6 +457,38 @@ const handleCheckWebhook = async (channel: Channel) => {
                                         <CardTitle class="text-base font-bold">
                                             {{ channel.name }}
                                         </CardTitle>
+                                        <Badge
+                                            v-if="channel.mode === 'business'"
+                                            class="bg-violet-500/10 text-violet-600 hover:bg-violet-500/20"
+                                        >
+                                            Telegram cá nhân
+                                        </Badge>
+                                        <Badge
+                                            v-if="
+                                                channel.mode === 'business' &&
+                                                !channel.business
+                                                    ?.is_enabled
+                                            "
+                                            variant="outline"
+                                            class="border-amber-500/40 text-amber-600"
+                                        >
+                                            Chờ kết nối Telegram Business
+                                        </Badge>
+                                        <Badge
+                                            v-if="
+                                                channel.mode === 'business' &&
+                                                channel.business?.is_enabled
+                                            "
+                                            class="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20"
+                                        >
+                                            <span
+                                                class="mr-1.5 size-1.5 rounded-full bg-emerald-500"
+                                            ></span>
+                                            {{
+                                                channel.business?.user_name ||
+                                                'Đã liên kết'
+                                            }}
+                                        </Badge>
                                         <Badge
                                             v-if="
                                                 channel.status === 'connected'

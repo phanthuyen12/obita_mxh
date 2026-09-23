@@ -45,6 +45,10 @@ class TelegramOmnichatWebhookController extends Controller
             isset($payload['message']) => 'message',
             isset($payload['edited_message']) => 'edited_message',
             isset($payload['callback_query']) => 'callback_query',
+            isset($payload['business_connection']) => 'business_connection',
+            isset($payload['business_message']) => 'business_message',
+            isset($payload['edited_business_message']) => 'edited_business_message',
+            isset($payload['deleted_business_messages']) => 'deleted_business_messages',
             default => 'update',
         };
 

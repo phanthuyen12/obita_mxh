@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs\Omnichat;
 
+use App\Enums\Omnichat\ChannelStatus;
 use App\Events\OmnichatMessageCreated;
 use App\Models\OmnichatChannel;
 use App\Models\OmnichatContact;
@@ -43,16 +44,25 @@ class ProcessTelegramOmnichatWebhook implements ShouldQueue
         $telegramClient ??= app(TelegramOmnichatClient::class);
 
         $channelId = data_get($this->webhookEvent->payload, 'channel_id');
+        $businessConnection = data_get($this->webhookEvent->payload, 'business_connection');
         $message = data_get($this->webhookEvent->payload, 'message')
-            ?? data_get($this->webhookEvent->payload, 'edited_message');
+            ?? data_get($this->webhookEvent->payload, 'edited_message')
+            ?? data_get($this->webhookEvent->payload, 'business_message')
+            ?? data_get($this->webhookEvent->payload, 'edited_business_message');
 
-        // Check if there is a message in the update
-        if (! is_string($channelId) || ! is_array($message)) {
+        // Check if there is a message or business connection in the update
+        if (! is_string($channelId) || (! is_array($message) && ! is_array($businessConnection))) {
             $this->webhookEvent->update([
                 'status' => 'ignored',
                 'processed_at' => now(),
                 'error_message' => 'The Telegram update is not a message.',
             ]);
+
+            return;
+        }
+
+        if (is_array($businessConnection)) {
+            $this->processBusinessConnection($channelId, $businessConnection);
 
             return;
         }
@@ -97,6 +107,21 @@ class ProcessTelegramOmnichatWebhook implements ShouldQueue
 
                     if ($channel === null) {
                         throw new RuntimeException('The Telegram channel no longer exists.');
+                    }
+
+                    // In personal mode, messages sent by the account owner himself
+                    // (from his own Telegram app) are skipped for now.
+                    if (TelegramOmnichatClient::isPersonalMode($channel)) {
+                        $ownerId = (string) data_get($channel->settings, 'business.user_id');
+                        if ($ownerId !== '' && $ownerId === $customerId) {
+                            $webhookEvent->update([
+                                'status' => 'ignored',
+                                'processed_at' => now(),
+                                'error_message' => 'Business message sent by the account owner.',
+                            ]);
+
+                            return;
+                        }
                     }
 
                     $firstName = (string) data_get($from, 'first_name', '');
@@ -263,6 +288,56 @@ class ProcessTelegramOmnichatWebhook implements ShouldQueue
 
             throw $exception;
         }
+    }
+
+    /**
+     * Handle a business_connection update: the personal account connected or
+     * disconnected the bot, or edited the bot's rights.
+     *
+     * @param  array<string, mixed>  $connection
+     */
+    private function processBusinessConnection(string $channelId, array $connection): void
+    {
+        $channel = OmnichatChannel::query()->find($channelId);
+
+        if ($channel === null) {
+            $this->webhookEvent->update([
+                'status' => 'ignored',
+                'processed_at' => now(),
+                'error_message' => 'The Telegram channel no longer exists.',
+            ]);
+
+            return;
+        }
+
+        $isEnabled = (bool) data_get($connection, 'is_enabled');
+        $firstName = (string) data_get($connection, 'user.first_name', '');
+        $lastName = (string) data_get($connection, 'user.last_name', '');
+        $ownerName = trim("{$firstName} {$lastName}");
+
+        $settings = $channel->settings ?? [];
+        $settings['business'] = array_filter([
+            'connection_id' => data_get($connection, 'id'),
+            'is_enabled' => $isEnabled,
+            'user_id' => (string) data_get($connection, 'user.id'),
+            'user_name' => $ownerName !== '' ? $ownerName : null,
+            'user_username' => data_get($connection, 'user.username'),
+            'rights' => data_get($connection, 'rights'),
+            'synced_at' => now()->toIso8601String(),
+        ], static fn ($value): bool => $value !== null);
+
+        $channel->update([
+            'settings' => $settings,
+            'status' => $isEnabled ? ChannelStatus::Connected : ChannelStatus::Disconnected,
+            'connected_at' => $isEnabled ? now() : $channel->connected_at,
+            'disconnected_at' => $isEnabled ? null : now(),
+        ]);
+
+        $this->webhookEvent->update([
+            'status' => 'processed',
+            'processed_at' => now(),
+            'error_message' => null,
+        ]);
     }
 
     /**

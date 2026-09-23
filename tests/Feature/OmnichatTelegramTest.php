@@ -334,6 +334,289 @@ it('can fetch webhook info for telegram channel', function (): void {
         ->assertJsonPath('info.result.pending_update_count', 3);
 });
 
+it('lets a workspace admin connect a personal telegram (business) channel', function (): void {
+    [$user, $workspace] = telegramAdminUser();
+
+    Http::fake([
+        'https://api.telegram.org/bot654321:fake-token/getMe' => Http::response([
+            'ok' => true,
+            'result' => [
+                'id' => 111222333,
+                'is_bot' => true,
+                'first_name' => 'Personal Assistant',
+                'username' => 'personal_assistant_bot',
+                'can_connect_to_business' => true,
+            ],
+        ]),
+        'https://api.telegram.org/bot654321:fake-token/setWebhook' => Http::response([
+            'ok' => true,
+            'result' => true,
+        ]),
+    ]);
+
+    $this->actingAs($user)->post(route('app.omnichat.telegram.store'), [
+        'token' => '654321:fake-token',
+        'mode' => 'business',
+    ])->assertRedirect()->assertSessionHas('success');
+
+    $channel = OmnichatChannel::query()->where('workspace_id', $workspace->id)->sole();
+    expect(data_get($channel->settings, 'mode'))->toBe('business')
+        ->and(data_get($channel->settings, 'business'))->toBeNull()
+        ->and($channel->status)->toBe(ChannelStatus::Connected);
+});
+
+it('rejects a bot without business mode enabled when connecting a personal channel', function (): void {
+    [$user, $workspace] = telegramAdminUser();
+
+    Http::fake([
+        'https://api.telegram.org/bot777888:fake-token/getMe' => Http::response([
+            'ok' => true,
+            'result' => [
+                'id' => 444555666,
+                'is_bot' => true,
+                'first_name' => 'Plain Bot',
+                'username' => 'plain_bot',
+            ],
+        ]),
+    ]);
+
+    $this->actingAs($user)->post(route('app.omnichat.telegram.store'), [
+        'token' => '777888:fake-token',
+        'mode' => 'business',
+    ])->assertRedirect()->assertSessionHasErrors('token');
+
+    expect(OmnichatChannel::query()->where('workspace_id', $workspace->id)->count())->toBe(0);
+});
+
+it('processes a business_connection update to link the personal account', function (): void {
+    $workspace = Workspace::factory()->create();
+    $channel = OmnichatChannel::query()->create([
+        'workspace_id' => $workspace->id,
+        'provider' => ChannelProvider::Telegram,
+        'external_id' => 'biz_bot',
+        'name' => 'Biz Bot',
+        'access_token' => 'biz-token',
+        'webhook_secret' => 'secret',
+        'status' => ChannelStatus::Connected,
+        'settings' => ['mode' => 'business'],
+    ]);
+
+    $event = OmnichatWebhookEvent::query()->create([
+        'workspace_id' => $workspace->id,
+        'provider' => 'telegram',
+        'external_event_id' => "{$channel->id}:bc1",
+        'event_type' => 'business_connection',
+        'payload' => [
+            'channel_id' => $channel->id,
+            'business_connection' => [
+                'id' => 'bizconn123',
+                'user' => [
+                    'id' => 555000111,
+                    'is_bot' => false,
+                    'first_name' => 'Chủ',
+                    'last_name' => 'Shop',
+                    'username' => 'chushop',
+                ],
+                'date' => time(),
+                'is_enabled' => true,
+                'rights' => ['can_reply' => true, 'can_read_messages' => true],
+            ],
+        ],
+        'status' => 'pending',
+        'received_at' => now(),
+    ]);
+
+    (new ProcessTelegramOmnichatWebhook($event))->handle();
+
+    $channel = $channel->fresh();
+    $settings = $channel->settings;
+    expect(data_get($settings, 'business.connection_id'))->toBe('bizconn123')
+        ->and(data_get($settings, 'business.user_id'))->toBe('555000111')
+        ->and(data_get($settings, 'business.is_enabled'))->toBeTrue()
+        ->and($channel->status)->toBe(ChannelStatus::Connected)
+        ->and($event->fresh()->status)->toBe('processed');
+});
+
+it('processes a business_message from a customer into the inbox', function (): void {
+    Event::fake();
+
+    $workspace = Workspace::factory()->create();
+    $channel = OmnichatChannel::query()->create([
+        'workspace_id' => $workspace->id,
+        'provider' => ChannelProvider::Telegram,
+        'external_id' => 'biz_bot2',
+        'name' => 'Biz Bot 2',
+        'access_token' => 'biz-token-2',
+        'webhook_secret' => 'secret',
+        'status' => ChannelStatus::Connected,
+        'settings' => [
+            'mode' => 'business',
+            'business' => [
+                'connection_id' => 'bizconn456',
+                'is_enabled' => true,
+                'user_id' => '555000111',
+            ],
+        ],
+    ]);
+
+    $event = OmnichatWebhookEvent::query()->create([
+        'workspace_id' => $workspace->id,
+        'provider' => 'telegram',
+        'external_event_id' => "{$channel->id}:bm1",
+        'event_type' => 'business_message',
+        'payload' => [
+            'channel_id' => $channel->id,
+            'business_message' => [
+                'message_id' => 1001,
+                'business_connection_id' => 'bizconn456',
+                'from' => [
+                    'id' => 998877665,
+                    'is_bot' => false,
+                    'first_name' => 'Khách',
+                    'last_name' => 'Hàng',
+                    'username' => 'khachhang',
+                ],
+                'chat' => [
+                    'id' => 998877665,
+                    'type' => 'private',
+                ],
+                'date' => time(),
+                'text' => 'Cho mình hỏi giá sản phẩm này? 0911222333',
+            ],
+        ],
+        'status' => 'pending',
+        'received_at' => now(),
+    ]);
+
+    Http::fake([
+        'https://api.telegram.org/botbiz-token-2/getUserProfilePhotos*' => Http::response([
+            'ok' => true,
+            'result' => ['photos' => []],
+        ]),
+    ]);
+
+    (new ProcessTelegramOmnichatWebhook($event))->handle();
+
+    $conversation = OmnichatConversation::query()->where('channel_id', $channel->id)->sole();
+    $message = OmnichatMessage::query()->where('conversation_id', $conversation->id)->sole();
+    expect($message->direction)->toBe('inbound')
+        ->and($message->body)->toBe('Cho mình hỏi giá sản phẩm này? 0911222333')
+        ->and($message->sender_contact_id)->not->toBeNull()
+        ->and($event->fresh()->status)->toBe('processed');
+});
+
+it('ignores business messages sent by the account owner himself', function (): void {
+    Event::fake();
+
+    $workspace = Workspace::factory()->create();
+    $channel = OmnichatChannel::query()->create([
+        'workspace_id' => $workspace->id,
+        'provider' => ChannelProvider::Telegram,
+        'external_id' => 'biz_bot3',
+        'name' => 'Biz Bot 3',
+        'access_token' => 'biz-token-3',
+        'webhook_secret' => 'secret',
+        'status' => ChannelStatus::Connected,
+        'settings' => [
+            'mode' => 'business',
+            'business' => [
+                'connection_id' => 'bizconn789',
+                'is_enabled' => true,
+                'user_id' => '555000111',
+            ],
+        ],
+    ]);
+
+    $event = OmnichatWebhookEvent::query()->create([
+        'workspace_id' => $workspace->id,
+        'provider' => 'telegram',
+        'external_event_id' => "{$channel->id}:bm2",
+        'event_type' => 'business_message',
+        'payload' => [
+            'channel_id' => $channel->id,
+            'business_message' => [
+                'message_id' => 1002,
+                'business_connection_id' => 'bizconn789',
+                'from' => [
+                    'id' => 555000111,
+                    'is_bot' => false,
+                    'first_name' => 'Chủ',
+                    'last_name' => 'Shop',
+                ],
+                'chat' => [
+                    'id' => 998877665,
+                    'type' => 'private',
+                ],
+                'date' => time(),
+                'text' => 'Dạ bên mình còn hàng nhé bạn!',
+            ],
+        ],
+        'status' => 'pending',
+        'received_at' => now(),
+    ]);
+
+    (new ProcessTelegramOmnichatWebhook($event))->handle();
+
+    expect(OmnichatMessage::query()->where('channel_id', $channel->id)->count())->toBe(0)
+        ->and($event->fresh()->status)->toBe('ignored');
+});
+
+it('includes the business connection id in outbound sends for personal channels', function (): void {
+    [$user, $workspace] = telegramAdminUser();
+
+    $channel = OmnichatChannel::query()->create([
+        'workspace_id' => $workspace->id,
+        'provider' => ChannelProvider::Telegram,
+        'external_id' => 'biz_bot4',
+        'name' => 'Biz Bot 4',
+        'access_token' => 'biz-token-4',
+        'webhook_secret' => 'secret',
+        'status' => ChannelStatus::Connected,
+        'settings' => [
+            'mode' => 'business',
+            'business' => [
+                'connection_id' => 'bizconn999',
+                'is_enabled' => true,
+                'user_id' => '555000111',
+            ],
+        ],
+    ]);
+
+    $contact = OmnichatContact::query()->create([
+        'workspace_id' => $workspace->id,
+        'display_name' => 'Khách D',
+        'status' => 'active',
+    ]);
+
+    $conversation = OmnichatConversation::query()->create([
+        'workspace_id' => $workspace->id,
+        'channel_id' => $channel->id,
+        'contact_id' => $contact->id,
+        'external_id' => '444333222',
+        'status' => 'open',
+    ]);
+
+    Http::fake([
+        'https://api.telegram.org/botbiz-token-4/sendMessage' => Http::response([
+            'ok' => true,
+            'result' => ['message_id' => 777],
+        ]),
+    ]);
+
+    $msg = app(StoreMessage::class)->execute(
+        conversation: $conversation,
+        sender: $user,
+        body: 'Chào bạn, bên mình hỗ trợ ngay ạ!',
+        mode: 'reply',
+        clientId: (string) Str::uuid(),
+    );
+
+    Http::assertSent(fn ($request): bool => $request['business_connection_id'] === 'bizconn999'
+        && $request['chat_id'] === '444333222');
+
+    expect($msg->direction)->toBe('outbound');
+});
+
 it('can execute omnichat:telegram-webhook command to sync and inspect', function (): void {
     [$user, $workspace] = telegramAdminUser();
 

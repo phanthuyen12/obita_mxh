@@ -1,11 +1,18 @@
 import '../css/app.css';
 import './echo';
 
+import { IonicVue } from '@ionic/vue';
 import { createInertiaApp, router } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { i18nVue } from 'laravel-vue-i18n';
 import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
+
+/* Ionic core CSS (minimal set) — powers the omnichat LiveChat page.
+   Structural resets and the dark palette are intentionally NOT imported
+   globally to avoid overriding the rest of the Inertia app's styling;
+   the LiveChat page scopes its own dark theme in a container. */
+import '@ionic/vue/css/core.css';
 
 import { initializeDataLayer } from './datalayer';
 import dayjs from './dayjs';
@@ -69,6 +76,7 @@ createInertiaApp({
                     return await langs[`../../lang/php_${lang}.json`]();
                 },
             })
+            .use(IonicVue, { mode: 'ios' })
             .use(plugin)
             .mount(el);
     },

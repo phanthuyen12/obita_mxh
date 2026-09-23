@@ -22,6 +22,7 @@ class StoreTelegramChannelRequest extends FormRequest
     {
         return [
             'token' => ['required', 'string', 'max:255'],
+            'mode' => ['sometimes', 'string', 'in:bot,business'],
         ];
     }
 }

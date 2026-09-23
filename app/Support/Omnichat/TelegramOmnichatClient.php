@@ -76,11 +76,56 @@ class TelegramOmnichatClient
         $response = Http::timeout(10)->post("{$this->baseUrl}/bot{$token}/setWebhook", [
             'url' => $url,
             'secret_token' => $secret,
-            'allowed_updates' => ['message', 'edited_message', 'callback_query'],
+            'allowed_updates' => $this->allowedUpdates($channel),
             'drop_pending_updates' => false,
         ]);
 
         return $response->successful() && (bool) data_get($response->json(), 'ok');
+    }
+
+    /**
+     * Update types the bot should receive, depending on the channel mode.
+     *
+     * @return list<string>
+     */
+    public function allowedUpdates(OmnichatChannel $channel): array
+    {
+        if (self::isPersonalMode($channel)) {
+            return [
+                'message',
+                'edited_message',
+                'callback_query',
+                'business_connection',
+                'business_message',
+                'edited_business_message',
+                'deleted_business_messages',
+            ];
+        }
+
+        return ['message', 'edited_message', 'callback_query'];
+    }
+
+    /**
+     * Whether the channel is linked to a personal (Telegram Business) account.
+     */
+    public static function isPersonalMode(OmnichatChannel $channel): bool
+    {
+        return data_get($channel->settings, 'mode') === 'business';
+    }
+
+    /**
+     * The active business connection id for personal-mode channels, if connected.
+     */
+    public function businessConnectionId(OmnichatChannel $channel): ?string
+    {
+        if (! self::isPersonalMode($channel)) {
+            return null;
+        }
+
+        $id = data_get($channel->settings, 'business.connection_id');
+        $enabled = (bool) data_get($channel->settings, 'business.is_enabled', false);
+
+        return $enabled && is_string($id) && $id !== '' ? $id : null;
     }
 
     /**
@@ -114,6 +159,10 @@ class TelegramOmnichatClient
             'chat_id' => $chatId,
             'text' => $text,
         ];
+
+        if (($connectionId = $this->businessConnectionId($channel)) !== null) {
+            $payload['business_connection_id'] = $connectionId;
+        }
 
         if ($replyMarkup !== null) {
             $payload['reply_markup'] = $replyMarkup;
@@ -177,6 +226,11 @@ class TelegramOmnichatClient
         );
 
         $params = ['chat_id' => $chatId];
+
+        if (($connectionId = $this->businessConnectionId($channel)) !== null) {
+            $params['business_connection_id'] = $connectionId;
+        }
+
         if ($caption !== null && $caption !== '') {
             $params['caption'] = $caption;
         }

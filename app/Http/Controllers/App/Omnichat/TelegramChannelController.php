@@ -35,6 +35,8 @@ class TelegramChannelController extends Controller
                 'id' => $channel->id,
                 'name' => $channel->name,
                 'username' => data_get($channel->settings, 'bot_username'),
+                'mode' => data_get($channel->settings, 'mode', 'bot'),
+                'business' => data_get($channel->settings, 'business'),
                 'avatar_url' => $channel->avatar_url,
                 'status' => $channel->status->value,
                 'webhook_url' => $client->buildWebhookUrl($channel),
@@ -51,6 +53,7 @@ class TelegramChannelController extends Controller
     {
         $workspace = $request->user()->currentWorkspace;
         $token = trim($request->validated('token'));
+        $mode = $request->validated('mode', 'bot');
 
         try {
             $botInfo = $client->verifyToken($token);
@@ -65,6 +68,24 @@ class TelegramChannelController extends Controller
         $externalId = $username ? (string) $username : (string) $botId;
         $webhookSecret = Str::random(64);
 
+        if ($mode === 'business' && data_get($botInfo, 'can_connect_to_business') !== true) {
+            return back()->withErrors(['token' => 'Bot này chưa được bật Secretary Mode trong @BotFather, không thể kết nối với Telegram cá nhân.']);
+        }
+
+        $settings = [
+            'mode' => $mode,
+            'bot_id' => $botId,
+            'bot_username' => $username,
+            'ai_care' => [
+                'enabled' => false,
+                'provider' => 'dify',
+            ],
+        ];
+
+        if ($mode === 'business') {
+            $settings['business'] = null;
+        }
+
         /** @var OmnichatChannel $channel */
         $channel = OmnichatChannel::query()->updateOrCreate(
             [
@@ -77,14 +98,7 @@ class TelegramChannelController extends Controller
                 'access_token' => $token,
                 'webhook_secret' => $webhookSecret,
                 'status' => ChannelStatus::Connected,
-                'settings' => [
-                    'bot_id' => $botId,
-                    'bot_username' => $username,
-                    'ai_care' => [
-                        'enabled' => false,
-                        'provider' => 'dify',
-                    ],
-                ],
+                'settings' => $settings,
                 'connected_at' => now(),
                 'disconnected_at' => null,
             ],
@@ -93,6 +107,13 @@ class TelegramChannelController extends Controller
         // Register Webhook
         $webhookUrl = $client->buildWebhookUrl($channel);
         $client->setWebhook($channel, $webhookUrl);
+
+        if ($mode === 'business') {
+            return back()->with(
+                'success',
+                "Đã tạo kênh Telegram cá nhân. Bây giờ hãy mở Telegram trên điện thoại → Settings → Telegram Business → Chatbots và thêm bot @{$username} để hoàn tất kết nối."
+            );
+        }
 
         // Fetch avatar if available
         $avatar = $client->fetchUserProfilePhoto($channel, $botId);
