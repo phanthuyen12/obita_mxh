@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\GitHubController;
 use App\Http\Controllers\Auth\GoogleController;
+use App\Http\Controllers\Auth\LiveChatLoginController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
@@ -35,6 +36,10 @@ Route::middleware(['guest'])->group(function () {
     Route::get('/auth/google/redirect', [GoogleController::class, 'redirect'])->name('auth.google.redirect');
     Route::get('/auth/github/redirect', [GitHubController::class, 'redirect'])->name('auth.github.redirect');
 });
+
+// Dedicated mobile-style login for /omnichat/livechat — outside the guest
+// middleware so authenticated users are sent straight to LiveChat.
+Route::get('/login/livechat', [LiveChatLoginController::class, 'create'])->name('login.livechat');
 
 // Callbacks must be reachable by both guests (signup/login) and authenticated
 // users (connect-from-settings). The redirect routes that initiate the OAuth

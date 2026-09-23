@@ -11,6 +11,7 @@ export interface Message {
   text?: string
   time: string
   isRead?: boolean
+  clientId?: string
   attachment?: Attachment
 }
 
@@ -24,7 +25,9 @@ export interface ChatItem {
   channelSource?: ChannelSource
   channelName?: string
   phone?: string
+  contactId?: string
   tags?: ConversationTag[]
+  tagIds?: string[]
   folderCategory?: string[]
   avatarType: 'text' | 'image' | 'icon'
   avatarText?: string

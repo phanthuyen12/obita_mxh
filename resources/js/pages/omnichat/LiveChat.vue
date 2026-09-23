@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3'
+import { Head, router, usePage } from '@inertiajs/vue3'
+import { useEcho } from '@laravel/echo-vue'
 import { IonApp, IonIcon } from '@ionic/vue'
 import axios from 'axios'
 import {
@@ -16,12 +17,19 @@ import {
 } from 'ionicons/icons'
 import { computed, onMounted, ref } from 'vue'
 
+const page = usePage()
+const authUser = computed(() => page.props.auth?.user ?? { name: '', email: '' })
+
 import { store as storeMessage } from '@/actions/App/Http/Controllers/App/Omnichat/MessageController'
 import ConversationReadController from '@/actions/App/Http/Controllers/App/Omnichat/ConversationReadController'
 import dayjs from '@/dayjs'
+import { logout } from '@/routes'
 import { index as livechatConversations, show as livechatConversation } from '@/routes/app/omnichat/livechat/conversations'
 
 import ChatRoom from './livechat/components/ChatRoom.vue'
+import CustomersPage from './livechat/components/CustomersPage.vue'
+import AnalyticsPage from './livechat/components/AnalyticsPage.vue'
+import ProfilePage from './livechat/components/ProfilePage.vue'
 import type { Attachment, ChannelSource, ChatItem, Message } from './livechat/types/chat'
 
 type ConnectedChannel = {
@@ -103,11 +111,8 @@ const toChatItem = (conversation: ConversationSummary): ChatItem => {
     name,
     channelSource: source,
     phone: conversation.contact.phone ?? undefined,
-    avatarType: conversation.contact.avatar_url ? 'image' : 'text',
-    avatarText: name.charAt(0).toUpperCase(),
-    avatarBg: avatarColorFor(conversation.id),
-    time: formatTime(conversation.last_message_at),
     tags: conversation.labels.map((label) => label.name) as ChatItem['tags'],
+    tagIds: conversation.labels.map((label) => label.id),
     unreadCount: conversation.unread_count > 0 ? conversation.unread_count : undefined,
     unreadType: 'blue',
     lastMessage: { text: conversation.last_message_preview ?? '' },
@@ -125,6 +130,74 @@ const loadConversations = async (): Promise<void> => {
 }
 
 onMounted(loadConversations)
+
+// WebSocket (Laravel Reverb / Echo): nhận tin nhắn mới realtime cho mọi kênh đang chọn.
+type BroadcastMessage = {
+  id: string
+  conversation_id: string
+  direction: 'inbound' | 'outbound' | 'internal'
+  type: string
+  body: string | null
+  status: string
+  client_id: string | null
+  sender: { id: string; name: string; avatar_url: string | null } | null
+  attachments: Array<{ id: string; type: string; url?: string; original_name?: string }>
+  sent_at: string | null
+  created_at: string
+}
+
+type MessageCreatedPayload = { message: BroadcastMessage }
+
+const applyIncomingMessage = (message: BroadcastMessage): void => {
+  const conversation = chats.value.find((chat) => chat.id === message.conversation_id)
+
+  // Cập nhật phòng chat đang mở.
+  if (selectedChat.value && selectedChat.value.id === message.conversation_id) {
+    // Bỏ qua echo của tin nhắn mình vừa gửi tối ưu (đã có trong phòng chat).
+    const duplicate = selectedChat.value.messages.some(
+      (m) => m.id === message.id || (message.client_id !== null && m.clientId === message.client_id),
+    )
+    if (!duplicate) {
+      const payload: MessagePayload = {
+        id: message.id,
+        direction: message.direction === 'outbound' ? 'outbound' : 'inbound',
+        body: message.body,
+        sent_at: message.sent_at,
+        created_at: message.created_at,
+        read_at: message.direction === 'outbound' ? message.sent_at : null,
+      }
+      selectedChat.value = {
+        ...selectedChat.value,
+        messages: [...selectedChat.value.messages, toMessage(payload)],
+      }
+    }
+  }
+
+  // Cập nhật danh sách hội thoại: đưa lên đầu + badge chưa đọc.
+  if (conversation) {
+    conversation.lastMessage.text = message.body ?? `[${message.type}]`
+    conversation.time = formatTime(message.sent_at ?? message.created_at)
+
+    if (message.direction === 'inbound' && message.conversation_id !== selectedChat.value?.id) {
+      conversation.unreadCount = (typeof conversation.unreadCount === 'number' ? conversation.unreadCount : 0) + 1
+      conversation.unreadType = 'blue'
+    }
+    chats.value = [conversation, ...chats.value.filter((chat) => chat.id !== conversation.id)]
+  } else {
+    // Hội thoại mới chưa có trong danh sách → tải lại.
+    loadConversations()
+  }
+}
+
+for (const channel of connectedChannels) {
+  useEcho<MessageCreatedPayload>(
+    `omnichat.channel.${channel.id}`,
+    '.omnichat.message.created',
+    ({ message }) => {
+      applyIncomingMessage(message)
+    },
+  )
+}
 
 const filteredChats = computed(() =>
   chats.value.filter((chat) => {
@@ -162,7 +235,11 @@ const openChat = async (chat: ChatItem): Promise<void> => {
   selectedChat.value = { ...chat, messages: [] }
 
   const { data } = await axios.get(livechatConversation.url(chat.id))
-  selectedChat.value = { ...chat, messages: (data.messages.data as MessagePayload[]).map(toMessage) }
+  selectedChat.value = {
+    ...chat,
+    contactId: data.conversation.contact.id as string,
+    messages: (data.messages.data as MessagePayload[]).map(toMessage),
+  }
 
   // Mark the conversation read once opened.
   try {
@@ -172,11 +249,11 @@ const openChat = async (chat: ChatItem): Promise<void> => {
   }
 }
 
-const handleSend = async ({ id, text, attachment }: { id: string; text: string; attachment: Attachment | null }): Promise<void> => {
+const handleSend = async ({ text, attachment, clientId }: { id: string; text: string; attachment: Attachment | null; clientId: string }): Promise<void> => {
   const payload = new FormData()
   payload.append('body', text)
   payload.append('mode', 'reply')
-  payload.append('client_id', crypto.randomUUID())
+  payload.append('client_id', clientId)
 
   if (attachment?.url && attachment.type === 'image') {
     const blob = await (await fetch(attachment.url)).blob()
@@ -192,6 +269,45 @@ const handleUpdateLastMessage = ({ id, text, time }: { id: string; text: string;
     target.lastMessage.text = text
     target.time = time
   }
+}
+
+const handleLogout = (): void => {
+  router.post(logout.url())
+}
+
+type CustomerLike = {
+  id: string
+  name: string
+  phone: string
+  avatarText: string
+  avatarBg: string
+  tags?: string[]
+  notes?: string
+  lastActive?: string
+}
+
+const handleChatWithCustomer = (customer: CustomerLike): void => {
+  activeTab.value = 'chat'
+
+  const existing = chats.value.find((chat) => chat.phone === customer.phone && customer.phone !== '')
+  if (existing) {
+    openChat(existing)
+    return
+  }
+
+  const placeholder: ChatItem = {
+    id: `contact_${customer.id}`,
+    name: customer.name,
+    phone: customer.phone,
+    avatarType: 'text',
+    avatarText: customer.avatarText,
+    avatarBg: customer.avatarBg,
+    time: 'Vừa xong',
+    tags: (customer.tags ?? []) as ChatItem['tags'],
+    lastMessage: { text: customer.notes || 'Khách hàng chưa có hội thoại gần đây' },
+  }
+  chats.value.unshift(placeholder)
+  selectedChat.value = placeholder
 }
 </script>
 
@@ -212,7 +328,23 @@ const handleUpdateLastMessage = ({ id, text, time }: { id: string; text: string;
 
       <!-- Màn hình chính đa tab -->
       <template v-else>
-        <template v-if="activeTab === 'chat'">
+        <template v-if="activeTab === 'contacts'">
+          <CustomersPage @chat-with="handleChatWithCustomer" />
+        </template>
+
+        <template v-else-if="activeTab === 'calls'">
+          <AnalyticsPage />
+        </template>
+
+        <template v-else-if="activeTab === 'settings'">
+          <ProfilePage
+            :user="{ name: currentUser.name, avatar_url: currentUser.avatar_url }"
+            :channels="connectedChannels"
+            @logout="handleLogout"
+          />
+        </template>
+
+        <template v-else>
           <div class="top-sticky-wrapper">
             <header class="telegram-header">
               <button class="header-btn-text">Sửa</button>
@@ -320,12 +452,6 @@ const handleUpdateLastMessage = ({ id, text, time }: { id: string; text: string;
               <p>Không có cuộc trò chuyện nào trong thư mục "{{ activeFolder }}"</p>
             </div>
           </main>
-        </template>
-
-        <template v-else>
-          <div class="chat-list-scrollable">
-            <div class="empty-state"><p>Tính năng đang được hoàn thiện.</p></div>
-          </div>
         </template>
 
         <div class="floating-dock-container">

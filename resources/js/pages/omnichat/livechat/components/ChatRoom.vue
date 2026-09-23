@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { ref, nextTick, onMounted, watch } from 'vue'
+import { ref, computed, nextTick, onMounted, watch } from 'vue'
 import { IonIcon } from '@ionic/vue'
+import axios from 'axios'
+import dayjs from '@/dayjs'
 import {
   chevronBack,
   attachOutline,
@@ -12,7 +14,6 @@ import {
   documentAttachOutline,
   pricetagOutline
 } from 'ionicons/icons'
-import dayjs from '@/dayjs'
 import type { ChatItem, Message, Attachment } from '../types/chat'
 
 const props = defineProps<{
@@ -21,7 +22,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'back'): void
-  (e: 'send', payload: { id: string; text: string; attachment: Attachment | null }): void
+  (e: 'send', payload: { id: string; text: string; attachment: Attachment | null; clientId: string }): void
   (e: 'update-last-message', payload: { id: string; text: string; time: string }): void
 }>()
 
@@ -101,17 +102,19 @@ const sendMessage = () => {
 
   // Optimistic UI: show the outgoing message immediately, the parent
   // persists it through the Omnichat API and reconciles on refresh.
+  const clientId = crypto.randomUUID()
   const newMsg: Message = {
-    id: 'msg_' + Date.now(),
+    id: 'msg_' + clientId.slice(0, 8),
     sender: 'me',
     text: text || undefined,
     time: currentTime,
     isRead: false,
+    clientId,
     attachment: attachment ?? undefined
   }
 
   messages.value.push(newMsg)
-  emit('send', { id: props.chat.id, text, attachment })
+  emit('send', { id: props.chat.id, text, attachment, clientId })
   emit('update-last-message', {
     id: props.chat.id,
     text: text || (attachment?.type === 'image' ? '[Hình ảnh]' : `[Tệp] ${attachment?.name}`),
@@ -125,17 +128,69 @@ const sendMessage = () => {
   scrollToBottom()
 }
 
-// Logic Gắn Tag Cuộc Hội Thoại
+// Logic Gắn Tag Cuộc Hội Thoại — đồng bộ với backend qua API
 const showTagModal = ref(false)
-const availableConvTags = ['VIP', 'Chốt đơn', 'Đang tư vấn', 'Cần hỗ trợ', 'Khách mới', 'Tiềm năng'] as const
+const availableConvTags = ref<Array<{ id: string; name: string }>>([])
+const isSavingTags = ref(false)
 
-const toggleConversationTag = (tag: any) => {
+type TagPayload = { id: string; name: string; color?: string | null }
+
+const loadTags = async (): Promise<void> => {
+  try {
+    const { data } = await axios.get('/omnichat/livechat/tags')
+    availableConvTags.value = (data.data as TagPayload[]).map(t => ({ id: t.id, name: t.name }))
+  } catch {
+    availableConvTags.value = []
+  }
+}
+
+onMounted(loadTags)
+
+const selectedTagIds = computed(() =>
+  (props.chat.tagIds ?? [])
+    .map(name => availableConvTags.value.find(t => t.name === name)?.id)
+    .filter((id): id is string => Boolean(id)),
+)
+
+const toggleConversationTag = (tag: { id: string; name: string }) => {
   if (!props.chat.tags) props.chat.tags = []
-  const idx = props.chat.tags.indexOf(tag)
-  if (idx > -1) {
-    props.chat.tags.splice(idx, 1)
+  if (!props.chat.tagIds) props.chat.tagIds = []
+
+  const nameIdx = props.chat.tags.indexOf(tag.name)
+  const idIdx = props.chat.tagIds.indexOf(tag.id)
+
+  if (nameIdx > -1) {
+    props.chat.tags.splice(nameIdx, 1)
   } else {
-    props.chat.tags.push(tag)
+    props.chat.tags.push(tag.name)
+  }
+  if (idIdx > -1) {
+    props.chat.tagIds.splice(idIdx, 1)
+  } else {
+    props.chat.tagIds.push(tag.id)
+  }
+
+  persistConversationTags()
+}
+
+const persistConversationTags = async (): Promise<void> => {
+  if (!props.chat.contactId) return
+  isSavingTags.value = true
+  try {
+    const { data } = await axios.put(
+      `/omnichat/livechat/contacts/${props.chat.contactId}/conversation-tags`,
+      {
+        conversation_id: props.chat.id,
+        tag_ids: props.chat.tagIds ?? [],
+      },
+    )
+    const serverTags = (data.tags as TagPayload[]).map(t => t.name)
+    props.chat.tags = serverTags as ChatItem['tags']
+    props.chat.tagIds = (data.tags as TagPayload[]).map(t => t.id)
+  } catch {
+    // Keep optimistic state; reload restores server truth on next open.
+  } finally {
+    isSavingTags.value = false
   }
 }
 </script>
@@ -204,7 +259,11 @@ const toggleConversationTag = (tag: any) => {
       <div class="tags-pill-scroll">
         <span v-for="t in chat.tags" :key="t" class="conv-tag-pill">
           🏷️ {{ t }}
-          <ion-icon :icon="closeCircle" class="remove-conv-tag" @click="toggleConversationTag(t)"></ion-icon>
+          <ion-icon
+            :icon="closeCircle"
+            class="remove-conv-tag"
+            @click="toggleConversationTag({ id: chat.tagIds?.[chat.tags?.indexOf(t) ?? -1] ?? '', name: t })"
+          ></ion-icon>
         </span>
       </div>
       <button class="add-more-tag-btn" @click="showTagModal = true">
@@ -353,12 +412,12 @@ const toggleConversationTag = (tag: any) => {
           <div class="conv-tags-grid">
             <button
               v-for="tag in availableConvTags"
-              :key="tag"
-              :class="['tag-select-pill', { active: chat.tags?.includes(tag) }]"
+              :key="tag.id"
+              :class="['tag-select-pill', { active: chat.tags?.includes(tag.name) }]"
               @click="toggleConversationTag(tag)"
             >
               <span class="tag-bullet">•</span>
-              {{ tag }}
+              {{ tag.name }}
             </button>
           </div>
         </div>

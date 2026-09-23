@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { IonIcon } from '@ionic/vue'
 import {
   keyOutline,
@@ -17,20 +17,50 @@ import {
   logoFacebook
 } from 'ionicons/icons'
 
+type ConnectedChannel = {
+  id: string
+  provider: string
+  name: string
+  avatar_url: string | null
+  status: string
+  is_active: boolean
+}
+
+const props = defineProps<{
+  user?: { name: string; avatar_url?: string | null }
+  channels?: ConnectedChannel[]
+}>()
+
 const emit = defineEmits<{
   (e: 'logout'): void
 }>()
 
-const geminiKey = ref('AIzaSyD98x7_example_key')
+const userName = computed(() => props.user?.name || 'Người dùng')
+const initials = computed(() =>
+  userName.value
+    .split(/\s+/)
+    .map(part => part.charAt(0).toUpperCase())
+    .slice(0, 2)
+    .join(''),
+)
+const connectedChannels = computed(() => props.channels ?? [])
+const activeChannelCount = computed(() => connectedChannels.value.filter(c => c.is_active).length)
+
+const channelHint = (provider: string, index: number): string => {
+  const hints: Record<string, string> = {
+    facebook: 'Facebook Messenger & Pages',
+    instagram: 'Instagram Direct Messages',
+    telegram: 'Telegram Bot & Channels',
+    zalo: 'Zalo Official Account (OA)',
+    website: 'Website LiveChat Widget',
+  }
+  return hints[provider] ?? 'Kênh nhắn tin đa nền tảng'
+}
+
+const geminiKey = ref('')
 const showApiKey = ref(false)
 const isOpenAiEnabled = ref(true)
 const isSaved = ref(false)
-
-// Kênh kết nối đa nền tảng (Omnichannel)
-const fbConnected = ref(true)
-const tgConnected = ref(true)
-const zaloConnected = ref(true)
-const webConnected = ref(true)
 
 const toggleShowApiKey = () => {
   showApiKey.value = !showApiKey.value
@@ -61,7 +91,7 @@ const saveSettings = () => {
       <div class="user-hero-card">
         <div class="avatar-large-wrap">
           <div class="avatar-large">
-            <span>PT</span>
+            <span>{{ initials }}</span>
           </div>
           <button class="change-avatar-btn" title="Đổi ảnh đại diện">
             <ion-icon :icon="cameraOutline"></ion-icon>
@@ -70,14 +100,13 @@ const saveSettings = () => {
 
         <div class="user-meta-center">
           <div class="name-verify-row">
-            <h2 class="user-full-name">Phan Thuyên</h2>
+            <h2 class="user-full-name">{{ userName }}</h2>
             <span class="verified-check" title="Đã xác minh">✓</span>
           </div>
-          <span class="user-handle">@phanthuyen_mmo</span>
-          <span class="user-phone-badge">📱 +84 988 123 456</span>
-          
+          <span class="user-handle">Tài khoản quản trị Omnichat</span>
+
           <div class="premium-pills-row">
-            <span class="premium-badge">⭐ Telegram Premium</span>
+            <span class="premium-badge">⭐ Omnichat Master</span>
             <span class="bot-master-badge">⚡ Bot AI Master</span>
           </div>
         </div>
@@ -85,16 +114,16 @@ const saveSettings = () => {
         <!-- 3 Thẻ thống kê tài khoản nhanh -->
         <div class="profile-quick-stats">
           <div class="p-stat-box">
-            <span class="p-stat-val">12</span>
+            <span class="p-stat-val">{{ activeChannelCount }}</span>
             <span class="p-stat-lbl">Kênh quản lý</span>
           </div>
           <div class="p-stat-box">
-            <span class="p-stat-val text-emerald">98.5%</span>
-            <span class="p-stat-lbl">Tỷ lệ rep AI</span>
+            <span class="p-stat-val text-emerald">{{ connectedChannels.length }}</span>
+            <span class="p-stat-lbl">Kênh kết nối</span>
           </div>
           <div class="p-stat-box">
-            <span class="p-stat-val text-amber">VIP 3</span>
-            <span class="p-stat-lbl">Cấp tài khoản</span>
+            <span class="p-stat-val text-amber">Live</span>
+            <span class="p-stat-lbl">Trạng thái</span>
           </div>
         </div>
       </div>
@@ -147,74 +176,39 @@ const saveSettings = () => {
       <div class="settings-group">
         <div class="group-header">KÊNH HỖ TRỢ ĐA NỀN TẢNG (OMICHAT)</div>
 
-        <!-- Facebook Page -->
-        <div class="setting-item">
-          <div class="setting-icon-box fb-channel-bg">
-            <ion-icon :icon="logoFacebook"></ion-icon>
+        <div
+          v-for="(channel, index) in connectedChannels"
+          :key="channel.id"
+          class="setting-item"
+        >
+          <div
+            class="setting-icon-box"
+            :class="channel.provider === 'telegram' ? 'tg-channel-bg' : channel.provider === 'zalo' ? 'zalo-channel-bg' : channel.provider === 'website' ? 'web-channel-bg' : 'fb-channel-bg'"
+          >
+            <template v-if="channel.provider === 'telegram'">
+              <span class="tg-mini-plane">✈️</span>
+            </template>
+            <template v-else-if="channel.provider === 'zalo'">
+              <span class="zalo-letter">Z</span>
+            </template>
+            <template v-else-if="channel.provider === 'website'">
+              <ion-icon :icon="globeOutline"></ion-icon>
+            </template>
+            <template v-else>
+              <ion-icon :icon="logoFacebook"></ion-icon>
+            </template>
           </div>
           <div class="setting-content">
             <div class="channel-name-line">
-              <span class="setting-label">Facebook Fanpage & Ads</span>
-              <span class="status-live-pill">Đang kết nối</span>
+              <span class="setting-label">{{ channel.name }}</span>
+              <span :class="channel.is_active ? 'status-live-pill' : 'status-off-pill'">
+                {{ channel.is_active ? 'Đang kết nối' : 'Mất kết nối' }}
+              </span>
             </div>
-            <span class="setting-hint">3 Page Facebook đang hoạt động</span>
+            <span class="setting-hint">{{ channelHint(channel.provider, index) }}</span>
           </div>
           <label class="toggle-switch">
-            <input v-model="fbConnected" type="checkbox" />
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-
-        <!-- Telegram -->
-        <div class="setting-item">
-          <div class="setting-icon-box tg-channel-bg">
-            <span class="tg-mini-plane">✈️</span>
-          </div>
-          <div class="setting-content">
-            <div class="channel-name-line">
-              <span class="setting-label">Telegram Bot & Groups</span>
-              <span class="status-live-pill">Đang kết nối</span>
-            </div>
-            <span class="setting-hint">Webhook Bot AI Master MTProto</span>
-          </div>
-          <label class="toggle-switch">
-            <input v-model="tgConnected" type="checkbox" />
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-
-        <!-- Zalo OA -->
-        <div class="setting-item">
-          <div class="setting-icon-box zalo-channel-bg">
-            <span class="zalo-letter">Z</span>
-          </div>
-          <div class="setting-content">
-            <div class="channel-name-line">
-              <span class="setting-label">Zalo Official Account (OA)</span>
-              <span class="status-live-pill">Đang kết nối</span>
-            </div>
-            <span class="setting-hint">Tự động rep tin nhắn Zalo khách VIP</span>
-          </div>
-          <label class="toggle-switch">
-            <input v-model="zaloConnected" type="checkbox" />
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-
-        <!-- Web LiveChat Widget -->
-        <div class="setting-item">
-          <div class="setting-icon-box web-channel-bg">
-            <ion-icon :icon="globeOutline"></ion-icon>
-          </div>
-          <div class="setting-content">
-            <div class="channel-name-line">
-              <span class="setting-label">Website LiveChat Widget</span>
-              <span class="status-live-pill">Đang kết nối</span>
-            </div>
-            <span class="setting-hint">Widget nhúng trực tiếp trên Website</span>
-          </div>
-          <label class="toggle-switch">
-            <input v-model="webConnected" type="checkbox" />
+            <input :checked="channel.is_active" type="checkbox" disabled />
             <span class="toggle-slider"></span>
           </label>
         </div>
@@ -571,6 +565,16 @@ const saveSettings = () => {
   color: #34d399;
   background: rgba(16, 185, 129, 0.15);
   border: 0.5px solid rgba(16, 185, 129, 0.3);
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+.status-off-pill {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #9ca3af;
+  background: rgba(156, 163, 175, 0.15);
+  border: 0.5px solid rgba(156, 163, 175, 0.3);
   padding: 1px 6px;
   border-radius: 8px;
 }

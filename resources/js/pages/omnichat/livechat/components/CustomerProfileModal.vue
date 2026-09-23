@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { IonIcon } from '@ionic/vue'
+import axios from 'axios'
 import {
   closeOutline,
   callOutline,
@@ -25,7 +26,58 @@ const emit = defineEmits<{
 const editMode = ref(false)
 const editedCustomer = ref<Customer>({ ...props.customer })
 const newTagInput = ref('')
-const availableTags = ['VIP ⭐', 'Đã chốt', 'Tiềm năng', 'Khách sỉ', 'Đang tư vấn', 'Cần chăm sóc', 'Black MMO', 'Telegram Bot']
+const availableTags = ref<Array<{ id: string; name: string }>>([])
+const isSaving = ref(false)
+
+type TagPayload = { id: string; name: string; color?: string | null }
+
+const loadTags = async (): Promise<void> => {
+  try {
+    const { data } = await axios.get('/omnichat/livechat/tags')
+    availableTags.value = (data.data as TagPayload[]).map(t => ({ id: t.id, name: t.name }))
+  } catch {
+    availableTags.value = []
+  }
+}
+
+onMounted(loadTags)
+
+const tagIdByName = (name: string): string | undefined =>
+  availableTags.value.find(t => t.name === name)?.id
+
+const persistTags = async (tagNames: string[]): Promise<void> => {
+  isSaving.value = true
+  try {
+    const tagIds = tagNames
+      .map(name => tagIdByName(name))
+      .filter((id): id is string => Boolean(id))
+
+    // Create unknown tags on the fly so custom tags survive reloads.
+    for (const name of tagNames) {
+      if (!tagIdByName(name) && name.trim()) {
+        const { data } = await axios.post('/omnichat/livechat/tags', { name: name.trim() })
+        const tag = data.tag as TagPayload
+        availableTags.value.push({ id: tag.id, name: tag.name })
+        tagIds.push(tag.id)
+      }
+    }
+
+    const { data } = await axios.put(`/omnichat/livechat/contacts/${props.customer.id}`, {
+      display_name: editedCustomer.value.name,
+      phone: editedCustomer.value.phone || null,
+      notes: editedCustomer.value.notes ?? null,
+      tag_ids: tagIds,
+    })
+
+    emit('update-customer', {
+      ...editedCustomer.value,
+      tags: (data.tags as TagPayload[]).map(t => t.name),
+      tagIds: (data.tags as TagPayload[]).map(t => t.id),
+    })
+  } finally {
+    isSaving.value = false
+  }
+}
 
 const toggleTag = (t: string) => {
   if (!editedCustomer.value.tags) editedCustomer.value.tags = []
@@ -54,8 +106,8 @@ const removeTag = (t: string) => {
   }
 }
 
-const saveChanges = () => {
-  emit('update-customer', { ...editedCustomer.value })
+const saveChanges = async (): Promise<void> => {
+  await persistTags(editedCustomer.value.tags ?? [])
   editMode.value = false
 }
 </script>
@@ -72,9 +124,10 @@ const saveChanges = () => {
         <span class="sheet-header-title">Hồ sơ khách hàng</span>
         <button
           class="sheet-edit-btn"
+          :disabled="isSaving"
           @click="editMode ? saveChanges() : (editMode = true)"
         >
-          {{ editMode ? 'Lưu' : 'Sửa' }}
+          {{ isSaving ? 'Đang lưu...' : editMode ? 'Lưu' : 'Sửa' }}
         </button>
       </div>
 
@@ -158,11 +211,11 @@ const saveChanges = () => {
             <div class="suggest-tags-wrap">
               <button
                 v-for="st in availableTags"
-                :key="st"
-                :class="['suggest-pill', { selected: editedCustomer.tags?.includes(st) }]"
-                @click="toggleTag(st)"
+                :key="st.id"
+                :class="['suggest-pill', { selected: editedCustomer.tags?.includes(st.name) }]"
+                @click="toggleTag(st.name)"
               >
-                {{ st }}
+                {{ st.name }}
               </button>
             </div>
 

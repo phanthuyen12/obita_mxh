@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { IonIcon } from '@ionic/vue'
+import axios from 'axios'
+import dayjs from '@/dayjs'
 import {
   searchOutline,
   callOutline,
@@ -18,9 +20,28 @@ export interface Customer {
   avatarBg: string
   tag: 'VIP' | 'Đã mua' | 'Tiềm năng' | 'Chưa liên hệ'
   tags?: string[]
+  tagIds?: string[]
   totalSpent: string
   lastActive: string
   notes?: string
+}
+
+type ContactPayload = {
+  id: string
+  display_name: string
+  avatar_url: string | null
+  phone: string | null
+  email: string | null
+  notes: string | null
+  lead_stage: string | null
+  last_seen_at: string | null
+  phone_detected_at: string | null
+  conversation_count: number
+  latest_conversation_id: string | null
+  last_message_at: string | null
+  last_message_preview: string | null
+  provider: string | null
+  tags: Array<{ id: string; name: string; color: string | null }>
 }
 
 const emit = defineEmits<{
@@ -40,79 +61,73 @@ const filterOptions = [
   { label: 'Tiềm năng', value: 'potential' }
 ]
 
-const customers = ref<Customer[]>([
-  {
-    id: 'c1',
-    name: 'Nguyễn Văn Hùng (KHOA LOL)',
-    phone: '0988 123 456',
-    avatarText: 'H',
-    avatarBg: '#78350f',
-    tag: 'VIP',
-    tags: ['VIP ⭐', 'Black MMO', 'Khách sỉ'],
-    totalSpent: '15.400.000 đ',
-    lastActive: '1 phút trước',
-    notes: 'Quan tâm API video, tài khoản ChatGPT'
-  },
-  {
-    id: 'c2',
-    name: 'Đoàn Dũng (Black MMO)',
-    phone: '0912 888 999',
-    avatarText: 'D',
-    avatarBg: '#1e3a8a',
-    tag: 'VIP',
-    tags: ['VIP ⭐', 'Đã chốt', 'Telegram Bot'],
-    totalSpent: '28.900.000 đ',
-    lastActive: '08:42',
-    notes: 'Khách sỉ API key Gemini'
-  },
-  {
-    id: 'c3',
-    name: 'Trần Thị Mai Phương',
-    phone: '0977 654 321',
-    avatarText: 'P',
-    avatarBg: '#d97706',
-    tag: 'Đã mua',
-    tags: ['Đã chốt', 'Ads FB'],
-    totalSpent: '3.200.000 đ',
-    lastActive: 'Hôm qua',
-    notes: 'Chạy Ads Facebook đồ gia dụng'
-  },
-  {
-    id: 'c4',
-    name: 'Phạm Quang Huy',
-    phone: '0868 333 444',
-    avatarText: 'Q',
-    avatarBg: '#059669',
-    tag: 'Tiềm năng',
-    tags: ['Đang tư vấn', 'Tiềm năng'],
-    totalSpent: '0 đ',
-    lastActive: '2 ngày trước',
-    notes: 'Hỏi bảng giá bot tự động chốt đơn'
-  },
-  {
-    id: 'c5',
-    name: 'Lê Hoàng Long (Crypto King)',
-    phone: '0903 777 888',
-    avatarText: 'L',
-    avatarBg: '#7c3aed',
-    tag: 'VIP',
-    tags: ['VIP ⭐', 'Crypto VIP'],
-    totalSpent: '45.000.000 đ',
-    lastActive: '08:34',
-    notes: 'Gói tín hiệu VIP Forex & Crypto'
-  },
-  {
-    id: 'c6',
-    name: 'Vũ Minh Đức',
-    phone: '0345 678 901',
-    avatarText: 'Đ',
-    avatarBg: '#dc2626',
-    tag: 'Chưa liên hệ',
-    tags: ['Cần chăm sóc'],
-    totalSpent: '0 đ',
-    lastActive: '1 tuần trước'
+const AVATAR_COLORS = ['#0866ff', '#0088cc', '#0068ff', '#db2777', '#059669', '#78350f', '#0284c7', '#7c3aed']
+
+const avatarColorFor = (id: string): string => {
+  let hash = 0
+  for (let i = 0; i < id.length; i++) {
+    hash = id.charCodeAt(i) + ((hash << 5) - hash)
   }
-])
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
+}
+
+const relativeTime = (iso: string | null): string => {
+  if (!iso) return 'Chưa hoạt động'
+  return dayjs(iso).fromNow()
+}
+
+const STAGE_LABEL: Record<string, Customer['tag']> = {
+  converted: 'Đã mua',
+  qualified: 'Tiềm năng',
+  contacted: 'Tiềm năng',
+  new: 'Chưa liên hệ',
+  lost: 'Chưa liên hệ',
+}
+
+const toCustomer = (contact: ContactPayload): Customer => {
+  const name = contact.display_name || 'Khách hàng'
+  const tagNames = contact.tags.map(t => t.name)
+
+  return {
+    id: contact.id,
+    name,
+    phone: contact.phone ?? '',
+    avatarText: name.charAt(0).toUpperCase(),
+    avatarBg: avatarColorFor(contact.id),
+    tag: STAGE_LABEL[contact.lead_stage ?? 'new'] ?? (tagNames.some(t => t.startsWith('VIP')) ? 'VIP' : 'Chưa liên hệ'),
+    tags: tagNames,
+    tagIds: contact.tags.map(t => t.id),
+    totalSpent: contact.conversation_count > 0 ? `${contact.conversation_count} hội thoại` : '0 hội thoại',
+    lastActive: relativeTime(contact.last_seen_at ?? contact.last_message_at),
+    notes: contact.notes ?? undefined,
+  }
+}
+
+const customers = ref<Customer[]>([])
+const isLoading = ref(false)
+
+const loadCustomers = async (): Promise<void> => {
+  isLoading.value = true
+  try {
+    const { data } = await axios.get('/omnichat/livechat/contacts', {
+      params: {
+        search: searchQuery.value,
+        filter: selectedFilter.value === 'all' ? '' : selectedFilter.value,
+      },
+    })
+    customers.value = (data.data as ContactPayload[]).map(toCustomer)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+let searchDebounce: ReturnType<typeof setTimeout> | undefined
+watch(searchQuery, () => {
+  clearTimeout(searchDebounce)
+  searchDebounce = setTimeout(loadCustomers, 300)
+})
+watch(selectedFilter, loadCustomers)
+onMounted(loadCustomers)
 
 const handleUpdateCustomer = (updated: Customer) => {
   const index = customers.value.findIndex(c => c.id === updated.id)
@@ -264,7 +279,11 @@ const getTagColor = (tag: Customer['tag']) => {
         </div>
       </div>
 
-      <div v-if="filteredCustomers.length === 0" class="empty-customers">
+      <div v-if="isLoading" class="empty-customers">
+        <p>Đang tải khách hàng...</p>
+      </div>
+
+      <div v-else-if="filteredCustomers.length === 0" class="empty-customers">
         <p>Không tìm thấy khách hàng nào khớp với tìm kiếm</p>
       </div>
     </main>
