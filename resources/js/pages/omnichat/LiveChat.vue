@@ -54,7 +54,7 @@ type Props = {
   currentUser: { id: string; name: string; avatar_url: string | null }
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 // Map backend provider → applivechat channel source badge.
 const PROVIDER_SOURCE: Record<string, ChannelSource> = {
@@ -189,7 +189,7 @@ const applyIncomingMessage = (message: BroadcastMessage): void => {
   }
 }
 
-for (const channel of connectedChannels) {
+for (const channel of props.connectedChannels) {
   useEcho<MessageCreatedPayload>(
     `omnichat.channel.${channel.id}`,
     '.omnichat.message.created',
@@ -339,7 +339,7 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
         <template v-else-if="activeTab === 'settings'">
           <ProfilePage
             :user="{ name: currentUser.name, avatar_url: currentUser.avatar_url }"
-            :channels="connectedChannels"
+            :channels="props.connectedChannels"
             @logout="handleLogout"
           />
         </template>
