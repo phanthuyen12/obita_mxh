@@ -23,11 +23,12 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Passport\Contracts\OAuthenticatable;
 use Laravel\Passport\HasApiTokens;
+use NotificationChannels\WebPush\HasPushSubscriptions;
 
 class User extends Authenticatable implements MustVerifyEmail, OAuthenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasAccount, HasApiTokens, HasFactory, HasMedia, HasUuids, HasWorkspace, Notifiable;
+    use HasAccount, HasApiTokens, HasFactory, HasMedia, HasPushSubscriptions, HasUuids, HasWorkspace, Notifiable;
 
     /**
      * @var list<string>

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Events;
 
 use App\Models\OmnichatMessage;
+use App\Notifications\WebsiteChatMessageNotification;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -16,7 +17,16 @@ class OmnichatMessageCreated implements ShouldBroadcast, ShouldDispatchAfterComm
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(public OmnichatMessage $message) {}
+    public function __construct(public OmnichatMessage $message)
+    {
+        if ($message->direction === 'inbound' && $message->channel?->provider?->value === 'website') {
+            $message->loadMissing(['conversation.workspace.members', 'senderContact', 'channel']);
+
+            foreach ($message->conversation->workspace->members as $user) {
+                $user->notify(new WebsiteChatMessageNotification($message));
+            }
+        }
+    }
 
     public function broadcastAs(): string
     {

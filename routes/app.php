@@ -59,6 +59,7 @@ use App\Http\Controllers\App\Settings\WorkspaceWebhookController;
 use App\Http\Controllers\App\SocialAccountGroupController;
 use App\Http\Controllers\App\TeamController;
 use App\Http\Controllers\App\UnsplashController;
+use App\Http\Controllers\App\WebPushSubscriptionController;
 use App\Http\Controllers\App\WelcomeController;
 use App\Http\Controllers\App\WordPressSiteController;
 use App\Http\Controllers\App\WorkspaceAssignmentController;
@@ -96,6 +97,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/', function () {
         return redirect()->route('app.calendar');
     })->name('app.home');
+
+    Route::post('push-subscriptions', [WebPushSubscriptionController::class, 'store'])->name('app.push-subscriptions.store');
+    Route::delete('push-subscriptions', [WebPushSubscriptionController::class, 'destroy'])->name('app.push-subscriptions.destroy');
 
     Route::get('subscribe', [BillingController::class, 'subscribe'])->name('app.subscribe');
     Route::get('welcome', fn () => redirect()->route('app.welcome.persona'))->name('app.welcome');

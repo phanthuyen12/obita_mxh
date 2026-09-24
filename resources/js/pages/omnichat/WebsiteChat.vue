@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
 import { IconMessageCirclePlus } from '@tabler/icons-vue';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
 import { store } from '@/actions/App/Http/Controllers/App/Omnichat/WebsiteChatController';
@@ -33,6 +33,56 @@ const form = useForm({
     primary_color: '#2563EB',
     position: 'right' as 'left' | 'right',
     privacy_url: '',
+});
+
+const pushSupported = ref(false);
+const pushEnabled = ref(false);
+const pushLoading = ref(false);
+
+const enablePushNotifications = async (): Promise<void> => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+    pushLoading.value = true;
+    try {
+        const registration = await navigator.serviceWorker.register('/sw.js');
+        const permission = await Notification.requestPermission();
+
+        if (permission !== 'granted') return;
+
+        const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+        if (!vapidKey) return;
+
+        const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: Uint8Array.from(atob(vapidKey.replace(/-/g, '+').replace(/_/g, '/')), (character) => character.charCodeAt(0)),
+        });
+        const json = subscription.toJSON();
+
+        await fetch('/push-subscriptions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '',
+                Accept: 'application/json',
+            },
+            body: JSON.stringify({
+                endpoint: json.endpoint,
+                publicKey: json.keys?.p256dh,
+                authToken: json.keys?.auth,
+                contentEncoding: 'aes128gcm',
+            }),
+        });
+        pushEnabled.value = true;
+        toast.success('Đã bật thông báo tin nhắn Website.');
+    } catch {
+        toast.error('Không thể bật thông báo. Hãy kiểm tra quyền trình duyệt và HTTPS.');
+    } finally {
+        pushLoading.value = false;
+    }
+};
+
+onMounted(() => {
+    pushSupported.value = 'serviceWorker' in navigator && 'PushManager' in window;
 });
 
 const createChannel = () => {
@@ -69,6 +119,14 @@ const createChannel = () => {
                 <Button @click="showCreate = !showCreate">
                     <IconMessageCirclePlus class="size-4" />
                     {{ showCreate ? 'Đóng' : 'Tạo kênh website' }}
+                </Button>
+                <Button
+                    v-if="pushSupported"
+                    variant="outline"
+                    :disabled="pushLoading || pushEnabled"
+                    @click="enablePushNotifications"
+                >
+                    {{ pushEnabled ? 'Đã bật thông báo' : 'Bật thông báo điện thoại' }}
                 </Button>
             </div>
 
