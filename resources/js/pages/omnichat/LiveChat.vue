@@ -1467,6 +1467,10 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
 .ios-device-container .analytics-scroll,
 .ios-device-container .customer-list-scroll,
 .ios-device-container .pf-scroll {
+  min-height: 0 !important;
+  height: 0 !important;
+  overflow-y: auto !important;
+  touch-action: pan-y !important;
   padding-bottom: max(120px, calc(108px + env(safe-area-inset-bottom, 0px))) !important;
 }
 

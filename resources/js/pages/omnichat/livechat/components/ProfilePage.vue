@@ -616,6 +616,8 @@ const saveSettings = async (): Promise<void> => {
     background: #0c0c0f;
     overflow: hidden;
     min-height: 0;
+    height: 100%;
+    max-height: 100%;
     width: 100%;
 }
 
@@ -670,13 +672,17 @@ const saveSettings = async (): Promise<void> => {
 /* ── Scroll ─────────────────────────────────────────── */
 .pf-scroll {
     flex: 1;
+    min-height: 0;
+    height: 0;
     overflow-y: auto;
+    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     padding: 20px 14px max(120px, calc(env(safe-area-inset-bottom, 0px) + 100px));
     display: flex;
     flex-direction: column;
     gap: 6px;              /* breathing room giữa các label + card groups */
-    min-height: 0;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
 }
 
 /* ── Banner ─────────────────────────────────────────── */
