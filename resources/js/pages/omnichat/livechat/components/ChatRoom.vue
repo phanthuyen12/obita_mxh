@@ -474,11 +474,14 @@ const persistConversationTags = async (): Promise<void> => {
                         <span class="orange-emoji">🍊</span>
                     </div>
                     <div
-                        v-else
+                        v-else-if="chat.avatarBg"
                         class="avatar-icon-fill"
                         :style="{ backgroundColor: chat.avatarBg }"
                     >
                         <span class="emoji-fill">👤</span>
+                    </div>
+                    <div v-else class="avatar-fallback-fill">
+                        <ion-icon :icon="personCircleOutline"></ion-icon>
                     </div>
                 </div>
             </div>
@@ -823,6 +826,8 @@ const persistConversationTags = async (): Promise<void> => {
     left: 0;
     right: 0;
     bottom: 0;
+    height: 100%;
+    height: 100dvh;
     width: 100%;
     max-width: 100%;
     background-color: #07080c;
@@ -1082,6 +1087,17 @@ const persistConversationTags = async (): Promise<void> => {
     flex-shrink: 0;
     cursor: pointer;
     transition: transform 0.15s, border-color 0.15s;
+}
+
+.avatar-fallback-fill {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #343945;
+    color: #c8ccd5;
+    font-size: 22px;
 }
 .header-avatar-circle:active {
     transform: scale(0.92);
@@ -1535,6 +1551,7 @@ const persistConversationTags = async (): Promise<void> => {
 .chat-scroll-area {
     flex: 1;
     min-height: 0;
+    max-height: 100%;
     overflow-y: auto;
     overflow-x: hidden;
     position: relative;
