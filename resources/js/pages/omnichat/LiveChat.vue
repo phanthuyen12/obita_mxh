@@ -1309,6 +1309,204 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
 <style scoped src="./livechat/theme/livechat.css"></style>
 
 <style>
+/* Shared iOS surface tokens for every LiveChat subpage and sheet. */
+.ios-device-container {
+  --ios-bg: #f2f2f7;
+  --ios-surface: #ffffff;
+  --ios-secondary-surface: rgba(118, 118, 128, 0.12);
+  --ios-text: #1c1c1e;
+  --ios-secondary-text: #636366;
+  --ios-tertiary-text: #8e8e93;
+  --ios-separator: rgba(60, 60, 67, 0.12);
+  --ios-blue: #007aff;
+}
+
+.ios-device-container .customers-page,
+.ios-device-container .analytics-page,
+.ios-device-container .profile-page {
+  background: var(--ios-bg) !important;
+  color: var(--ios-text);
+}
+
+.ios-device-container .pf-topbar {
+  background: rgba(242, 242, 247, 0.94) !important;
+  border-color: var(--ios-separator) !important;
+}
+
+.ios-device-container .pf-title,
+.ios-device-container .pf-row-title,
+.ios-device-container .pf-bot-name,
+.ios-device-container .pf-stat strong {
+  color: var(--ios-text) !important;
+}
+
+.ios-device-container .pf-row-sub,
+.ios-device-container .pf-bot-sub,
+.ios-device-container .pf-input-hint,
+.ios-device-container .pf-version {
+  color: var(--ios-tertiary-text) !important;
+}
+
+.ios-device-container .pf-card {
+  background: var(--ios-surface) !important;
+  border-color: var(--ios-separator) !important;
+}
+
+.ios-device-container .pf-input,
+.ios-device-container .pf-bot-select {
+  background: var(--ios-secondary-surface) !important;
+  border-color: transparent !important;
+}
+
+.ios-device-container .pf-save-btn,
+.ios-device-container .pf-add-btn {
+  background: var(--ios-blue) !important;
+  color: #fff !important;
+}
+
+.ios-device-container .customers-sticky-top,
+.ios-device-container .analytics-sticky-top,
+.ios-device-container .profile-sticky-top {
+  background: rgba(242, 242, 247, 0.94) !important;
+  border-color: var(--ios-separator) !important;
+  padding-top: max(env(safe-area-inset-top, 0px), 12px) !important;
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+
+.ios-device-container .page-title,
+.ios-device-container .section-title,
+.ios-device-container .customer-name,
+.ios-device-container .kpi-number,
+.ios-device-container .profile-title {
+  color: var(--ios-text) !important;
+}
+
+.ios-device-container .sub-title,
+.ios-device-container .customer-count,
+.ios-device-container .kpi-title,
+.ios-device-container .kpi-subtext,
+.ios-device-container .customer-notes,
+.ios-device-container .empty-customers {
+  color: var(--ios-tertiary-text) !important;
+}
+
+.ios-device-container .search-inner,
+.ios-device-container .period-toggle,
+.ios-device-container .filter-pill,
+.ios-device-container .add-customer-btn,
+.ios-device-container .load-more-btn {
+  background: var(--ios-secondary-surface) !important;
+  border-color: transparent !important;
+  color: var(--ios-secondary-text) !important;
+}
+
+.ios-device-container .filter-pill.active,
+.ios-device-container .period-btn.active {
+  background: var(--ios-text) !important;
+  color: #fff !important;
+}
+
+.ios-device-container .customer-card,
+.ios-device-container .kpi-card,
+.ios-device-container .chart-section-card,
+.ios-device-container .profile-section,
+.ios-device-container .profile-card {
+  background: var(--ios-surface) !important;
+  border-color: var(--ios-separator) !important;
+  box-shadow: 0 1px 2px rgba(28, 28, 30, 0.04);
+}
+
+.ios-device-container .customer-card:active {
+  background: rgba(118, 118, 128, 0.1) !important;
+}
+
+.ios-device-container .customer-search-input,
+.ios-device-container .pf-input,
+.ios-device-container .csp-tag-input {
+  color: var(--ios-text) !important;
+}
+
+.ios-device-container .call-action {
+  background: rgba(52, 199, 89, 0.12) !important;
+  color: #248a3d !important;
+}
+
+.ios-device-container .chat-action,
+.ios-device-container .add-customer-btn {
+  color: var(--ios-blue) !important;
+}
+
+.ios-device-container .analytics-scroll,
+.ios-device-container .customer-list-scroll,
+.ios-device-container .pf-scroll {
+  padding-bottom: max(120px, calc(108px + env(safe-area-inset-bottom, 0px))) !important;
+}
+
+.ios-device-container .csp-panel,
+.ios-device-container .customer-profile-modal,
+.ios-device-container .tag-mgmt-sheet {
+  background: rgba(255, 255, 255, 0.97) !important;
+  color: var(--ios-text) !important;
+  border-color: var(--ios-separator) !important;
+  box-shadow: 0 -12px 40px rgba(28, 28, 30, 0.16);
+}
+
+.ios-device-container .chat-room,
+.ios-device-container .chat-room-container,
+.ios-device-container .conversation-room {
+  background: var(--ios-bg) !important;
+  color: var(--ios-text) !important;
+}
+
+.ios-device-container .chat-header,
+.ios-device-container .chat-room-header {
+  background: rgba(242, 242, 247, 0.94) !important;
+  border-color: var(--ios-separator) !important;
+  color: var(--ios-text) !important;
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+
+.ios-device-container .message-input,
+.ios-device-container .chat-input,
+.ios-device-container .composer {
+  background: var(--ios-surface) !important;
+  border-color: var(--ios-separator) !important;
+  color: var(--ios-text) !important;
+}
+
+.ios-device-container .csp-header,
+.ios-device-container .customer-profile-header,
+.ios-device-container .tag-mgmt-header {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: var(--ios-separator) !important;
+}
+
+.ios-device-container .csp-title,
+.ios-device-container .csp-hero-name,
+.ios-device-container .sheet-main-title,
+.ios-device-container .tag-mgmt-title {
+  color: var(--ios-text) !important;
+}
+
+.ios-device-container .csp-close-btn,
+.ios-device-container .csp-edit-btn,
+.ios-device-container .sheet-done-btn {
+  background: var(--ios-secondary-surface) !important;
+  color: var(--ios-blue) !important;
+  border-color: transparent !important;
+}
+
+.ios-device-container .csp-channel-pill,
+.ios-device-container .csp-assign-select,
+.ios-device-container .create-tag-box,
+.ios-device-container .csp-tag-manager {
+  background: var(--ios-secondary-surface) !important;
+  border-color: var(--ios-separator) !important;
+  color: var(--ios-secondary-text) !important;
+}
+
 /* Khóa cứng cuộn ngang/kéo ngang đàn hồi trên điện thoại di động */
 html,
 body {
