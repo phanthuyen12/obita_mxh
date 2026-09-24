@@ -120,14 +120,6 @@ const createChannel = () => {
                     <IconMessageCirclePlus class="size-4" />
                     {{ showCreate ? 'Đóng' : 'Tạo kênh website' }}
                 </Button>
-                <Button
-                    v-if="pushSupported"
-                    variant="outline"
-                    :disabled="pushLoading || pushEnabled"
-                    @click="enablePushNotifications"
-                >
-                    {{ pushEnabled ? 'Đã bật thông báo' : 'Bật thông báo điện thoại' }}
-                </Button>
             </div>
 
             <Card v-if="showCreate">

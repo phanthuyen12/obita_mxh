@@ -13,6 +13,7 @@ import {
     globeOutline,
     keyOutline,
     logOutOutline,
+    notificationsOutline,
     sparklesOutline,
     starOutline,
     trashOutline,
@@ -69,6 +70,52 @@ const isAiEnabled = ref(false);
 const isSaving = ref(false);
 const isSaved = ref(false);
 const saveError = ref(false);
+const pushSupported = ref(false);
+const pushEnabled = ref(false);
+const pushLoading = ref(false);
+
+const enablePush = async (): Promise<void> => {
+    if (!pushSupported.value) return;
+    pushLoading.value = true;
+    try {
+        const registration = await navigator.serviceWorker.register('/sw.js');
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') return;
+
+        const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+        if (!vapidKey) throw new Error('Missing VAPID public key');
+        let subscription = await registration.pushManager.getSubscription();
+        if (!subscription) {
+            const padded = vapidKey.replace(/-/g, '+').replace(/_/g, '/');
+            subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: Uint8Array.from(atob(padded), (char) => char.charCodeAt(0)),
+            });
+        }
+        const json = subscription.toJSON();
+        const response = await fetch('/push-subscriptions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '',
+            },
+            body: JSON.stringify({
+                endpoint: json.endpoint,
+                publicKey: json.keys?.p256dh,
+                authToken: json.keys?.auth,
+                contentEncoding: 'aes128gcm',
+            }),
+        });
+        if (!response.ok) throw new Error(`Push registration failed: ${response.status}`);
+        pushEnabled.value = true;
+    } catch {
+        saveError.value = true;
+        setTimeout(() => { saveError.value = false; }, 3000);
+    } finally {
+        pushLoading.value = false;
+    }
+};
 
 const toggleShowApiKey = () => {
     showApiKey.value = !showApiKey.value;
@@ -117,6 +164,7 @@ const loadBots = async (): Promise<void> => {
 };
 
 onMounted(() => {
+    pushSupported.value = 'serviceWorker' in navigator && 'PushManager' in window;
     if (props.canManageAiSettings) {
         loadBots();
     }
@@ -452,6 +500,19 @@ const saveSettings = async (): Promise<void> => {
                 <span class="pf-count">{{ connectedChannels.length }}</span>
             </p>
 
+            <div v-if="pushSupported" class="pf-card pf-push-card">
+                <div class="pf-row-icon pf-icon-purple">
+                    <ion-icon :icon="notificationsOutline" />
+                </div>
+                <div class="pf-row-body">
+                    <p class="pf-row-title">Thông báo trên điện thoại</p>
+                    <p class="pf-row-sub">Nhận tin nhắn Website ngay cả khi đã đóng trình duyệt.</p>
+                </div>
+                <button class="pf-push-btn" :disabled="pushLoading || pushEnabled" @click="enablePush">
+                    {{ pushEnabled ? 'Đã bật' : pushLoading ? '...' : 'Bật' }}
+                </button>
+            </div>
+
             <div class="pf-card">
                 <div v-if="connectedChannels.length === 0" class="pf-empty">Chưa có kênh nào được kết nối</div>
 
@@ -523,6 +584,27 @@ const saveSettings = async (): Promise<void> => {
 </template>
 
 <style scoped>
+.pf-push-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pf-push-btn {
+    flex-shrink: 0;
+    border: 0;
+    border-radius: 999px;
+    background: #2f8cff;
+    color: #fff;
+    padding: 7px 13px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.pf-push-btn:disabled {
+    opacity: 0.6;
+}
+
 /* ═══════════════════════════════════════════════════════
    Profile Page — Clean Card Design
    ═══════════════════════════════════════════════════════ */
@@ -996,4 +1078,3 @@ const saveSettings = async (): Promise<void> => {
 .pf-toast-anim-enter-from,
 .pf-toast-anim-leave-to { opacity: 0; transform: translateX(-50%) translateY(12px); }
 </style>
-
