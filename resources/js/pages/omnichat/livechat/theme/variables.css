@@ -1,11 +1,11 @@
-/* Apple-inspired iOS variables */
+/* Apple-inspired dark iOS variables */
 :root {
   --ion-font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --ion-background-color: #f2f2f7;
-  --ion-background-color-rgb: 242, 242, 247;
+  --ion-background-color: #0d0e12;
+  --ion-background-color-rgb: 13, 14, 18;
 
-  --ion-text-color: #1c1c1e;
-  --ion-text-color-rgb: 28, 28, 30;
+  --ion-text-color: #f5f5f7;
+  --ion-text-color-rgb: 245, 245, 247;
 
   --ion-color-step-50: #0d0d0d;
   --ion-color-step-100: #1a1a1a;
@@ -27,23 +27,23 @@
   --ion-color-step-900: #e6e6e6;
   --ion-color-step-950: #f2f2f2;
 
-  --tg-bg: #f2f2f7;
-  --tg-header-bg: #ffffff;
-  --tg-search-bg: rgba(118, 118, 128, .12);
-  --tg-folder-bg: rgba(118, 118, 128, .12);
-  --tg-folder-active: #1c1c1e;
-  --tg-folder-active-text: #ffffff;
-  --tg-folder-text: #636366;
-  --tg-badge-blue: #007aff;
-  --tg-badge-gray: #8e8e93;
+  --tg-bg: #0d0e12;
+  --tg-header-bg: #17191f;
+  --tg-search-bg: #22252d;
+  --tg-folder-bg: #22252d;
+  --tg-folder-active: #f5f5f7;
+  --tg-folder-active-text: #17191f;
+  --tg-folder-text: #b4b6bf;
+  --tg-badge-blue: #4da3ff;
+  --tg-badge-gray: #5d626e;
   --tg-badge-red: #ff3b30;
-  --tg-item-border: rgba(60, 60, 67, .12);
-  --tg-subtext: #8e8e93;
+  --tg-item-border: rgba(255, 255, 255, .09);
+  --tg-subtext: #858894;
 }
 
 body {
-  background-color: #f2f2f7;
-  color: #1c1c1e;
+  background-color: #0d0e12;
+  color: #f5f5f7;
   user-select: none;
   -webkit-font-smoothing: antialiased;
 }

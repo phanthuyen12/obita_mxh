@@ -1311,14 +1311,14 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
 <style>
 /* Shared iOS surface tokens for every LiveChat subpage and sheet. */
 .ios-device-container {
-  --ios-bg: #f2f2f7;
-  --ios-surface: #ffffff;
-  --ios-secondary-surface: rgba(118, 118, 128, 0.12);
-  --ios-text: #1c1c1e;
-  --ios-secondary-text: #636366;
-  --ios-tertiary-text: #8e8e93;
-  --ios-separator: rgba(60, 60, 67, 0.12);
-  --ios-blue: #007aff;
+  --ios-bg: #0d0e12;
+  --ios-surface: #17191f;
+  --ios-secondary-surface: #22252d;
+  --ios-text: #f5f5f7;
+  --ios-secondary-text: #b4b6bf;
+  --ios-tertiary-text: #858894;
+  --ios-separator: rgba(255, 255, 255, 0.09);
+  --ios-blue: #4da3ff;
 }
 
 .ios-device-container .customers-page,
@@ -1329,7 +1329,7 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
 }
 
 .ios-device-container .pf-topbar {
-  background: rgba(242, 242, 247, 0.94) !important;
+  background: rgba(13, 14, 18, 0.94) !important;
   border-color: var(--ios-separator) !important;
 }
 
@@ -1360,14 +1360,14 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
 
 .ios-device-container .pf-save-btn,
 .ios-device-container .pf-add-btn {
-  background: var(--ios-blue) !important;
+  background: #2f8cff !important;
   color: #fff !important;
 }
 
 .ios-device-container .customers-sticky-top,
 .ios-device-container .analytics-sticky-top,
 .ios-device-container .profile-sticky-top {
-  background: rgba(242, 242, 247, 0.94) !important;
+  background: rgba(13, 14, 18, 0.94) !important;
   border-color: var(--ios-separator) !important;
   padding-top: max(env(safe-area-inset-top, 0px), 12px) !important;
   backdrop-filter: blur(24px) saturate(180%);
@@ -1403,8 +1403,8 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
 
 .ios-device-container .filter-pill.active,
 .ios-device-container .period-btn.active {
-  background: var(--ios-text) !important;
-  color: #fff !important;
+  background: #f5f5f7 !important;
+  color: #17191f !important;
 }
 
 .ios-device-container .customer-card,
@@ -1414,11 +1414,11 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
 .ios-device-container .profile-card {
   background: var(--ios-surface) !important;
   border-color: var(--ios-separator) !important;
-  box-shadow: 0 1px 2px rgba(28, 28, 30, 0.04);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
 }
 
 .ios-device-container .customer-card:active {
-  background: rgba(118, 118, 128, 0.1) !important;
+  background: #242832 !important;
 }
 
 .ios-device-container .customer-search-input,
@@ -1428,8 +1428,8 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
 }
 
 .ios-device-container .call-action {
-  background: rgba(52, 199, 89, 0.12) !important;
-  color: #248a3d !important;
+  background: rgba(52, 199, 89, 0.16) !important;
+  color: #63d987 !important;
 }
 
 .ios-device-container .chat-action,
@@ -1446,10 +1446,10 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
 .ios-device-container .csp-panel,
 .ios-device-container .customer-profile-modal,
 .ios-device-container .tag-mgmt-sheet {
-  background: rgba(255, 255, 255, 0.97) !important;
+  background: rgba(23, 25, 31, 0.98) !important;
   color: var(--ios-text) !important;
   border-color: var(--ios-separator) !important;
-  box-shadow: 0 -12px 40px rgba(28, 28, 30, 0.16);
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.45);
 }
 
 .ios-device-container .chat-room,
@@ -1461,7 +1461,7 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
 
 .ios-device-container .chat-header,
 .ios-device-container .chat-room-header {
-  background: rgba(242, 242, 247, 0.94) !important;
+  background: rgba(13, 14, 18, 0.94) !important;
   border-color: var(--ios-separator) !important;
   color: var(--ios-text) !important;
   backdrop-filter: blur(24px) saturate(180%);
@@ -1479,7 +1479,7 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
 .ios-device-container .csp-header,
 .ios-device-container .customer-profile-header,
 .ios-device-container .tag-mgmt-header {
-  background: rgba(255, 255, 255, 0.92) !important;
+  background: rgba(23, 25, 31, 0.94) !important;
   border-color: var(--ios-separator) !important;
 }
 
