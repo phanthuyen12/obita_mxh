@@ -9,19 +9,26 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
         /** @var string|null $connection */
         $connection = config('webpush.database_connection');
         /** @var string $tableName */
         $tableName = config('webpush.table_name');
 
-        Schema::connection($connection)->create($tableName, function (Blueprint $table) {
+        if (Schema::connection($connection)->hasTable($tableName)) {
+            return;
+        }
+
+        Schema::connection($connection)->create($tableName, function (Blueprint $table): void {
             $table->bigIncrements('id');
-            $table->morphs('subscribable', 'push_subscriptions_subscribable_morph_idx');
+            $table->string('subscribable_type');
+            $table->uuid('subscribable_id');
+            $table->index(
+                ['subscribable_type', 'subscribable_id'],
+                'push_subscriptions_subscribable_morph_idx',
+            );
             $table->string('endpoint', PushSubscription::ENDPOINT_MAX_LENGTH)
                 ->charset('ascii')
                 ->unique();
@@ -34,10 +41,8 @@ return new class extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
         /** @var string|null $connection */
         $connection = config('webpush.database_connection');
