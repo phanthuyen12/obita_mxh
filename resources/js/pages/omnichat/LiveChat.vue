@@ -1379,6 +1379,25 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
   border-color: var(--ios-separator) !important;
 }
 
+.ios-device-container .pf-push-card {
+  display: flex !important;
+  align-items: center !important;
+  min-height: 78px !important;
+  padding: 14px !important;
+}
+
+.ios-device-container .pf-push-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 74px !important;
+  min-height: 38px !important;
+  background: #2f8cff !important;
+  color: #fff !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
 .ios-device-container .pf-input,
 .ios-device-container .pf-bot-select {
   background: var(--ios-secondary-surface) !important;

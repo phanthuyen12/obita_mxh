@@ -588,21 +588,33 @@ const saveSettings = async (): Promise<void> => {
     display: flex;
     align-items: center;
     gap: 10px;
+    min-height: 78px;
+    padding: 14px !important;
 }
 
 .pf-push-btn {
     flex-shrink: 0;
     border: 0;
     border-radius: 999px;
-    background: #2f8cff;
+    appearance: none;
+    background: #2f8cff !important;
     color: #fff;
-    padding: 7px 13px;
-    font-size: 12px;
+    min-width: 74px;
+    min-height: 38px;
+    padding: 9px 16px;
+    font-size: 13px;
     font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(47, 140, 255, 0.35);
 }
 
 .pf-push-btn:disabled {
     opacity: 0.6;
+}
+
+.pf-push-btn:not(:disabled):active {
+    transform: scale(0.96);
 }
 
 /* ═══════════════════════════════════════════════════════
