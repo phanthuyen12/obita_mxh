@@ -19,7 +19,7 @@ class OmnichatMessageCreated implements ShouldBroadcast, ShouldDispatchAfterComm
 
     public function __construct(public OmnichatMessage $message)
     {
-        if ($message->direction === 'inbound' && $message->channel?->provider?->value === 'website') {
+        if ($message->direction === 'inbound') {
             $message->loadMissing(['conversation.workspace.members', 'senderContact', 'channel']);
 
             foreach ($message->conversation->workspace->members as $user) {

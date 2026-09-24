@@ -75,12 +75,14 @@ const pushEnabled = ref(false);
 const pushLoading = ref(false);
 const pushStatus = ref<'idle' | 'loading' | 'success' | 'error'>('idle');
 const pushErrorMessage = ref('');
+const pushNotice = ref('');
 
 const enablePush = async (): Promise<void> => {
     if (!pushSupported.value) return;
     pushLoading.value = true;
     pushStatus.value = 'loading';
     pushErrorMessage.value = '';
+    pushNotice.value = 'Đang đăng ký thông báo...';
     try {
         const registration = await navigator.serviceWorker.register('/sw.js');
         const permission = await Notification.requestPermission();
@@ -114,9 +116,11 @@ const enablePush = async (): Promise<void> => {
         if (!response.ok) throw new Error(`Push registration failed: ${response.status}`);
         pushEnabled.value = true;
         pushStatus.value = 'success';
+        pushNotice.value = 'Đăng ký thông báo thành công';
     } catch {
         pushStatus.value = 'error';
         pushErrorMessage.value = 'Không đăng ký được. Hãy thử lại.';
+        pushNotice.value = 'Đăng ký thông báo thất bại';
         saveError.value = true;
         setTimeout(() => { saveError.value = false; }, 3000);
     } finally {
@@ -518,6 +522,7 @@ const saveSettings = async (): Promise<void> => {
                 <button class="pf-push-btn" :disabled="pushLoading || pushEnabled" @click="enablePush">
                     {{ pushEnabled ? 'Đã bật' : pushLoading ? '...' : 'Bật' }}
                 </button>
+                <strong v-if="pushNotice" class="pf-push-notice">{{ pushNotice }}</strong>
                 <span v-if="pushStatus === 'success'" class="pf-push-status pf-push-success">Đăng ký thành công</span>
                 <span v-else-if="pushStatus === 'error'" class="pf-push-status pf-push-error">{{ pushErrorMessage }}</span>
             </div>
@@ -629,6 +634,13 @@ const saveSettings = async (): Promise<void> => {
 .pf-push-status {
     flex-basis: 100%;
     font-size: 11px;
+}
+
+.pf-push-notice {
+    flex-basis: 100%;
+    display: block;
+    color: #f5f5f7;
+    font-size: 13px;
 }
 
 .pf-push-success { color: #63d987; }

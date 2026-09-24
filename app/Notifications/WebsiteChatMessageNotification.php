@@ -30,13 +30,17 @@ class WebsiteChatMessageNotification extends Notification implements ShouldQueue
         $conversation = $this->message->conversation;
         $name = $this->message->senderContact?->display_name ?? 'Khách hàng';
         $body = trim((string) $this->message->body);
+        $provider = $this->message->channel?->provider?->value ?? 'omnichat';
 
         return (new WebPushMessage)
             ->title("Tin nhắn mới từ {$name}")
             ->body($body !== '' ? $body : 'Khách hàng đã gửi một tin nhắn mới.')
             ->icon('/apple-touch-icon.png')
             ->badge('/favicon-32x32.png')
-            ->tag("website-chat-{$conversation?->id}")
-            ->data(['url' => '/omnichat/livechat']);
+            ->tag("omnichat-{$conversation?->id}")
+            ->data([
+                'url' => '/omnichat/livechat',
+                'provider' => $provider,
+            ]);
     }
 }
