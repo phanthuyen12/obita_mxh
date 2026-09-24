@@ -73,10 +73,14 @@ const saveError = ref(false);
 const pushSupported = ref(false);
 const pushEnabled = ref(false);
 const pushLoading = ref(false);
+const pushStatus = ref<'idle' | 'loading' | 'success' | 'error'>('idle');
+const pushErrorMessage = ref('');
 
 const enablePush = async (): Promise<void> => {
     if (!pushSupported.value) return;
     pushLoading.value = true;
+    pushStatus.value = 'loading';
+    pushErrorMessage.value = '';
     try {
         const registration = await navigator.serviceWorker.register('/sw.js');
         const permission = await Notification.requestPermission();
@@ -109,7 +113,10 @@ const enablePush = async (): Promise<void> => {
         });
         if (!response.ok) throw new Error(`Push registration failed: ${response.status}`);
         pushEnabled.value = true;
+        pushStatus.value = 'success';
     } catch {
+        pushStatus.value = 'error';
+        pushErrorMessage.value = 'Không đăng ký được. Hãy thử lại.';
         saveError.value = true;
         setTimeout(() => { saveError.value = false; }, 3000);
     } finally {
@@ -511,6 +518,8 @@ const saveSettings = async (): Promise<void> => {
                 <button class="pf-push-btn" :disabled="pushLoading || pushEnabled" @click="enablePush">
                     {{ pushEnabled ? 'Đã bật' : pushLoading ? '...' : 'Bật' }}
                 </button>
+                <span v-if="pushStatus === 'success'" class="pf-push-status pf-push-success">Đăng ký thành công</span>
+                <span v-else-if="pushStatus === 'error'" class="pf-push-status pf-push-error">{{ pushErrorMessage }}</span>
             </div>
 
             <div class="pf-card">
@@ -616,6 +625,14 @@ const saveSettings = async (): Promise<void> => {
 .pf-push-btn:not(:disabled):active {
     transform: scale(0.96);
 }
+
+.pf-push-status {
+    flex-basis: 100%;
+    font-size: 11px;
+}
+
+.pf-push-success { color: #63d987; }
+.pf-push-error { color: #ff7b72; }
 
 /* ═══════════════════════════════════════════════════════
    Profile Page — Clean Card Design
