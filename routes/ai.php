@@ -10,6 +10,12 @@ Route::middleware('throttle:mcp-oauth-registration')->group(function () {
     Mcp::oauthRoutes();
 });
 
+
+
+
+
+
+
 Mcp::web('/mcp/trypost', TryPostServer::class)
     ->middleware(['auth:api', 'workspace.token:mcp'])
     ->name('mcp.trypost');
