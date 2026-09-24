@@ -1513,7 +1513,7 @@ body {
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
-  touch-action: pan-y;
+  touch-action: auto;
   overscroll-behavior-x: none;
   -webkit-overflow-scrolling: touch;
 }
@@ -1522,7 +1522,7 @@ ion-app {
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
-  touch-action: pan-y;
+  touch-action: auto;
   overscroll-behavior-x: none;
 }
 </style>

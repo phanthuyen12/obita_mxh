@@ -16,6 +16,7 @@
   background: #0d0e12;
   display: flex;
   flex-direction: column;
+  min-height: 0;
   position: relative;
   overflow: hidden;
   overflow-x: hidden;
@@ -663,6 +664,14 @@
   min-height: 0;
   overflow: hidden;
   position: relative;
+}
+
+/* Keep the inbox viewport scrollable inside the fixed mobile shell. */
+.tab-area > .top-sticky-wrapper + .chat-list-scrollable {
+  min-height: 0;
+  flex: 1 1 auto;
+  overscroll-behavior-y: auto;
+  touch-action: pan-y;
 }
 
 :focus-visible {
