@@ -147,6 +147,8 @@ type ConversationSummary = {
         phone?: string | null;
         email?: string | null;
         notes?: string | null;
+        telegram_username?: string | null;
+        telegram_user_id?: string | null;
     };
     channel: { provider: string; name?: string };
     last_message_preview: string | null;
@@ -169,6 +171,8 @@ const toChatItem = (conversation: ConversationSummary): ChatItem => {
         phone: conversation.contact.phone ?? undefined,
         contactEmail: conversation.contact.email ?? undefined,
         contactNotes: conversation.contact.notes ?? undefined,
+        telegramUsername: conversation.contact.telegram_username,
+        telegramUserId: conversation.contact.telegram_user_id,
         assignedUser: conversation.assigned_user ?? null,
         tags: conversation.labels.map(
             (label) => label.name,
@@ -282,6 +286,28 @@ type BroadcastMessage = {
     created_at: string;
 };
 
+let notificationAudio: AudioContext | null = null;
+
+const playIncomingSound = (): void => {
+    try {
+        notificationAudio ??= new AudioContext();
+        const oscillator = notificationAudio.createOscillator();
+        const gain = notificationAudio.createGain();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(880, notificationAudio.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(1320, notificationAudio.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.0001, notificationAudio.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.08, notificationAudio.currentTime + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, notificationAudio.currentTime + 0.2);
+        oscillator.connect(gain);
+        gain.connect(notificationAudio.destination);
+        oscillator.start();
+        oscillator.stop(notificationAudio.currentTime + 0.2);
+    } catch {
+        // Audio may be blocked until the user interacts with the page.
+    }
+};
+
 type MessageCreatedPayload = { message: BroadcastMessage };
 
 const applyIncomingMessage = (message: BroadcastMessage): void => {
@@ -347,6 +373,7 @@ const applyIncomingMessage = (message: BroadcastMessage): void => {
             message.direction === 'inbound' &&
             message.conversation_id !== selectedChat.value?.id
         ) {
+            if (conversation.channelSource === 'website') playIncomingSound();
             conversation.unreadCount =
                 (typeof conversation.unreadCount === 'number'
                     ? conversation.unreadCount

@@ -13,6 +13,7 @@ export interface Message {
     isRead?: boolean;
     clientId?: string;
     attachment?: Attachment;
+    attachments?: Attachment[];
 }
 
 export type ConversationTag =
@@ -40,6 +41,8 @@ export interface ChatItem {
     contactId?: string;
     contactEmail?: string;
     contactNotes?: string;
+    telegramUsername?: string | null;
+    telegramUserId?: string | null;
     assignedUser?: AssignedUser | null;
     tags?: ConversationTag[];
     tagIds?: string[];

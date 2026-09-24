@@ -234,6 +234,15 @@ const createTag = async () => {
                         <template v-else-if="chat.channelSource === 'website'">🌐 Website</template>
                         <template v-else>🔵 Facebook</template>
                     </span>
+                    <a
+                        v-if="chat.channelSource === 'telegram' && chat.telegramUsername"
+                        class="csp-telegram-link"
+                        :href="`https://t.me/${chat.telegramUsername.replace(/^@/, '')}`"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        @{{ chat.telegramUsername.replace(/^@/, '') }} · Xem profile Telegram
+                    </a>
                 </div>
                 <button
                     class="csp-edit-btn"
@@ -552,6 +561,14 @@ const createTag = async () => {
     background: rgba(255, 255, 255, 0.07);
     color: #a1a1aa;
     border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.csp-telegram-link {
+    display: block;
+    margin-top: 5px;
+    color: #4da3ff;
+    font-size: 11px;
+    text-decoration: none;
 }
 
 .csp-edit-btn {

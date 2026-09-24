@@ -39,6 +39,7 @@ const emit = defineEmits<{
             id: string;
             text: string;
             attachment: Attachment | null;
+            attachments?: Attachment[];
             clientId: string;
         },
     ): void;
@@ -94,7 +95,7 @@ watch(
 );
 
 const inputText = ref('');
-const selectedAttachment = ref<Attachment | null>(null);
+const selectedAttachments = ref<Attachment[]>([]);
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const messagesContainerRef = ref<HTMLElement | null>(null);
 
@@ -119,8 +120,8 @@ const triggerAttach = () => {
 
 const onFileSelected = (event: Event) => {
     const target = event.target as HTMLInputElement;
-    if (target.files && target.files[0]) {
-        const file = target.files[0];
+    if (target.files && target.files.length > 0) {
+        for (const file of Array.from(target.files)) {
         const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
         const sizeFormatted =
             file.size > 1024 * 1024
@@ -129,41 +130,43 @@ const onFileSelected = (event: Event) => {
 
         if (file.type.startsWith('image/')) {
             const previewUrl = URL.createObjectURL(file);
-            selectedAttachment.value = {
+            selectedAttachments.value.push({
                 name: file.name,
                 size: sizeFormatted,
                 type: 'image',
                 url: previewUrl,
-            };
+            });
         } else if (file.size <= 50 * 1024 * 1024) {
             // Tệp không phải ảnh: chỉ cho phép ≤ 50 MB
-            selectedAttachment.value = {
+            selectedAttachments.value.push({
                 name: file.name,
                 size: sizeFormatted,
                 type: 'file',
-            };
+            });
         } else {
             alert('Tệp quá lớn. Vui lòng chọn tệp nhỏ hơn 50 MB.');
+        }
         }
     }
 };
 
 const removeAttachment = (revokeUrl = true) => {
-    if (revokeUrl && selectedAttachment.value?.url) {
-        URL.revokeObjectURL(selectedAttachment.value.url);
+    if (revokeUrl) {
+        selectedAttachments.value.forEach((attachment) => {
+            if (attachment.url) URL.revokeObjectURL(attachment.url);
+        });
     }
-    selectedAttachment.value = null;
+    selectedAttachments.value = [];
     if (fileInputRef.value) fileInputRef.value.value = '';
 };
 
 const sendMessage = () => {
     const text = inputText.value.trim();
-    if (!text && !selectedAttachment.value) return;
+    if (!text && selectedAttachments.value.length === 0) return;
 
     const currentTime = dayjs().format('HH:mm');
-    const attachment = selectedAttachment.value
-        ? { ...selectedAttachment.value }
-        : null;
+    const attachments = selectedAttachments.value.map((item) => ({ ...item }));
+    const attachment = attachments[0] ?? null;
 
     // Optimistic UI: show the outgoing message immediately, the parent
     // persists it through the Omnichat API and reconciles on refresh.
@@ -176,17 +179,20 @@ const sendMessage = () => {
         isRead: false,
         clientId,
         attachment: attachment ?? undefined,
+        attachments,
     };
 
     messages.value.push(newMsg);
-    emit('send', { id: props.chat.id, text, attachment, clientId });
+    emit('send', { id: props.chat.id, text, attachment, attachments, clientId });
     emit('update-last-message', {
         id: props.chat.id,
         text:
             text ||
-            (attachment?.type === 'image'
-                ? '[Hình ảnh]'
-                : `[Tệp] ${attachment?.name}`),
+            (attachments.length > 1
+                ? `[${attachments.length} tệp đính kèm]`
+                : attachment?.type === 'image'
+                  ? '[Hình ảnh]'
+                  : `[Tệp] ${attachment?.name}`),
         time: currentTime,
     });
 
@@ -406,6 +412,16 @@ const persistConversationTags = async (): Promise<void> => {
                     {{ chat.channelName ? `${chat.channelName} • ` : '' }}hoạt
                     động 1 phút trước • 🏷️ {{ chat.tags?.length || 0 }} thẻ
                 </span>
+                <a
+                    v-if="chat.channelSource === 'telegram' && chat.telegramUsername"
+                    class="telegram-profile-link"
+                    :href="`https://t.me/${chat.telegramUsername.replace(/^@/, '')}`"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    @click.stop
+                >
+                    @{{ chat.telegramUsername.replace(/^@/, '') }}
+                </a>
             </div>
 
             <div class="header-right-actions">
@@ -622,26 +638,18 @@ const persistConversationTags = async (): Promise<void> => {
         </div>
 
         <!-- 3. Preview tệp khi chọn file chuẩn bị gửi -->
-        <div v-if="selectedAttachment" class="attachment-preview-drawer">
-            <div class="preview-drawer-item">
-                <img
-                    v-if="selectedAttachment.type === 'image'"
-                    :src="selectedAttachment.url"
-                    class="preview-thumb-img"
-                />
+        <div v-if="selectedAttachments.length" class="attachment-preview-drawer">
+            <div v-for="attachment in selectedAttachments" :key="attachment.url || attachment.name" class="preview-drawer-item">
+                <img v-if="attachment.type === 'image'" :src="attachment.url" class="preview-thumb-img" />
                 <div v-else class="preview-thumb-file">📄</div>
                 <div class="preview-info-col">
-                    <span class="preview-file-name">{{
-                        selectedAttachment.name
-                    }}</span>
-                    <span class="preview-file-size">{{
-                        selectedAttachment.size
-                    }}</span>
+                    <span class="preview-file-name">{{ attachment.name }}</span>
+                    <span class="preview-file-size">{{ attachment.size }}</span>
                 </div>
-                <button class="remove-attachment-btn" @click="removeAttachment">
-                    <ion-icon :icon="closeCircle"></ion-icon>
-                </button>
             </div>
+            <button class="remove-attachment-btn" @click="removeAttachment">
+                <ion-icon :icon="closeCircle"></ion-icon>
+            </button>
         </div>
 
         <!-- 4. Input Bar CỐ ĐỊNH CỨNG ở đáy chuẩn ảnh mẫu: [Clip] [Input: "Tin nhắn" + Smiley] [Mic] -->
@@ -652,6 +660,7 @@ const persistConversationTags = async (): Promise<void> => {
                 type="file"
                 class="hidden-file-input"
                 accept="image/*,application/pdf,video/mp4,video/quicktime"
+                multiple
                 @change="onFileSelected"
             />
 
@@ -680,7 +689,7 @@ const persistConversationTags = async (): Promise<void> => {
 
             <!-- Action: Mic Icon tròn hoặc Nút Send xanh/tím -->
             <button
-                v-if="inputText.trim().length > 0 || selectedAttachment"
+                v-if="inputText.trim().length > 0 || selectedAttachments.length > 0"
                 class="send-message-btn"
                 title="Gửi tin nhắn"
                 @click="sendMessage"
@@ -951,6 +960,18 @@ const persistConversationTags = async (): Promise<void> => {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.telegram-profile-link {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    color: #4da3ff;
+    font-size: 11px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-decoration: none;
 }
 
 .header-right-actions {
