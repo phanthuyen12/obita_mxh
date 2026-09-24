@@ -578,7 +578,7 @@ const saveSettings = async (): Promise<void> => {
                 <ion-icon :icon="chevronForward" class="pf-chevron" />
             </div>
 
-            <p class="pf-version">Omnichat LiveChat v1.0</p>
+            <p class="pf-version">AE Chat v1.0</p>
 
             <!-- ── Toasts ── -->
             <transition name="pf-toast-anim">

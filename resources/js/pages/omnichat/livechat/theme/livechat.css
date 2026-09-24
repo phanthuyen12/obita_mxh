@@ -65,6 +65,14 @@
 }
 .tg-paper-plane-icon svg { width: 17px; height: 17px; transform: translate(-1px,.5px); }
 
+.ae-chat-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  object-fit: cover;
+  box-shadow: 0 4px 12px rgba(47, 140, 255, .25);
+}
+
 .header-title { display: flex; align-items: center; gap: 8px; }
 .header-actions { display: flex; align-items: center; gap: 8px; }
 

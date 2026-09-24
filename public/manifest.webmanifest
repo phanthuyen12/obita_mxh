@@ -1,6 +1,6 @@
 {
-    "name": "King Hub Social",
-    "short_name": "King Hub",
+    "name": "AE Chat",
+    "short_name": "AE Chat",
     "description": "Quản lý kênh mạng xã hội và livechat tập trung",
     "start_url": "/omnichat/livechat",
     "display": "standalone",
@@ -9,13 +9,13 @@
     "orientation": "portrait-primary",
     "icons": [
         {
-            "src": "/apple-touch-icon.png",
+            "src": "/images/aetrading.png",
             "sizes": "180x180",
             "type": "image/png",
             "purpose": "any maskable"
         },
         {
-            "src": "/favicon.svg",
+            "src": "/images/aetrading.png",
             "sizes": "any",
             "type": "image/svg+xml",
             "purpose": "any"

@@ -4,7 +4,7 @@ self.addEventListener('push', (event) => {
     event.waitUntil(
         self.registration.showNotification(data.title || 'Tin nhắn mới', {
             body: data.body || 'Bạn có một tin nhắn mới.',
-            icon: data.icon || '/apple-touch-icon.png',
+            icon: data.icon || '/images/aetrading.png',
             badge: data.badge || '/favicon-32x32.png',
             tag: data.tag || 'website-chat',
             data: data.data || { url: '/omnichat/livechat' },

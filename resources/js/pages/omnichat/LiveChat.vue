@@ -772,7 +772,7 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
 </script>
 
 <template>
-    <Head title="LiveChat" />
+    <Head title="AE Chat" />
 
     <ion-app>
         <div class="ios-device-container">
@@ -835,19 +835,8 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
                         <header class="telegram-header">
                             <button class="header-btn-text">Sửa</button>
                             <div class="header-title">
-                                <div class="tg-paper-plane-icon">
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                        <path
-                                            d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM16.64 8.8L15.01 16.48C14.89 17.02 14.57 17.15 14.12 16.9L11.64 15.07L10.44 16.22C10.31 16.35 10.2 16.46 9.94 16.46L10.12 13.91L14.76 9.72C14.96 9.54 14.71 9.44 14.44 9.62L8.71 13.23L6.24 12.46C5.7 12.29 5.69 11.92 6.35 11.66L16.03 7.93C16.48 7.76 16.87 8.03 16.64 8.8Z"
-                                            fill="white"
-                                        />
-                                    </svg>
-                                </div>
-                                <span class="title-text">Chat</span>
+                                <img class="ae-chat-logo" src="/images/aetrading.png" alt="AE Chat" />
+                                <span class="title-text">AE Chat</span>
                             </div>
                             <div class="header-actions">
                                 <!-- Chuông thông báo realtime -->
