@@ -1452,6 +1452,15 @@ const handleChatWithCustomer = (customer: CustomerLike): void => {
   box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.45);
 }
 
+.ios-device-container .floating-dock {
+  background: rgba(23, 25, 31, 0.94) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.ios-device-container .floating-dock-container {
+  background: linear-gradient(to top, #0d0e12 46%, transparent) !important;
+}
+
 .ios-device-container .chat-room,
 .ios-device-container .chat-room-container,
 .ios-device-container .conversation-room {

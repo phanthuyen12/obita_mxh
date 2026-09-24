@@ -823,6 +823,7 @@ const persistConversationTags = async (): Promise<void> => {
     overflow: hidden;
     overflow-x: hidden;
     touch-action: pan-y;
+    min-height: 0;
     overscroll-behavior-x: none;
     box-sizing: border-box;
     font-family:
@@ -836,12 +837,12 @@ const persistConversationTags = async (): Promise<void> => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: calc(6px + max(env(safe-area-inset-top, 0px), 44px)) 10px 6px;
+    padding: max(env(safe-area-inset-top, 0px), 8px) 10px 7px;
     background: rgba(18, 20, 26, 0.96);
     backdrop-filter: blur(25px);
     -webkit-backdrop-filter: blur(25px);
     border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
-    min-height: 50px;
+    min-height: 58px;
     box-sizing: border-box;
     width: 100%;
     max-width: 100%;
@@ -1055,7 +1056,8 @@ const persistConversationTags = async (): Promise<void> => {
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1.5px solid rgba(255, 255, 255, 0.18);
+    border: 2px solid rgba(255, 255, 255, 0.26);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
     flex-shrink: 0;
     cursor: pointer;
     transition: transform 0.15s, border-color 0.15s;
@@ -1511,6 +1513,7 @@ const persistConversationTags = async (): Promise<void> => {
 /* 2. Phần Tin Nhắn Cuộn Tự Nhiên (Scrollable Area) */
 .chat-scroll-area {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
     position: relative;
@@ -1523,7 +1526,7 @@ const persistConversationTags = async (): Promise<void> => {
 .messages-inner-wrapper {
     position: relative;
     z-index: 2;
-    padding: 16px 12px 28px;
+    padding: 8px 12px 20px;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -1733,7 +1736,7 @@ const persistConversationTags = async (): Promise<void> => {
     min-height: 54px;
     display: flex;
     align-items: center;
-    padding: 0 10px env(safe-area-inset-bottom, 0px);
+    padding: 7px 10px max(env(safe-area-inset-bottom, 0px), 7px);
     gap: 8px;
     flex-shrink: 0;
     position: relative;
@@ -1767,7 +1770,7 @@ const persistConversationTags = async (): Promise<void> => {
 .input-capsule-box {
     flex: 1;
     height: 38px;
-    background-color: #1c1c1e;
+    background-color: #22252d;
     border-radius: 20px;
     display: flex;
     align-items: center;
