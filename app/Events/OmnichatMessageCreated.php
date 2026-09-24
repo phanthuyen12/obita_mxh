@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Events;
 
 use App\Models\OmnichatMessage;
+use App\Models\User;
 use App\Notifications\WebsiteChatMessageNotification;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -20,9 +21,13 @@ class OmnichatMessageCreated implements ShouldBroadcast, ShouldDispatchAfterComm
     public function __construct(public OmnichatMessage $message)
     {
         if ($message->direction === 'inbound') {
-            $message->loadMissing(['conversation.workspace.members', 'senderContact', 'channel']);
+            $message->loadMissing(['senderContact', 'channel']);
 
-            foreach ($message->conversation->workspace->members as $user) {
+            $users = User::query()
+                ->where('current_workspace_id', $message->workspace_id)
+                ->get();
+
+            foreach ($users as $user) {
                 $user->notify(new WebsiteChatMessageNotification($message));
             }
         }
