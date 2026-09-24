@@ -1,11 +1,11 @@
-/* Telegram iOS Dark Mode variables */
+/* Apple-inspired iOS variables */
 :root {
   --ion-font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --ion-background-color: #000000;
-  --ion-background-color-rgb: 0, 0, 0;
+  --ion-background-color: #f2f2f7;
+  --ion-background-color-rgb: 242, 242, 247;
 
-  --ion-text-color: #ffffff;
-  --ion-text-color-rgb: 255, 255, 255;
+  --ion-text-color: #1c1c1e;
+  --ion-text-color-rgb: 28, 28, 30;
 
   --ion-color-step-50: #0d0d0d;
   --ion-color-step-100: #1a1a1a;
@@ -27,23 +27,23 @@
   --ion-color-step-900: #e6e6e6;
   --ion-color-step-950: #f2f2f2;
 
-  --tg-bg: #000000;
-  --tg-header-bg: #1c1c1e;
-  --tg-search-bg: #1c1c1e;
-  --tg-folder-bg: #1c1c1e;
-  --tg-folder-active: #ffffff;
-  --tg-folder-active-text: #000000;
-  --tg-folder-text: #8e8e93;
-  --tg-badge-blue: #2a8bf2;
-  --tg-badge-gray: #3a3a3c;
+  --tg-bg: #f2f2f7;
+  --tg-header-bg: #ffffff;
+  --tg-search-bg: rgba(118, 118, 128, .12);
+  --tg-folder-bg: rgba(118, 118, 128, .12);
+  --tg-folder-active: #1c1c1e;
+  --tg-folder-active-text: #ffffff;
+  --tg-folder-text: #636366;
+  --tg-badge-blue: #007aff;
+  --tg-badge-gray: #8e8e93;
   --tg-badge-red: #ff3b30;
-  --tg-item-border: #1c1c1e;
+  --tg-item-border: rgba(60, 60, 67, .12);
   --tg-subtext: #8e8e93;
 }
 
 body {
-  background-color: #000000;
-  color: #ffffff;
+  background-color: #f2f2f7;
+  color: #1c1c1e;
   user-select: none;
   -webkit-font-smoothing: antialiased;
 }
