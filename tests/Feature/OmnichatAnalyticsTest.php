@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Enums\Omnichat\ChannelProvider;
 use App\Enums\SocialAccount\Platform;
 use App\Enums\UserWorkspace\Role;
+use App\Models\OmnichatChannel;
 use App\Models\OmnichatContact;
 use App\Models\OmnichatConversation;
 use App\Models\OmnichatMessage;
@@ -81,6 +83,22 @@ test('user can view omnichat analytics page with real database records', functio
         ->where('contacts.data.0.name', 'Nguyễn Văn Thật')
         ->where('contacts.data.0.phone', '0912345678')
     );
+});
+
+test('analytics includes website channels using the provider attribute', function () {
+    $channel = OmnichatChannel::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'provider' => ChannelProvider::Website,
+        'name' => 'Website Live Chat',
+    ]);
+
+    $this->actingAs($this->user)
+        ->get('/omnichat/analytics')
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->where('channelsOptions.0.id', $channel->id)
+            ->where('channelsOptions.0.platform', ChannelProvider::Website->value)
+        );
 });
 
 test('user can view dedicated user analytics page with real user stats', function () {

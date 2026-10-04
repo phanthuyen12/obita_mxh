@@ -2,11 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Enums\Omnichat\ChannelProvider;
 use App\Enums\SocialAccount\Platform;
 use App\Enums\UserWorkspace\Role;
 use App\Events\OmnichatMessageCreated;
 use App\Listeners\Omnichat\HandlePageAiCareAutoReply;
 use App\Models\AiBot;
+use App\Models\OmnichatChannel;
 use App\Models\OmnichatConversation;
 use App\Models\OmnichatMessage;
 use App\Models\SocialAccount;
@@ -14,6 +16,10 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Services\Dify\DifyChatClient;
 use App\Support\Omnichat\FacebookMessengerClient;
+use App\Support\Omnichat\RemoteImageDownloader;
+use App\Support\Omnichat\TelegramOmnichatClient;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
@@ -195,4 +201,91 @@ test('inbound omnichat message triggers ai auto reply via dify', function () {
 
     expect($outboundMessage)->not->toBeNull();
     expect($outboundMessage->body)->toBe('Chào bạn! King Coffee rất hân hạnh được phục vụ bạn.');
+});
+
+test('telegram ai reply downloads and sends linked images as photo messages', function (): void {
+    $channel = OmnichatChannel::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'provider' => ChannelProvider::Telegram,
+        'settings' => [
+            'ai_care' => [
+                'enabled' => true,
+                'provider' => 'dify',
+                'dify_api_key' => 'telegram-app-key',
+                'dify_base_url' => 'https://kingai.tnicorporation.com/v1',
+                'operating_hours' => ['mode' => '24/7'],
+            ],
+        ],
+    ]);
+    $conversation = OmnichatConversation::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'channel_id' => $channel->id,
+        'social_account_id' => null,
+        'external_id' => 'telegram-chat-123',
+    ]);
+
+    $difyClientMock = mock(DifyChatClient::class);
+    $difyClientMock->shouldReceive('sendMessage')
+        ->once()
+        ->andReturn([
+            'answer' => "Đây là sản phẩm bạn hỏi.\n\n![Ảnh sản phẩm](https://8.8.8.8/product.jpg)",
+            'conversation_id' => 'dify-telegram-conv-123',
+        ]);
+    app()->instance(DifyChatClient::class, $difyClientMock);
+
+    $telegramClientMock = mock(TelegramOmnichatClient::class);
+    $telegramClientMock->shouldReceive('sendMessage')
+        ->once()
+        ->andReturn(['id' => 'telegram-text-1', 'payload' => []]);
+    $telegramClientMock->shouldReceive('sendPhoto')
+        ->once()
+        ->withArgs(fn (OmnichatChannel $sentChannel, string $chatId, UploadedFile $image): bool => $sentChannel->is($channel)
+            && $chatId === 'telegram-chat-123'
+            && $image->getClientOriginalName() === 'product.jpg')
+        ->andReturn([
+            'id' => 'telegram-photo-1',
+            'payload' => ['ok' => true],
+            'attachment' => [
+                'id' => 'telegram-file-1',
+                'type' => 'image',
+                'url' => '',
+                'original_name' => 'product.jpg',
+                'mime_type' => 'image/jpeg',
+                'size' => 12,
+            ],
+        ]);
+    app()->instance(TelegramOmnichatClient::class, $telegramClientMock);
+
+    $imageContent = UploadedFile::fake()->image('fixture.jpg')->getContent();
+    Http::fake([
+        'https://8.8.8.8/product.jpg' => Http::response($imageContent, 200, ['Content-Type' => 'image/jpeg']),
+    ]);
+
+    $inboundMessage = OmnichatMessage::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'channel_id' => $channel->id,
+        'conversation_id' => $conversation->id,
+        'direction' => 'inbound',
+        'body' => 'Gửi hình cho tôi xem',
+    ]);
+
+    app(HandlePageAiCareAutoReply::class)->handle(new OmnichatMessageCreated($inboundMessage));
+
+    $outboundMessages = OmnichatMessage::query()
+        ->where('conversation_id', $conversation->id)
+        ->where('direction', 'outbound')
+        ->get();
+
+    expect($outboundMessages)->toHaveCount(2)
+        ->and($outboundMessages->firstWhere('type', 'text')?->body)->toBe('Đây là sản phẩm bạn hỏi.')
+        ->and($outboundMessages->firstWhere('type', 'image')?->status)->toBe('sent');
+
+    Http::assertSent(fn ($request): bool => $request->url() === 'https://8.8.8.8/product.jpg');
+});
+
+test('remote ai images cannot be downloaded from private network addresses', function (): void {
+    expect(fn () => app(RemoteImageDownloader::class)->withDownloadedImage(
+        'https://127.0.0.1/private.jpg',
+        fn (UploadedFile $image): null => null,
+    ))->toThrow(RuntimeException::class);
 });

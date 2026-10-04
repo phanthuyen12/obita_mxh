@@ -81,9 +81,15 @@ class ProcessScheduledBroadcastCampaigns extends Command
                 $sentCount++;
             }
 
+            $nextScheduledAt = $campaign->scheduled_at?->copy()->addDay();
+            while ($campaign->repeat_daily && $nextScheduledAt?->lessThanOrEqualTo(now())) {
+                $nextScheduledAt->addDay();
+            }
+
             $campaign->update([
-                'status' => 'completed',
-                'completed_at' => now(),
+                'status' => $campaign->repeat_daily ? 'scheduled' : 'completed',
+                'scheduled_at' => $campaign->repeat_daily ? $nextScheduledAt : $campaign->scheduled_at,
+                'completed_at' => $campaign->repeat_daily ? null : now(),
                 'stats' => [
                     'total_targeted' => $contacts->count(),
                     'total_sent' => $sentCount,

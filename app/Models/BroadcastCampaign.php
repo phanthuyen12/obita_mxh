@@ -26,6 +26,7 @@ class BroadcastCampaign extends Model
         'ai_spin_enabled',
         'status',
         'scheduled_at',
+        'repeat_daily',
         'started_at',
         'completed_at',
         'delay_seconds',
@@ -36,6 +37,7 @@ class BroadcastCampaign extends Model
     {
         return [
             'ai_spin_enabled' => 'boolean',
+            'repeat_daily' => 'boolean',
             'trigger_inactive_days' => 'integer',
             'delay_seconds' => 'integer',
             'stats' => 'array',

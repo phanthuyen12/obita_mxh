@@ -95,7 +95,7 @@ class OmnichatAnalyticsService
         $websiteOptions = $websiteChannels->map(fn (OmnichatChannel $c): array => [
             'id' => $c->id,
             'name' => $c->name ?: ($c->provider === ChannelProvider::Website ? 'Website Live Chat' : strtoupper($c->provider->value)),
-            'platform' => $c->platform,
+            'platform' => $c->provider->value,
             'avatar_url' => null,
             'ai_enabled' => (bool) (data_get($c->settings, 'ai_care.enabled', false)),
         ]);

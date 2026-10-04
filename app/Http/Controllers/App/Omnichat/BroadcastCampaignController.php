@@ -13,6 +13,7 @@ use App\Services\Omnichat\CustomerSegmentFilterService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -89,7 +90,12 @@ class BroadcastCampaignController extends Controller
             'image' => ['nullable', 'file', 'image', 'max:10240'],
             'ai_spin_enabled' => ['nullable', 'boolean'],
             'delay_seconds' => ['nullable', 'integer', 'min:1', 'max:60'],
-            'scheduled_at' => ['nullable', 'date'],
+            'scheduled_at' => [
+                'nullable',
+                'date',
+                Rule::when($request->boolean('repeat_daily'), ['required', 'after:now']),
+            ],
+            'repeat_daily' => ['nullable', 'boolean'],
         ]);
 
         $imageUrl = null;
@@ -108,6 +114,7 @@ class BroadcastCampaignController extends Controller
 
         $scheduledAt = ! empty($validated['scheduled_at']) ? Carbon::parse($validated['scheduled_at']) : null;
         $isScheduled = $scheduledAt && $scheduledAt->isFuture();
+        $repeatDaily = (bool) ($validated['repeat_daily'] ?? false);
 
         $campaign = BroadcastCampaign::query()->create([
             'workspace_id' => $workspace->id,
@@ -121,6 +128,7 @@ class BroadcastCampaignController extends Controller
             'delay_seconds' => $validated['delay_seconds'] ?? 3,
             'status' => $isScheduled ? 'scheduled' : 'sending',
             'scheduled_at' => $scheduledAt,
+            'repeat_daily' => $repeatDaily,
             'started_at' => $isScheduled ? null : now(),
         ]);
 

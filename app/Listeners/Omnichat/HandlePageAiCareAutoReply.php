@@ -15,10 +15,12 @@ use App\Models\SocialAccount;
 use App\Services\Dify\DifyChatClient;
 use App\Support\Omnichat\FacebookMessengerClient;
 use App\Support\Omnichat\LazadaClient;
+use App\Support\Omnichat\RemoteImageDownloader;
 use App\Support\Omnichat\ShopeeClient;
 use App\Support\Omnichat\TelegramOmnichatClient;
 use App\Support\Omnichat\ZaloOaClient;
 use Carbon\Carbon;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -33,6 +35,7 @@ class HandlePageAiCareAutoReply
         private readonly LazadaClient $lazadaClient,
         private readonly ShopeeClient $shopeeClient,
         private readonly TelegramOmnichatClient $telegramOmnichatClient,
+        private readonly RemoteImageDownloader $remoteImageDownloader,
     ) {}
 
     public function handle(OmnichatMessageCreated $event): void
@@ -153,7 +156,12 @@ class HandlePageAiCareAutoReply
         // Generate AI reply
         $replyText = $this->generateReply($message, $conversation, $aiCare);
 
-        if (blank($replyText)) {
+        $imageUrls = [];
+        if ($channel?->provider === ChannelProvider::Telegram && filled($replyText)) {
+            [$replyText, $imageUrls] = $this->extractImageUrls($replyText);
+        }
+
+        if (blank($replyText) && $imageUrls === []) {
             Log::warning('[AI-Care] Generated AI reply text is blank');
 
             return;
@@ -163,7 +171,98 @@ class HandlePageAiCareAutoReply
             'reply' => $replyText,
         ]);
 
-        $this->sendOutboundReply($conversation, $account, $channel, $replyText);
+        if (filled($replyText)) {
+            $this->sendOutboundReply($conversation, $account, $channel, $replyText);
+        }
+
+        foreach ($imageUrls as $imageUrl) {
+            $this->sendOutboundImageReply($conversation, $channel, $imageUrl);
+        }
+    }
+
+    /** @return array{string, list<string>} */
+    private function extractImageUrls(string $reply): array
+    {
+        preg_match_all('/!\[[^\]]*\]\((https:\/\/[^\s)]+)\)/i', $reply, $markdownMatches);
+        preg_match_all('/https:\/\/[^\s<>()]+\.(?:jpe?g|png|gif|webp)(?:\?[^\s<>()]*)?/i', $reply, $directMatches);
+
+        $imageUrls = array_values(array_unique(array_slice([
+            ...($markdownMatches[1] ?? []),
+            ...($directMatches[0] ?? []),
+        ], 0, 3)));
+
+        $cleanReply = preg_replace('/!\[[^\]]*\]\(https:\/\/[^\s)]+\)/i', '', $reply) ?? $reply;
+        foreach ($directMatches[0] ?? [] as $url) {
+            $cleanReply = str_replace($url, '', $cleanReply);
+        }
+
+        return [trim(preg_replace('/\n{3,}/', "\n\n", $cleanReply) ?? $cleanReply), $imageUrls];
+    }
+
+    private function sendOutboundImageReply(
+        OmnichatConversation $conversation,
+        OmnichatChannel $channel,
+        string $imageUrl,
+    ): void {
+        $externalId = null;
+        $providerPayload = [];
+        $errorMessage = null;
+
+        try {
+            if (blank($conversation->external_id)) {
+                throw new \RuntimeException('Telegram conversation is missing its chat ID.');
+            }
+
+            $result = $this->remoteImageDownloader->withDownloadedImage(
+                $imageUrl,
+                fn (UploadedFile $image): array => $this->telegramOmnichatClient->sendPhoto(
+                    $channel,
+                    (string) $conversation->external_id,
+                    $image,
+                ),
+            );
+            $externalId = $result['id'];
+            $providerPayload = [
+                'telegram' => $result['payload'],
+                'attachments' => [$result['attachment']],
+            ];
+        } catch (\Throwable $exception) {
+            $errorMessage = $exception->getMessage();
+            Log::warning('[AI-Care] Failed to download or send AI reply image', [
+                'conversation_id' => $conversation->id,
+                'error' => $errorMessage,
+            ]);
+        }
+
+        DB::transaction(function () use ($conversation, $channel, $externalId, $providerPayload, $errorMessage): void {
+            $sentAt = now();
+            $outbound = OmnichatMessage::query()->create([
+                'workspace_id' => $conversation->workspace_id,
+                'channel_id' => $channel->id,
+                'conversation_id' => $conversation->id,
+                'client_id' => (string) Str::uuid(),
+                'sender_user_id' => null,
+                'external_id' => $externalId ?? (string) Str::uuid(),
+                'direction' => 'outbound',
+                'type' => 'image',
+                'body' => null,
+                'status' => $externalId !== null ? 'sent' : 'failed',
+                'error_message' => $errorMessage,
+                'provider_payload' => $providerPayload,
+                'sent_at' => $externalId !== null ? $sentAt : null,
+                'failed_at' => $externalId === null ? $sentAt : null,
+            ]);
+
+            if ($externalId !== null) {
+                $conversation->update([
+                    'last_message_preview' => '[image]',
+                    'last_message_at' => $sentAt,
+                    'last_outbound_at' => $sentAt,
+                ]);
+            }
+
+            rescue(fn () => OmnichatMessageCreated::dispatch($outbound), report: false);
+        });
     }
 
     private function isWithinOperatingHours(array $aiCare): bool
@@ -212,7 +311,7 @@ class HandlePageAiCareAutoReply
     {
         $provider = $aiCare['provider'] ?? 'dify';
         $difyApiKey = $aiCare['dify_api_key'] ?? null;
-        $difyBaseUrl = $aiCare['dify_base_url'] ?: 'https://kingai.tnicorporation.com/v1';
+        $difyBaseUrl = $aiCare['dify_base_url'] ?? 'https://kingai.tnicorporation.com/v1';
 
         // Bot resolution order: the admin's per-channel bot assignment wins,
         // then a channel-specific key, then the workspace default bot.

@@ -56,6 +56,7 @@ interface CampaignItem {
     sent_count: number;
     created_at: string;
     scheduled_at?: string | null;
+    repeat_daily?: boolean;
     started_at: string | null;
     completed_at: string | null;
 }
@@ -176,6 +177,7 @@ watch([triggerType, selectedSegmentId], () => {
 // Timing & Scheduling
 const timingMode = ref<'now' | 'schedule'>('now');
 const scheduledAt = ref<string>('');
+const repeatDaily = ref(false);
 
 // Kịch bản set time mẫu
 interface ScenarioPreset {
@@ -264,6 +266,8 @@ onMounted(() => {
 });
 
 const submitCampaign = async () => {
+    const shouldRepeatDaily = timingMode.value === 'schedule' && repeatDaily.value;
+
     if (!campaignName.value.trim() || !messageTemplate.value.trim()) {
         toast.error('Vui lòng nhập tên chiến dịch và nội dung tin nhắn');
         return;
@@ -301,6 +305,7 @@ const submitCampaign = async () => {
         if (timingMode.value === 'schedule' && scheduledAt.value) {
             formData.append('scheduled_at', scheduledAt.value);
         }
+        formData.append('repeat_daily', shouldRepeatDaily ? '1' : '0');
         if (attachedImage.value) {
             formData.append('image', attachedImage.value);
         }
@@ -308,13 +313,16 @@ const submitCampaign = async () => {
         const { data } = await axios.post('/omnichat/broadcast', formData);
 
         if (data.is_scheduled) {
-            toast.success(`Đã lên lịch thành công cho chiến dịch! Hệ thống sẽ tự động phát tin vào đúng giờ hẹn.`);
+            toast.success(shouldRepeatDaily
+                ? 'Đã lên lịch gửi tự động mỗi ngày vào giờ đã chọn.'
+                : 'Đã lên lịch thành công! Hệ thống sẽ tự động chạy vào giờ đã chọn.');
         } else {
             toast.success(`Đã khởi tạo và gửi thành công tới ${data.sent_count} khách hàng!`);
         }
 
         router.reload({ only: ['campaigns', 'sentMessages', 'stats'] });
         campaignName.value = 'Chiến dịch mới - ' + new Date().toLocaleTimeString('vi-VN');
+        repeatDaily.value = false;
         removeAttachedImage();
     } catch {
         toast.error('Lỗi khi gửi chiến dịch');
@@ -594,8 +602,16 @@ const formatDate = (dateStr: string | null) => {
                                     type="datetime-local"
                                     class="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
                                 />
+                                <label class="flex items-center gap-2 text-xs text-foreground">
+                                    <input
+                                        v-model="repeatDaily"
+                                        type="checkbox"
+                                        class="rounded border-input text-indigo-600 focus:ring-indigo-500"
+                                    />
+                                    <span>Lặp lại và tự động gửi mỗi ngày</span>
+                                </label>
                                 <p class="text-[10px] text-muted-foreground">
-                                    Hệ thống Cron sẽ tự động quét và phân phát tin nhắn theo giãn cách an toàn khi đến giờ đã hẹn.
+                                    Hệ thống tự chạy chiến dịch đến giờ đã hẹn. Nếu bật lặp, chiến dịch sẽ chạy lại mỗi ngày.
                                 </p>
                             </div>
                         </div>
@@ -876,7 +892,7 @@ const formatDate = (dateStr: string | null) => {
                                 </div>
                                 <span class="text-xs text-muted-foreground flex items-center gap-1">
                                     <span v-if="camp.scheduled_at && camp.status === 'scheduled'" class="text-amber-600 font-medium">
-                                        Hẹn: {{ formatDate(camp.scheduled_at) }}
+                                        Hẹn: {{ formatDate(camp.scheduled_at) }}<span v-if="camp.repeat_daily"> · Lặp hằng ngày</span>
                                     </span>
                                     <span v-else>
                                         {{ formatDate(camp.created_at) }}
