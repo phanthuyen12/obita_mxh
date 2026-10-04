@@ -30,6 +30,10 @@ class HandlePageAiCareAutoReply
 {
     private const int IMAGE_REPLY_COOLDOWN_SECONDS = 600;
 
+    private const string AUTOBOT_PRICE_IMAGE_URL = 'https://res.cloudinary.com/dgsykeooe/image/upload/v1791128962/autobot_dw2jww.jpg';
+
+    private const string QUANTUM_PRICE_IMAGE_URL = 'https://res.cloudinary.com/dgsykeooe/image/upload/v1791128993/quantum_o4bmtq.jpg';
+
     public function __construct(
         private readonly DifyChatClient $difyChatClient,
         private readonly FacebookMessengerClient $facebookMessengerClient,
@@ -161,6 +165,11 @@ class HandlePageAiCareAutoReply
         $imageUrls = [];
         if ($channel?->provider === ChannelProvider::Telegram && filled($replyText)) {
             [$replyText, $imageUrls] = $this->extractImageUrls($replyText);
+
+            $priceImageUrls = $this->priceImagesForCostQuestion((string) $message->body);
+            if ($priceImageUrls !== null) {
+                $imageUrls = $priceImageUrls;
+            }
         }
 
         if (blank($replyText) && $imageUrls === []) {
@@ -210,6 +219,27 @@ class HandlePageAiCareAutoReply
         }
 
         return [trim(preg_replace('/\n{3,}/', "\n\n", $cleanReply) ?? $cleanReply), $imageUrls];
+    }
+
+    /** @return list<string>|null */
+    private function priceImagesForCostQuestion(string $query): ?array
+    {
+        $asksAboutCost = preg_match('/giá|gia|chi\s*phí|chi\s*phi|bao\s*nhiêu|bao\s*nhieu|how\s+much|price|pricing|cost|fees?|subscription|payment/iu', $query) === 1;
+
+        if (! $asksAboutCost) {
+            return null;
+        }
+
+        $priceImageUrls = [];
+        if (preg_match('/auto[\s-]*(?:bot|trade|trader)|autobot|autotrade|autotrader|annaly\s+bot/iu', $query) === 1) {
+            $priceImageUrls[] = self::AUTOBOT_PRICE_IMAGE_URL;
+        }
+
+        if (stripos($query, 'quantum') !== false) {
+            $priceImageUrls[] = self::QUANTUM_PRICE_IMAGE_URL;
+        }
+
+        return $priceImageUrls === [] ? null : $priceImageUrls;
     }
 
     private function sendOutboundImageReply(

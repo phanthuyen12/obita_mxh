@@ -394,6 +394,12 @@ workflow:
         - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d55002
           role: system
           text: 'AUTOBOT PRICE IMAGE EXCEPTION: When a customer asks about Autobot/Autotrade cost, fee, price, or payment, answer the cost question in plain text and include this approved price image in the same reply: ![Autobot price](https://res.cloudinary.com/dgsykeooe/image/upload/v1791128962/autobot_dw2jww.jpg). This user-approved image is an explicit exception to the no-price-image rule. Do not send the bot-results image instead of this price image for a cost question. Respect the anti-spam cooldown: if any image was sent within the last 20 turns, answer with text only. FORMATTING: Never use asterisks for bold/italic/emphasis, including ** or ***; use plain text.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d56002
+          role: system
+          text: 'IMAGE BATCH LIMIT: The Autobot price image counts toward the existing maximum of 3 images total in a reply. If relevant feedback images are also sent, include no more than 2 of them with the price image. Never exceed 3 images in a single answer.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d57002
+          role: system
+          text: 'FINAL AUTOBOT PRICE ROUTING: Treat Autobot, auto bot, auto trader, Autotrader, Autotrade, and auto trade as the Autotrade service. For a cost-only question, send only the Autobot price image and the matching text answer. Do not send Quantum price, VIP plans, client testimonials, profit screenshots, or other feedback images unless the customer separately asks for them. If a non-matching image was generated earlier in the reply, remove it.'
         selected: false
         title: Nhánh Autotrade
         type: llm
@@ -453,6 +459,12 @@ workflow:
         - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d55003
           role: system
           text: 'QUANTUM PRICE IMAGE EXCEPTION: When a customer asks about Quantum cost, fee, subscription price, plan price, or payment, answer the cost question in plain text and include this approved price image in the same reply: ![Quantum price](https://res.cloudinary.com/dgsykeooe/image/upload/v1791128993/quantum_o4bmtq.jpg). This user-approved image is an explicit exception to the no-price-image rule. Respect the anti-spam cooldown: if any image was sent within the last 20 turns, answer with text only. Do not ask for broker/country/account type unless the customer asks about technical compatibility or enrollment. FORMATTING: Never use asterisks for bold/italic/emphasis, including ** or ***; use plain text.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d56003
+          role: system
+          text: 'IMAGE BATCH LIMIT: The Quantum price image counts toward the existing maximum of 3 images total in a reply. If relevant feedback images are also sent, include no more than 2 of them with the price image. Never exceed 3 images in a single answer.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d57003
+          role: system
+          text: 'FINAL QUANTUM PRICE ROUTING: For a Quantum cost-only question, send only the Quantum price image and matching text answer. Do not send Autobot price, VIP plans, client testimonials, profit screenshots, or other feedback images unless the customer separately asks for them. If a non-matching image was generated earlier in the reply, remove it.'
         selected: false
         title: Nhánh Quantum
         type: llm
@@ -538,7 +550,7 @@ workflow:
           name: 'Customer asks about Gold Class, Gold trading education, course content, learning/practice, tuition, enrollment, requirements, Gold Class feedback, student reviews/results, or asks for an additional image.'
         - id: autotrade
           label: AUTOTRADE
-          name: 'Customer asks about Autotrade, Annaly bot profit share, the 90-day program, $500 capital, how managed bot access works, bot feedback/results, or an additional bot image.'
+          name: 'Customer asks about Autobot, auto bot, Autotrader, auto trader, Autotrade, auto trade, Annaly bot profit share, the 90-day program, $500 capital, how managed bot access works, bot feedback/results, or an additional bot image.'
         - id: quantum
           label: QUANTUM
           name: 'Customer asks about Quantum, Quantum bot, bot licence, subscription term, price, setup, technical compatibility, bot feedback/results, or an additional bot image.'
@@ -824,7 +836,7 @@ workflow:
             Recognize case-insensitive keywords and clear variations:
             - GOLD CLASS / goldclass / gold: education plus practical trading to build the
               customer''s own analysis, planning, execution, and risk-management process.
-            - AUTOTRADE / auto trade: the internal 90-day program using Annaly''s bot; at least
+            - AUTOBOT / AUTOTRADE / auto trade: the internal 90-day program using Annaly''s bot; at least
               $500 customer-owned trading capital, no upfront bot licence fee, and 20% of
               profits to Annaly / 80% to the customer. The $2,000 figure is a target only.
             - QUANTUM / quantum bot: fixed-term licence for the same underlying bot as
@@ -972,6 +984,12 @@ workflow:
         - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d55005
           role: system
           text: 'PRICE IMAGE ROUTING: If a customer asks about the price/cost/fee/payment for Autobot or Autotrade, include ![Autobot price](https://res.cloudinary.com/dgsykeooe/image/upload/v1791128962/autobot_dw2jww.jpg) with the plain-text price. If they ask about Quantum cost/plan/fee, include ![Quantum price](https://res.cloudinary.com/dgsykeooe/image/upload/v1791128993/quantum_o4bmtq.jpg) with the plain-text price. If they ask prices for both, include both matching images together. These two user-approved images are the only exceptions to the no-price-image rule. If an image batch was sent in the last 20 turns, do not resend images. FORMATTING: Do not use asterisks for bold, italics, or emphasis, including ** and ***; use plain text.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d56005
+          role: system
+          text: 'IMAGE BATCH LIMIT: Send no more than 3 images total in a reply. Price images count toward this limit. When both Autobot and Quantum prices are asked, send both price images and no more than one other relevant image.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d57005
+          role: system
+          text: 'FINAL PRODUCT IMAGE FILTER: For an Autobot/Autotrade cost-only question, output only the Autobot price image and relevant cost text. For a Quantum cost-only question, output only the Quantum price image and relevant cost text. Do not add VIP pricing cards, testimonials, or result images that the customer did not ask for. Only include additional feedback images when the customer explicitly asks for feedback/results.'
         selected: false
         title: Annaly Trader Sales Assistant
         type: llm

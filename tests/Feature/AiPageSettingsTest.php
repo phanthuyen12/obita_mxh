@@ -283,6 +283,83 @@ test('telegram ai reply downloads and sends linked images as photo messages', fu
     Http::assertSent(fn ($request): bool => $request->url() === 'https://8.8.8.8/product.jpg');
 });
 
+test('telegram auto trader cost questions send only the autobot price image', function (): void {
+    $channel = OmnichatChannel::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'provider' => ChannelProvider::Telegram,
+        'settings' => [
+            'ai_care' => [
+                'enabled' => true,
+                'provider' => 'dify',
+                'dify_api_key' => 'telegram-app-key',
+                'dify_base_url' => 'https://kingai.tnicorporation.com/v1',
+                'operating_hours' => ['mode' => '24/7'],
+            ],
+        ],
+    ]);
+    $conversation = OmnichatConversation::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'channel_id' => $channel->id,
+        'social_account_id' => null,
+        'external_id' => 'telegram-price-chat',
+    ]);
+
+    $difyClientMock = mock(DifyChatClient::class);
+    $difyClientMock->shouldReceive('sendMessage')
+        ->once()
+        ->andReturn([
+            'answer' => "Autotrade chi phí thế nào?\n\n![Quantum](https://res.cloudinary.com/dgsykeooe/image/upload/v1791128993/quantum_o4bmtq.jpg)\n![VIP](https://example.com/vip.jpg)\n![Feedback](https://example.com/feedback.jpg)",
+            'conversation_id' => 'dify-autotrade-price-conv',
+        ]);
+    app()->instance(DifyChatClient::class, $difyClientMock);
+
+    $telegramClientMock = mock(TelegramOmnichatClient::class);
+    $telegramClientMock->shouldReceive('sendMessage')
+        ->once()
+        ->andReturn(['id' => 'telegram-price-text', 'payload' => []]);
+    $telegramClientMock->shouldReceive('sendPhoto')
+        ->once()
+        ->withArgs(fn (OmnichatChannel $sentChannel, string $chatId, UploadedFile $image): bool => $sentChannel->is($channel)
+            && $chatId === 'telegram-price-chat'
+            && $image->getClientOriginalName() === 'autobot_dw2jww.jpg')
+        ->andReturn([
+            'id' => 'telegram-autobot-price-photo',
+            'payload' => ['ok' => true],
+            'attachment' => [
+                'id' => 'telegram-autobot-price-file',
+                'type' => 'image',
+                'url' => '',
+                'original_name' => 'autobot_dw2jww.jpg',
+                'mime_type' => 'image/jpeg',
+                'size' => 12,
+            ],
+        ]);
+    app()->instance(TelegramOmnichatClient::class, $telegramClientMock);
+
+    $imageDownloaderMock = mock(RemoteImageDownloader::class);
+    $imageDownloaderMock->shouldReceive('withDownloadedImage')
+        ->once()
+        ->withArgs(fn (string $url, Closure $callback): bool => $url === 'https://res.cloudinary.com/dgsykeooe/image/upload/v1791128962/autobot_dw2jww.jpg')
+        ->andReturnUsing(fn (string $url, Closure $callback): array => $callback(UploadedFile::fake()->image('autobot_dw2jww.jpg')));
+    app()->instance(RemoteImageDownloader::class, $imageDownloaderMock);
+
+    $inboundMessage = OmnichatMessage::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'channel_id' => $channel->id,
+        'conversation_id' => $conversation->id,
+        'direction' => 'inbound',
+        'body' => 'auto trader giá bao nhiêu?',
+    ]);
+
+    app(HandlePageAiCareAutoReply::class)->handle(new OmnichatMessageCreated($inboundMessage));
+
+    expect(OmnichatMessage::query()
+        ->where('conversation_id', $conversation->id)
+        ->where('direction', 'outbound')
+        ->where('type', 'image')
+        ->count())->toBe(1);
+});
+
 test('telegram ai care sends only one image batch during a burst in the same conversation', function (): void {
     $channel = OmnichatChannel::factory()->create([
         'workspace_id' => $this->workspace->id,
