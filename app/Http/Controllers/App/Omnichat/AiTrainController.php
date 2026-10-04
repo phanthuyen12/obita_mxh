@@ -16,6 +16,8 @@ use App\Services\Dify\DifyChatClient;
 use App\Services\Dify\DifyKnowledgeClient;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -243,6 +245,117 @@ class AiTrainController extends Controller
                 ? 'Đã nạp tri thức thành công và tự động đồng bộ sang Dify Knowledge Base!'
                 : ($syncMessage ?: 'Đã lưu tri thức thành công vào hệ thống!'),
         ]);
+    }
+
+    /**
+     * Retry syncing an existing knowledge item to its bot's Dify dataset.
+     */
+    public function retryKnowledgeSync(Request $request, AiSaleBotKnowledge $knowledge): JsonResponse
+    {
+        $workspace = $request->user()->currentWorkspace;
+        abort_unless($workspace && $knowledge->workspace_id === $workspace->id, 404);
+
+        $bot = $knowledge->bot ?? AiBot::defaultFor($workspace->id);
+        if (! $bot || $bot->workspace_id !== $workspace->id || blank($bot->dify_dataset_id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bot chưa được cấu hình Dataset ID trên Dify.',
+            ], SymfonyResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $datasetApiKey = $bot->dify_dataset_api_key ?: $bot->dify_api_key;
+        if (blank($datasetApiKey)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bot chưa được cấu hình API Key để đồng bộ Knowledge Base.',
+            ], SymfonyResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $baseUrl = $bot->dify_base_url ?: 'https://kingai.tnicorporation.com/v1';
+
+        try {
+            if (filled($knowledge->file_path)) {
+                $filePath = Storage::disk('public')->path($knowledge->file_path);
+                if (! is_file($filePath)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Không tìm thấy file gốc để đồng bộ lại.',
+                    ], SymfonyResponse::HTTP_UNPROCESSABLE_ENTITY);
+                }
+
+                $file = new UploadedFile(
+                    $filePath,
+                    $knowledge->title.'.'.$knowledge->file_type,
+                    null,
+                    null,
+                    true,
+                );
+                $difyResponse = filled($knowledge->dify_document_id)
+                    ? $this->difyKnowledgeClient->updateDocumentByFile(
+                        datasetId: $bot->dify_dataset_id,
+                        documentId: $knowledge->dify_document_id,
+                        file: $file,
+                        apiKey: $datasetApiKey,
+                        baseUrl: $baseUrl,
+                        customName: $knowledge->title.'.'.$knowledge->file_type,
+                    )
+                    : $this->difyKnowledgeClient->createDocumentByFile(
+                        datasetId: $bot->dify_dataset_id,
+                        file: $file,
+                        apiKey: $datasetApiKey,
+                        baseUrl: $baseUrl,
+                        customName: $knowledge->title.'.'.$knowledge->file_type,
+                    );
+            } elseif (filled($knowledge->content)) {
+                $difyResponse = filled($knowledge->dify_document_id)
+                    ? $this->difyKnowledgeClient->updateDocumentByText(
+                        datasetId: $bot->dify_dataset_id,
+                        documentId: $knowledge->dify_document_id,
+                        name: $knowledge->title.'.txt',
+                        text: $knowledge->content,
+                        apiKey: $datasetApiKey,
+                        baseUrl: $baseUrl,
+                    )
+                    : $this->difyKnowledgeClient->createDocumentByText(
+                        datasetId: $bot->dify_dataset_id,
+                        name: $knowledge->title.'.txt',
+                        text: $knowledge->content,
+                        apiKey: $datasetApiKey,
+                        baseUrl: $baseUrl,
+                    );
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tài liệu không còn file gốc hoặc nội dung để đồng bộ.',
+                ], SymfonyResponse::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $documentId = data_get($difyResponse, 'document.id');
+            if (blank($documentId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dify không trả về mã tài liệu sau khi đồng bộ.',
+                ], SymfonyResponse::HTTP_BAD_GATEWAY);
+            }
+
+            $knowledge->update([
+                'ai_bot_id' => $bot->id,
+                'dify_document_id' => $documentId,
+                'dify_batch_id' => data_get($difyResponse, 'batch'),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'knowledge' => $knowledge->fresh(),
+                'dify_synced' => true,
+                'message' => 'Đã đồng bộ tài liệu lên Dify Knowledge Base.',
+            ]);
+        } catch (\Throwable $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Đồng bộ Dify thất bại: '.$exception->getMessage(),
+            ], SymfonyResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
     }
 
     /**

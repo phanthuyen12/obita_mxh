@@ -106,6 +106,88 @@ class DifyKnowledgeClient
     }
 
     /**
+     * Update an uploaded file document and re-index it in Dify.
+     *
+     * @return array{document: array<string, mixed>, batch: string}
+     */
+    public function updateDocumentByFile(
+        string $datasetId,
+        string $documentId,
+        UploadedFile $file,
+        ?string $apiKey = null,
+        ?string $baseUrl = null,
+        ?string $customName = null,
+    ): array {
+        $key = $apiKey ?: (string) config('services.dify.dataset_api_key', config('services.dify.api_key'));
+        if (blank($key)) {
+            throw new DifyWorkflowException('Dify Dataset API key is not configured.');
+        }
+
+        $url = $baseUrl ?: (string) config('services.dify.base_url', 'https://api.dify.ai/v1');
+        $fileName = $customName ?: $file->getClientOriginalName();
+
+        $response = $this->client($key, $url)
+            ->attach('file', (string) file_get_contents($file->getRealPath()), $fileName)
+            ->patch("/datasets/{$datasetId}/documents/{$documentId}", [
+                'data' => json_encode(['process_rule' => ['mode' => 'automatic']]),
+            ]);
+
+        if (! $response->successful()) {
+            $message = (string) ($response->json('message') ?: $response->body());
+            Log::error('Dify updateDocumentByFile failed', [
+                'status' => $response->status(),
+                'dataset_id' => $datasetId,
+                'document_id' => $documentId,
+                'error' => $message,
+            ]);
+            throw new DifyWorkflowException("Cập nhật file trên Dify Knowledge thất bại ({$response->status()}): {$message}");
+        }
+
+        return $response->json();
+    }
+
+    /**
+     * Update a text document and re-index it in Dify.
+     *
+     * @return array{document: array<string, mixed>, batch: string}
+     */
+    public function updateDocumentByText(
+        string $datasetId,
+        string $documentId,
+        string $name,
+        string $text,
+        ?string $apiKey = null,
+        ?string $baseUrl = null,
+    ): array {
+        $key = $apiKey ?: (string) config('services.dify.dataset_api_key', config('services.dify.api_key'));
+        if (blank($key)) {
+            throw new DifyWorkflowException('Dify Dataset API key is not configured.');
+        }
+
+        $url = $baseUrl ?: (string) config('services.dify.base_url', 'https://api.dify.ai/v1');
+
+        $response = $this->client($key, $url)
+            ->post("/datasets/{$datasetId}/documents/{$documentId}/update-by-text", [
+                'name' => $name,
+                'text' => $text,
+                'process_rule' => ['mode' => 'automatic'],
+            ]);
+
+        if (! $response->successful()) {
+            $message = (string) ($response->json('message') ?: $response->body());
+            Log::error('Dify updateDocumentByText failed', [
+                'status' => $response->status(),
+                'dataset_id' => $datasetId,
+                'document_id' => $documentId,
+                'error' => $message,
+            ]);
+            throw new DifyWorkflowException("Cập nhật văn bản trên Dify Knowledge thất bại ({$response->status()}): {$message}");
+        }
+
+        return $response->json();
+    }
+
+    /**
      * Xóa tài liệu khỏi Dify Knowledge Base
      * DELETE /v1/datasets/{dataset_id}/documents/{document_id}
      */

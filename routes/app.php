@@ -291,6 +291,7 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
         Route::get('omnichat/analytics/users/{user}', [OmnichatAnalyticsController::class, 'userShow'])->name('app.omnichat.analytics.user');
         Route::get('omnichat/ai-train', [AiTrainController::class, 'index'])->name('app.omnichat.ai-train.index');
         Route::post('omnichat/ai-train/knowledge', [AiTrainController::class, 'storeKnowledge'])->name('app.omnichat.ai-train.knowledge.store');
+        Route::post('omnichat/ai-train/knowledge/{knowledge}/sync', [AiTrainController::class, 'retryKnowledgeSync'])->name('app.omnichat.ai-train.knowledge.sync');
         Route::delete('omnichat/ai-train/knowledge/{knowledge}', [AiTrainController::class, 'destroyKnowledge'])->name('app.omnichat.ai-train.knowledge.destroy');
         Route::post('omnichat/ai-train/product', [AiTrainController::class, 'storeProduct'])->name('app.omnichat.ai-train.product.store');
         Route::post('omnichat/ai-train/sandbox', [AiTrainController::class, 'chatSandbox'])->name('app.omnichat.ai-train.sandbox');

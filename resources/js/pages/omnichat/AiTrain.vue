@@ -13,6 +13,7 @@ import {
     IconMessageChatbot,
     IconPhoto,
     IconPlus,
+    IconRefresh,
     IconRobot,
     IconSend,
     IconSettings,
@@ -25,6 +26,7 @@ import axios from 'axios';
 import { ref } from 'vue';
 import { toast } from 'vue-sonner';
 
+import { retryKnowledgeSync as retryKnowledgeSyncRoute } from '@/actions/App/Http/Controllers/App/Omnichat/AiTrainController';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -91,6 +93,8 @@ const props = defineProps<{
     workspaceId: string;
 }>();
 
+const knowledgesList = ref([...props.knowledges]);
+const productsList = ref([...props.products.data]);
 const currentTab = ref<'knowledge' | 'products' | 'bot_config' | 'sandbox' | 'channels'>('knowledge');
 const channelsList = ref<ChannelItem[]>(props.channels ? [...props.channels] : []);
 const updatingChannelId = ref<string | null>(null);
@@ -134,6 +138,7 @@ const newDocTitle = ref('');
 const newDocContent = ref('');
 const docFile = ref<File | null>(null);
 const isUploadingDoc = ref(false);
+const syncingKnowledgeId = ref<string | null>(null);
 
 const handleFileUpload = (e: Event) => {
     const target = e.target as HTMLInputElement;
@@ -161,7 +166,7 @@ const submitKnowledge = async () => {
 
         const { data } = await axios.post('/omnichat/ai-train/knowledge', formData);
         toast.success(data.message || 'Đã nạp tri thức thành công!');
-        props.knowledges.unshift(data.knowledge);
+        knowledgesList.value.unshift(data.knowledge);
         newDocTitle.value = '';
         newDocContent.value = '';
         docFile.value = null;
@@ -172,13 +177,36 @@ const submitKnowledge = async () => {
     }
 };
 
+const retryKnowledgeSync = async (item: KnowledgeItem) => {
+    syncingKnowledgeId.value = item.id;
+
+    try {
+        const { data } = await axios.post(retryKnowledgeSyncRoute.url({ knowledge: item.id }));
+        const knowledgeIndex = knowledgesList.value.findIndex((knowledge) => knowledge.id === item.id);
+
+        if (knowledgeIndex !== -1) {
+            knowledgesList.value[knowledgeIndex] = data.knowledge;
+        }
+
+        toast.success(data.message || 'Đã đồng bộ tài liệu lên Dify.');
+    } catch (error) {
+        const message = axios.isAxiosError(error)
+            ? error.response?.data?.message
+            : null;
+
+        toast.error(message || 'Không thể đồng bộ tài liệu lên Dify.');
+    } finally {
+        syncingKnowledgeId.value = null;
+    }
+};
+
 const deleteKnowledge = async (id: string) => {
     if (!confirm('Bạn có chắc chắn muốn xóa tài liệu/hình ảnh tri thức này?')) return;
     try {
         await axios.delete(`/omnichat/ai-train/knowledge/${id}`);
         toast.success('Đã xóa tài liệu tri thức');
-        const idx = props.knowledges.findIndex(k => k.id === id);
-        if (idx !== -1) props.knowledges.splice(idx, 1);
+        const idx = knowledgesList.value.findIndex(k => k.id === id);
+        if (idx !== -1) knowledgesList.value.splice(idx, 1);
     } catch {
         toast.error('Lỗi khi xóa tài liệu');
     }
@@ -210,7 +238,7 @@ const submitProduct = async () => {
             stock_quantity: newStock.value,
         });
         toast.success('Đã thêm sản phẩm vào bảng giá AI!');
-        props.products.data.unshift(data.product);
+        productsList.value.unshift(data.product);
         newSku.value = '';
         newName.value = '';
         newPrice.value = '';
@@ -551,7 +579,7 @@ const formatCurrency = (val: string | number) => {
 
                     <div class="mt-4 divide-y divide-border">
                         <div
-                            v-for="item in props.knowledges"
+                            v-for="item in knowledgesList"
                             :key="item.id"
                             class="py-3 flex items-center justify-between gap-3"
                         >
@@ -575,9 +603,26 @@ const formatCurrency = (val: string | number) => {
                                 >
                                     ✓ Đồng bộ Dify
                                 </Badge>
+                                <Badge
+                                    v-else
+                                    variant="outline"
+                                    class="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 text-[10px]"
+                                >
+                                    Chưa đồng bộ Dify
+                                </Badge>
                                 <Badge variant="outline" class="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 text-[10px]">
                                     Đã sẵn sàng
                                 </Badge>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    :disabled="syncingKnowledgeId === item.id"
+                                    :title="syncingKnowledgeId === item.id ? 'Đang đồng bộ' : 'Đồng bộ lại lên Dify'"
+                                    @click="retryKnowledgeSync(item)"
+                                >
+                                    <IconRefresh class="size-4" :class="{ 'animate-spin': syncingKnowledgeId === item.id }" />
+                                    {{ syncingKnowledgeId === item.id ? 'Đang đồng bộ...' : item.dify_document_id ? 'Đồng bộ lại' : 'Đồng bộ Dify' }}
+                                </Button>
                                 <Button
                                     variant="ghost"
                                     size="icon-sm"
@@ -590,7 +635,7 @@ const formatCurrency = (val: string | number) => {
                             </div>
                         </div>
 
-                        <div v-if="props.knowledges.length === 0" class="py-8 text-center text-muted-foreground text-sm">
+                        <div v-if="knowledgesList.length === 0" class="py-8 text-center text-muted-foreground text-sm">
                             Chưa có tài liệu nào. Hãy nạp file đầu tiên bên cột trái!
                         </div>
                     </div>
@@ -664,7 +709,7 @@ const formatCurrency = (val: string | number) => {
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-border">
-                                <tr v-for="p in props.products.data" :key="p.id">
+                                <tr v-for="p in productsList" :key="p.id">
                                     <td class="py-2.5 px-3 font-mono font-medium">{{ p.sku }}</td>
                                     <td class="py-2.5 px-3 text-foreground font-medium">{{ p.name }}</td>
                                     <td class="py-2.5 px-3">{{ formatCurrency(p.price) }}</td>
@@ -677,7 +722,7 @@ const formatCurrency = (val: string | number) => {
                                         </Badge>
                                     </td>
                                 </tr>
-                                <tr v-if="props.products.data.length === 0">
+                                <tr v-if="productsList.length === 0">
                                     <td colspan="5" class="py-6 text-center text-muted-foreground">
                                         Chưa có sản phẩm nào. Hãy thêm sản phẩm ở cột bên trái!
                                     </td>
