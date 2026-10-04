@@ -26,7 +26,14 @@ class AiBotController extends Controller
         return [
             'id' => $bot->id,
             'name' => $bot->name,
+            'persona_tone' => $bot->persona_tone ?? 'friendly',
+            'bot_role' => $bot->bot_role ?? 'sales_consultant',
+            'greeting_message' => $bot->greeting_message,
+            'system_prompt' => $bot->system_prompt,
+            'objection_rules' => $bot->objection_rules ?? [],
             'dify_base_url' => $bot->dify_base_url,
+            'dify_dataset_id' => $bot->dify_dataset_id,
+            'dataset_key_set' => filled($bot->dify_dataset_api_key),
             'key_set' => $bot->dify_api_key !== null && $bot->dify_api_key !== '',
             'is_active' => $bot->is_active,
             'is_default' => $bot->is_default,
@@ -55,8 +62,15 @@ class AiBotController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
+            'persona_tone' => ['nullable', 'string', 'in:friendly,professional,enthusiastic'],
+            'bot_role' => ['nullable', 'string', 'in:sales_consultant,cskh,technical'],
+            'greeting_message' => ['nullable', 'string', 'max:1000'],
+            'system_prompt' => ['nullable', 'string', 'max:10000'],
+            'objection_rules' => ['nullable', 'array'],
             'dify_api_key' => ['required', 'string', 'max:500'],
             'dify_base_url' => ['nullable', 'url', 'max:255'],
+            'dify_dataset_id' => ['nullable', 'string', 'max:255'],
+            'dify_dataset_api_key' => ['nullable', 'string', 'max:500'],
             'is_active' => ['nullable', 'boolean'],
             'is_default' => ['nullable', 'boolean'],
         ]);
@@ -84,8 +98,15 @@ class AiBotController extends Controller
 
         $validated = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:100'],
+            'persona_tone' => ['nullable', 'string', 'in:friendly,professional,enthusiastic'],
+            'bot_role' => ['nullable', 'string', 'in:sales_consultant,cskh,technical'],
+            'greeting_message' => ['nullable', 'string', 'max:1000'],
+            'system_prompt' => ['nullable', 'string', 'max:10000'],
+            'objection_rules' => ['nullable', 'array'],
             'dify_api_key' => ['nullable', 'string', 'max:500'],
             'dify_base_url' => ['nullable', 'url', 'max:255'],
+            'dify_dataset_id' => ['nullable', 'string', 'max:255'],
+            'dify_dataset_api_key' => ['nullable', 'string', 'max:500'],
             'is_active' => ['sometimes', 'boolean'],
             'is_default' => ['sometimes', 'boolean'],
         ]);
@@ -101,6 +122,9 @@ class AiBotController extends Controller
             // An empty key keeps the existing one — the client never sees it back.
             if (($validated['dify_api_key'] ?? '') === '') {
                 unset($validated['dify_api_key']);
+            }
+            if (($validated['dify_dataset_api_key'] ?? '') === '') {
+                unset($validated['dify_dataset_api_key']);
             }
 
             $bot->update($validated);

@@ -58,6 +58,18 @@ class ContactController extends Controller
         ));
         $query->when($filter === 'bought', fn ($query) => $query->where('lead_stage', 'converted'));
         $query->when($filter === 'potential', fn ($query) => $query->where('lead_stage', 'qualified'));
+        $query->when($filter === 'inactive_30d', function ($query): void {
+            $threshold = now()->subDays(30);
+            $query->where(function ($q) use ($threshold): void {
+                $q->whereNull('last_seen_at')->orWhere('last_seen_at', '<=', $threshold);
+            });
+        });
+        $query->when($filter === 'inactive_40d', function ($query): void {
+            $threshold = now()->subDays(40);
+            $query->where(function ($q) use ($threshold): void {
+                $q->whereNull('last_seen_at')->orWhere('last_seen_at', '<=', $threshold);
+            });
+        });
 
         $contacts = $query->paginate((int) config('app.pagination.default'))->withQueryString()->through(function (OmnichatContact $contact): array {
             $latestConversation = $contact->conversations->first();

@@ -2,13 +2,18 @@
 
 declare(strict_types=1);
 
+use App\Enums\Omnichat\ChannelProvider;
 use App\Enums\UserWorkspace\Role;
 use App\Models\AiBot;
+use App\Models\OmnichatChannel;
 use App\Models\OmnichatContact;
 use App\Models\OmnichatConversation;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 beforeEach(function (): void {
     config(['trypost.self_hosted' => true]);
@@ -197,7 +202,7 @@ it('lists the ai state of every livechat channel', function (): void {
 });
 
 it('lets members toggle ai per channel without management rights', function (): void {
-    $member = User::factory()->create();
+    $member = User::factory()->create(['account_id' => $this->workspace->account_id]);
     $this->workspace->members()->attach($member->id, ['role' => Role::Member->value, 'can_omnichat' => true]);
     $member->update(['current_workspace_id' => $this->workspace->id]);
 
@@ -212,7 +217,7 @@ it('lets members toggle ai per channel without management rights', function (): 
 });
 
 it('forbids members from assigning a bot to a channel', function (): void {
-    $member = User::factory()->create();
+    $member = User::factory()->create(['account_id' => $this->workspace->account_id]);
     $this->workspace->members()->attach($member->id, ['role' => Role::Member->value, 'can_omnichat' => true]);
     $member->update(['current_workspace_id' => $this->workspace->id]);
 
@@ -238,7 +243,7 @@ it('lets admins assign a bot to a channel and sales toggles keep the assignment'
         ->assertJsonPath('bot_id', $bot->id);
 
     // A member switching AI off must not wipe the admin's bot assignment.
-    $member = User::factory()->create();
+    $member = User::factory()->create(['account_id' => $this->workspace->account_id]);
     $this->workspace->members()->attach($member->id, ['role' => Role::Member->value, 'can_omnichat' => true]);
     $member->update(['current_workspace_id' => $this->workspace->id]);
 
@@ -265,31 +270,46 @@ it('rejects assigning a bot from another workspace', function (): void {
 });
 
 it('accepts telegram images up to 10 megabytes', function (): void {
-    $channel = \App\Models\OmnichatChannel::factory()->create([
+    $channel = OmnichatChannel::factory()->create([
         'workspace_id' => $this->workspace->id,
-        'provider' => \App\Enums\Omnichat\ChannelProvider::Telegram,
+        'provider' => ChannelProvider::Telegram,
     ]);
-    $conversation = \App\Models\OmnichatConversation::factory()->create([
+    $conversation = OmnichatConversation::factory()->create([
         'workspace_id' => $this->workspace->id,
         'social_account_id' => null,
         'channel_id' => $channel->id,
-        'contact_id' => \App\Models\OmnichatContact::factory()->create(['workspace_id' => $this->workspace->id])->id,
+        'contact_id' => OmnichatContact::factory()->create(['workspace_id' => $this->workspace->id])->id,
     ]);
 
     // A 3 MB "photo" — previously rejected by the blanket 1 MB cap.
-    $file = \Illuminate\Http\UploadedFile::fake()->image('photo.jpg')->size(3072);
+    $file = UploadedFile::fake()->image('photo.jpg')->size(3072);
 
-    \Illuminate\Support\Facades\Http::fake([
-        '*/bot*/sendPhoto' => \Illuminate\Support\Facades\Http::response(['ok' => true, 'result' => ['message_id' => 42]]),
+    Http::fake([
+        '*/bot*/sendPhoto' => Http::response(['ok' => true, 'result' => ['message_id' => 42]]),
     ]);
 
     $response = $this->actingAs($this->owner->fresh())
         ->post(route('app.omnichat.messages.store', $conversation), [
             'body' => 'Ảnh nè',
             'mode' => 'reply',
-            'client_id' => (string) \Illuminate\Support\Str::uuid(),
+            'client_id' => (string) Str::uuid(),
             'image' => $file,
         ]);
 
     $response->assertSessionDoesntHaveErrors('image');
+});
+
+it('renders ai train page with connected channels and bots', function (): void {
+    $this->actingAs($this->owner->fresh())
+        ->get('/omnichat/ai-train')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('omnichat/AiTrain')
+            ->has('channels')
+            ->has('bots')
+            ->has('knowledges')
+            ->has('products')
+            ->where('channels.0.id', $this->channel->id)
+            ->where('channels.0.provider', 'facebook')
+        );
 });

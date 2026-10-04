@@ -23,20 +23,30 @@ class AiBot extends Model
     protected $fillable = [
         'workspace_id',
         'name',
+        'persona_tone',
+        'bot_role',
+        'greeting_message',
+        'system_prompt',
+        'objection_rules',
         'dify_api_key',
         'dify_base_url',
+        'dify_dataset_id',
+        'dify_dataset_api_key',
         'is_active',
         'is_default',
     ];
 
     protected $hidden = [
         'dify_api_key',
+        'dify_dataset_api_key',
     ];
 
     protected function casts(): array
     {
         return [
             'dify_api_key' => 'encrypted',
+            'dify_dataset_api_key' => 'encrypted',
+            'objection_rules' => 'array',
             'is_active' => 'boolean',
             'is_default' => 'boolean',
         ];

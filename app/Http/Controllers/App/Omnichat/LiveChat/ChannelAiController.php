@@ -35,6 +35,11 @@ class ChannelAiController extends Controller
         SocialAccount::query()
             ->where('workspace_id', $workspace->id)
             ->where('is_active', true)
+            ->whereIn('platform', [
+                \App\Enums\SocialAccount\Platform::Facebook,
+                \App\Enums\SocialAccount\Platform::Instagram,
+                \App\Enums\SocialAccount\Platform::InstagramFacebook,
+            ])
             ->get()
             ->each(fn (SocialAccount $account) => $rows->push([
                 'id' => $account->id,

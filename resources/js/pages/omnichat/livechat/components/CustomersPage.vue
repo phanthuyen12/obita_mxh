@@ -56,12 +56,14 @@ const selectedCustomerForProfile = ref<Customer | null>(null);
 
 const searchQuery = ref('');
 const selectedFilter = ref<
-    'all' | 'has_phone' | 'vip' | 'bought' | 'potential'
+    'all' | 'has_phone' | 'inactive_30d' | 'inactive_40d' | 'vip' | 'bought' | 'potential'
 >('all');
 
 const filterOptions = [
     { label: 'Tất cả', value: 'all' },
-    { label: 'Có SĐT', value: 'has_phone' },
+    { label: '📞 Có SĐT', value: 'has_phone' },
+    { label: '⏳ 30 ngày', value: 'inactive_30d' },
+    { label: '⚠️ 40 ngày', value: 'inactive_40d' },
     { label: 'VIP ⭐', value: 'vip' },
     { label: 'Đã mua', value: 'bought' },
     { label: 'Tiềm năng', value: 'potential' },
@@ -221,6 +223,7 @@ const filteredCustomers = computed(() => {
         } else if (selectedFilter.value === 'potential') {
             matchFilter = c.tag === 'Tiềm năng';
         }
+        // inactive_30d và inactive_40d do server query trực tiếp theo timestamp last_seen_at
 
         return matchQuery && matchFilter;
     });

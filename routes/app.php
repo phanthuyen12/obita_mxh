@@ -16,7 +16,9 @@ use App\Http\Controllers\App\GiphyController;
 use App\Http\Controllers\App\LinkPreviewController;
 use App\Http\Controllers\App\McpSettingsController;
 use App\Http\Controllers\App\NotificationController;
+use App\Http\Controllers\App\Omnichat\AiTrainController;
 use App\Http\Controllers\App\Omnichat\AnalyticsController as OmnichatAnalyticsController;
+use App\Http\Controllers\App\Omnichat\BroadcastCampaignController;
 use App\Http\Controllers\App\Omnichat\ConversationAiToggleController;
 use App\Http\Controllers\App\Omnichat\ConversationAssignmentController;
 use App\Http\Controllers\App\Omnichat\ConversationReadController;
@@ -266,6 +268,11 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
         Route::post('omnichat/livechat/ai-bots', [LiveChatAiBotController::class, 'store'])->name('app.omnichat.livechat.ai-bots.store');
         Route::put('omnichat/livechat/ai-bots/{bot}', [LiveChatAiBotController::class, 'update'])->name('app.omnichat.livechat.ai-bots.update');
         Route::delete('omnichat/livechat/ai-bots/{bot}', [LiveChatAiBotController::class, 'destroy'])->name('app.omnichat.livechat.ai-bots.destroy');
+        // Alias for bots
+        Route::get('omnichat/bots', [LiveChatAiBotController::class, 'index'])->name('app.omnichat.bots.index');
+        Route::post('omnichat/bots', [LiveChatAiBotController::class, 'store'])->name('app.omnichat.bots.store');
+        Route::put('omnichat/bots/{bot}', [LiveChatAiBotController::class, 'update'])->name('app.omnichat.bots.update');
+        Route::delete('omnichat/bots/{bot}', [LiveChatAiBotController::class, 'destroy'])->name('app.omnichat.bots.destroy');
         Route::get('omnichat/livechat/channel-ai', [LiveChatChannelAiController::class, 'index'])->name('app.omnichat.livechat.channel-ai.index');
         Route::put('omnichat/livechat/channel-ai/{channel}', [LiveChatChannelAiController::class, 'update'])->name('app.omnichat.livechat.channel-ai.update');
         Route::get('omnichat/livechat/contacts', [LiveChatContactController::class, 'index'])->name('app.omnichat.livechat.contacts.index');
@@ -282,6 +289,20 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
         Route::delete('omnichat/website-chat/{channel}', [WebsiteChatController::class, 'destroy'])->name('app.omnichat.website-chat.destroy');
         Route::get('omnichat/analytics', [OmnichatAnalyticsController::class, 'index'])->name('app.omnichat.analytics');
         Route::get('omnichat/analytics/users/{user}', [OmnichatAnalyticsController::class, 'userShow'])->name('app.omnichat.analytics.user');
+        Route::get('omnichat/ai-train', [AiTrainController::class, 'index'])->name('app.omnichat.ai-train.index');
+        Route::post('omnichat/ai-train/knowledge', [AiTrainController::class, 'storeKnowledge'])->name('app.omnichat.ai-train.knowledge.store');
+        Route::delete('omnichat/ai-train/knowledge/{knowledge}', [AiTrainController::class, 'destroyKnowledge'])->name('app.omnichat.ai-train.knowledge.destroy');
+        Route::post('omnichat/ai-train/product', [AiTrainController::class, 'storeProduct'])->name('app.omnichat.ai-train.product.store');
+        Route::post('omnichat/ai-train/sandbox', [AiTrainController::class, 'chatSandbox'])->name('app.omnichat.ai-train.sandbox');
+        Route::post('omnichat/ai-train/test-dify', [AiTrainController::class, 'testDify'])->name('app.omnichat.ai-train.test-dify');
+
+        // Gửi tin nhắn hàng loạt (Broadcast & Re-engagement)
+        Route::get('omnichat/broadcast', [BroadcastCampaignController::class, 'index'])->name('app.omnichat.broadcast.index');
+        Route::post('omnichat/broadcast', [BroadcastCampaignController::class, 'store'])->name('app.omnichat.broadcast.store');
+        Route::post('omnichat/broadcast/preview', [BroadcastCampaignController::class, 'previewAudience'])->name('app.omnichat.broadcast.preview');
+        Route::post('omnichat/broadcast/sample-contacts', [BroadcastCampaignController::class, 'generateSampleContacts'])->name('app.omnichat.broadcast.sample-contacts');
+        Route::post('omnichat/broadcast/retry', [BroadcastCampaignController::class, 'retryMessages'])->name('app.omnichat.broadcast.retry');
+
         Route::get('omnichat/analytics/export', [OmnichatAnalyticsController::class, 'export'])->name('app.omnichat.analytics.export');
         Route::put('omnichat/view', OmnichatViewController::class)->name('app.omnichat.view.update');
         Route::get('omnichat/leads', [OmnichatLeadController::class, 'index'])->name('app.omnichat.leads.index');

@@ -128,6 +128,14 @@ const omnichatNavItems = computed<NavItem[]>(() => [
                 activeQuery: 'inbox',
             },
             {
+                title: 'Huấn luyện Bot AI',
+                href: '/omnichat/ai-train',
+            },
+            {
+                title: 'Gửi tin hàng loạt (Broadcast)',
+                href: '/omnichat/broadcast',
+            },
+            {
                 title: 'Thống kê Omnichat',
                 href: omnichatAnalytics.url(),
             },

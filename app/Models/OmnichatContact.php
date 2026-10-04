@@ -23,6 +23,7 @@ class OmnichatContact extends Model
 
     protected $fillable = [
         'workspace_id',
+        'name',
         'display_name',
         'avatar_url',
         'email',
@@ -34,6 +35,8 @@ class OmnichatContact extends Model
         'last_seen_at',
         'is_lead',
         'lead_stage',
+        'lead_status',
+        'lead_value',
         'phone_detected_at',
     ];
 
