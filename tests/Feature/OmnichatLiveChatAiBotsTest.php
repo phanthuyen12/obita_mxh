@@ -52,14 +52,16 @@ it('creates an ai bot for admins', function (): void {
     $this->actingAs($this->owner->fresh())
         ->postJson(route('app.omnichat.livechat.ai-bots.store'), [
             'name' => 'Bot Chốt Đơn',
+            'response_language' => 'en',
             'dify_api_key' => 'app-secret',
         ])
         ->assertCreated()
         ->assertJsonPath('bot.name', 'Bot Chốt Đơn')
+        ->assertJsonPath('bot.response_language', 'en')
         ->assertJsonPath('bot.key_set', true)
         ->assertJsonMissing(['dify_api_key']);
 
-    expect(AiBot::query()->where('workspace_id', $this->workspace->id)->where('name', 'Bot Chốt Đơn')->exists())->toBeTrue();
+    expect(AiBot::query()->where('workspace_id', $this->workspace->id)->where('name', 'Bot Chốt Đơn')->value('response_language'))->toBe('en');
 });
 
 it('keeps a single default bot per workspace', function (): void {

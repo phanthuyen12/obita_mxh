@@ -220,6 +220,7 @@ class HandlePageAiCareAutoReply
         $assignedBot = ! empty($assignedBotId)
             ? AiBot::query()->where('workspace_id', $conversation->workspace_id)->whereKey($assignedBotId)->first()
             : null;
+        $configuredBot = $assignedBot;
 
         if ($assignedBot !== null) {
             $difyApiKey = $assignedBot->dify_api_key;
@@ -227,6 +228,7 @@ class HandlePageAiCareAutoReply
         } elseif (empty($difyApiKey)) {
             $defaultBot = AiBot::defaultFor($conversation->workspace_id);
             if ($defaultBot !== null) {
+                $configuredBot = $defaultBot;
                 $difyApiKey = $defaultBot->dify_api_key;
                 $difyBaseUrl = $defaultBot->dify_base_url ?: $difyBaseUrl;
             }
@@ -243,25 +245,10 @@ class HandlePageAiCareAutoReply
                 $difyConvId = data_get($conversation->meta, 'dify_conversation_id');
                 $userIdentifier = 'cust-'.($message->sender_contact_id ?? $conversation->external_id ?? 'guest');
 
-                // Restore session state from conversation meta
                 $sessionMeta = $conversation->meta ?? [];
-
-                /**
-                 * Build Dify inputs matching the bot's START node variables:
-                 *   - current_intent      : last detected intent (e.g. "mua_hang", "hoi_gia")
-                 *   - current_stage       : funnel stage (e.g. "awareness", "consideration", "decision")
-                 *   - lead_status         : contact lead stage or "new"
-                 *   - phone               : contact phone number
-                 *   - last_question_asked : the previous bot question to maintain conversation flow
-                 *   - session_memory      : a short JSON summary of key facts learned this session
-                 */
                 $inputs = [
-                    'current_intent' => (string) data_get($sessionMeta, 'dify_current_intent', ''),
-                    'current_stage' => (string) data_get($sessionMeta, 'dify_current_stage', 'awareness'),
-                    'lead_status' => (string) ($conversation->contact?->lead_stage ?? data_get($sessionMeta, 'dify_lead_status', 'new')),
-                    'phone' => (string) ($conversation->contact?->phone ?? ''),
-                    'last_question_asked' => (string) data_get($sessionMeta, 'dify_last_question_asked', ''),
-                    'session_memory' => (string) data_get($sessionMeta, 'dify_session_memory', ''),
+                    'bot_name' => $configuredBot?->name ?? 'Nhat Thien Assistant',
+                    'response_language' => $configuredBot?->response_language ?? 'vi',
                 ];
 
                 Log::info('[AI-Care] Calling DifyChatClient::sendMessage', [

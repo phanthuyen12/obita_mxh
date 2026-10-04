@@ -8,6 +8,8 @@ use App\Models\AiSaleBotKnowledge;
 use App\Models\AiSaleBotProduct;
 use App\Models\User;
 use App\Models\Workspace;
+use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Http;
 
 beforeEach(function (): void {
     config(['trypost.self_hosted' => true]);
@@ -43,6 +45,7 @@ it('renders the ai train page with knowledges, products, and bots', function ():
     AiBot::query()->create([
         'workspace_id' => $this->workspace->id,
         'name' => 'Bot Sale Master',
+        'response_language' => 'en',
         'persona_tone' => 'friendly',
         'greeting_message' => 'Xin chào!',
         'dify_api_key' => 'app-test',
@@ -52,7 +55,11 @@ it('renders the ai train page with knowledges, products, and bots', function ():
 
     $this->actingAs($this->owner->fresh())
         ->get(route('app.omnichat.ai-train.index'))
-        ->assertOk();
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('bots.0.name', 'Bot Sale Master')
+            ->where('bots.0.response_language', 'en')
+        );
 });
 
 it('allows creating product in ai sale bot pricing catalog', function (): void {
@@ -91,4 +98,29 @@ it('handles chat sandbox querying pricing catalog', function (): void {
         ->assertJsonPath('success', true);
 
     expect($res->json('reply'))->toContain('King Latte Macchiato');
+});
+
+it('passes the configured bot name and response language to Dify in the sandbox', function (): void {
+    $bot = AiBot::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'name' => 'Trading Coach',
+        'response_language' => 'ja',
+    ]);
+
+    Http::fake([
+        '*/chat-messages' => Http::response(['answer' => 'こんにちは'], 200),
+    ]);
+
+    $this->actingAs($this->owner->fresh())
+        ->postJson(route('app.omnichat.ai-train.sandbox'), [
+            'message' => 'Hello',
+            'bot_id' => $bot->id,
+        ])
+        ->assertOk()
+        ->assertJsonPath('reply', 'こんにちは');
+
+    Http::assertSent(fn (Request $request): bool => $request['inputs'] === [
+        'bot_name' => 'Trading Coach',
+        'response_language' => 'ja',
+    ]);
 });

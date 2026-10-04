@@ -26,6 +26,7 @@ class AiBotController extends Controller
         return [
             'id' => $bot->id,
             'name' => $bot->name,
+            'response_language' => $bot->response_language ?? 'vi',
             'persona_tone' => $bot->persona_tone ?? 'friendly',
             'bot_role' => $bot->bot_role ?? 'sales_consultant',
             'greeting_message' => $bot->greeting_message,
@@ -62,6 +63,7 @@ class AiBotController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
+            'response_language' => ['sometimes', 'string', 'max:50'],
             'persona_tone' => ['nullable', 'string', 'in:friendly,professional,enthusiastic'],
             'bot_role' => ['nullable', 'string', 'in:sales_consultant,cskh,technical'],
             'greeting_message' => ['nullable', 'string', 'max:1000'],
@@ -98,6 +100,7 @@ class AiBotController extends Controller
 
         $validated = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:100'],
+            'response_language' => ['sometimes', 'string', 'max:50'],
             'persona_tone' => ['nullable', 'string', 'in:friendly,professional,enthusiastic'],
             'bot_role' => ['nullable', 'string', 'in:sales_consultant,cskh,technical'],
             'greeting_message' => ['nullable', 'string', 'max:1000'],

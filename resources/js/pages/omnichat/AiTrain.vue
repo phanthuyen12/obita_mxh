@@ -57,6 +57,7 @@ interface ProductItem {
 interface BotItem {
     id: string;
     name: string;
+    response_language: string;
     persona_tone: 'friendly' | 'professional' | 'enthusiastic';
     bot_role: 'sales_consultant' | 'cskh' | 'technical';
     greeting_message: string | null;
@@ -228,6 +229,7 @@ const botsList = ref<BotItem[]>([...props.bots]);
 const selectedBotId = ref<string>(props.bots.find(b => b.is_default)?.id || props.bots[0]?.id || '');
 const activeBot = ref<Partial<BotItem> & { dify_api_key?: string; dify_dataset_api_key?: string }>({
     name: 'Trợ lý Bán Hàng AI King',
+    response_language: 'vi',
     persona_tone: 'friendly',
     bot_role: 'sales_consultant',
     greeting_message: 'Dạ em chào anh/chị ạ! Em là chuyên viên tư vấn của shop. Em có thể hỗ trợ anh/chị chọn sản phẩm, tra cứu bảng giá hoặc hướng dẫn đặt hàng nhận ưu đãi hôm nay ạ!',
@@ -263,6 +265,7 @@ const initNewBot = () => {
     selectedBotId.value = '';
     activeBot.value = {
         name: 'Trợ lý AI Mới',
+        response_language: 'vi',
         persona_tone: 'friendly',
         bot_role: 'sales_consultant',
         greeting_message: 'Dạ em chào anh/chị! Em có thể giúp gì cho mình hôm nay ạ?',
@@ -313,6 +316,7 @@ const saveBotConfig = async () => {
     try {
         const payload: Record<string, any> = {
             name: activeBot.value.name,
+            response_language: activeBot.value.response_language || 'vi',
             persona_tone: activeBot.value.persona_tone,
             bot_role: activeBot.value.bot_role,
             greeting_message: activeBot.value.greeting_message,
@@ -762,6 +766,25 @@ const formatCurrency = (val: string | number) => {
                                 placeholder="VD: Trợ lý Bán Hàng King Coffee"
                                 class="mt-1"
                             />
+                        </div>
+
+                        <div>
+                            <Label for="bot-language">Ngôn ngữ trả lời</Label>
+                            <select
+                                id="bot-language"
+                                v-model="activeBot.response_language"
+                                class="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            >
+                                <option value="vi">Tiếng Việt</option>
+                                <option value="en">English</option>
+                                <option value="zh">中文</option>
+                                <option value="ja">日本語</option>
+                                <option value="ko">한국어</option>
+                                <option value="fr">Français</option>
+                                <option value="es">Español</option>
+                                <option value="th">ภาษาไทย</option>
+                                <option value="id">Bahasa Indonesia</option>
+                            </select>
                         </div>
 
                         <!-- Giọng điệu -->

@@ -23,6 +23,7 @@ class AiBot extends Model
     protected $fillable = [
         'workspace_id',
         'name',
+        'response_language',
         'persona_tone',
         'bot_role',
         'greeting_message',
@@ -39,6 +40,10 @@ class AiBot extends Model
     protected $hidden = [
         'dify_api_key',
         'dify_dataset_api_key',
+    ];
+
+    protected $attributes = [
+        'response_language' => 'vi',
     ];
 
     protected function casts(): array

@@ -1,0 +1,296 @@
+app:
+  description: Bot tu van Trading Nhat Thien. Su dung mot knowledge base duy nhat lam nguon thong tin, tra loi ngan gon va chuyen tiep khi khong co du lieu xac thuc.
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  icon_type: emoji
+  mode: advanced-chat
+  name: Nhat Thien Trading Assistant
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openrouter:0.1.9@8f8c69f645a62eb917ae219cfb8b567e39707941fc06c755d565ebea6cd1d88a
+    version: null
+kind: app
+version: 0.7.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: knowledge-retrieval
+      id: start-to-knowledge
+      selected: false
+      source: '1782826419419'
+      sourceHandle: source
+      target: '1782827114917'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: knowledge-to-llm
+      selected: false
+      source: '1782827114917'
+      sourceHandle: source
+      target: '1782827488751'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: llm-to-answer
+      selected: false
+      source: '1782827488751'
+      sourceHandle: source
+      target: '1782827579780'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: false
+        title: Bat dau
+        type: start
+        variables:
+        - label: Ten bot (de trong de dung Nhat Thien Assistant)
+          max_length: 80
+          options: []
+          required: false
+          type: text-input
+          variable: bot_name
+        - label: Ngon ngu tra loi (de trong de dung Tieng Viet)
+          max_length: 50
+          options: []
+          required: false
+          type: text-input
+          variable: response_language
+      height: 90
+      id: '1782826419419'
+      position:
+        x: 80
+        y: 220
+      positionAbsolute:
+        x: 80
+        y: 220
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - YOUR_SINGLE_DIFY_DATASET_ID
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 5
+          weights:
+            keyword_setting:
+              keyword_weight: 0.3
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 0.7
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: Knowledge Base Nhat Thien
+        type: knowledge-retrieval
+      height: 90
+      id: '1782827114917'
+      position:
+        x: 400
+        y: 220
+      positionAbsolute:
+        x: 400
+        y: 220
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782827114917'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.2
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: 36c843b5-67a5-44da-8383-6a48c7c95774
+          role: system
+          text: '=== CAU HINH BOT ===
+
+            Ten bot: {{#1782826419419.bot_name#}}
+            Ngon ngu tra loi: {{#1782826419419.response_language#}}
+
+            Neu Ten bot de trong, tu gioi thieu la "Nhat Thien Assistant".
+            Neu Ngon ngu tra loi de trong, mac dinh dung tieng Viet.
+            Ma ngon ngu: vi = Tieng Viet, en = English, zh = Tieng Trung, ja = Tieng Nhat,
+            ko = Tieng Han, fr = Tieng Phap, es = Tieng Tay Ban Nha, th = Tieng Thai,
+            id = Tieng Indonesia.
+            Neu duoc cau hinh ngon ngu khac, tra loi bang ngon ngu do; giu nguyen ten rieng,
+            ten san pham va link. Neu khach chu dong yeu cau doi ngon ngu trong hoi thoai,
+            uu tien ngon ngu khach yeu cau.
+
+
+            Ban la tro ly tu van cua Nhat Thien, ho tro khach quan tam den Trading, SMC, khoa hoc, tai lieu va Fin AI.
+
+
+            === NGUON DU LIEU VA DO TIN CAY ===
+
+            Knowledge Base duoc ket noi trong workflow nay la nguon kien thuc duy nhat.
+            Chi dua ra thong tin cu the khi retrieved context co noi dung lien quan va ro rang.
+            Khong tu them gia, hoc phi, lich khai giang, uu dai, dieu kien tham gia,
+            link dang ky, loi ich san pham hoac chinh sach neu KB khong cung cap.
+            Neu khong tim thay thong tin, noi ro minh chua co du lieu xac nhan va moi
+            khach lien he nhom Zalo: https://zalo.me/g/sifuzb779.
+            Khong noi lich cu nhu the la lich hien tai. Neu ngay/thong tin co trong KB
+            da qua han hoac khong ro con hieu luc, khong dung de tu van; chuyen sang Zalo.
+            Khong tu tao link. Chi su dung link co trong KB hoac link Zalo duoc phep o tren.
+
+
+            === PHAM VI TU VAN ===
+
+            Ho tro cac chu de: tai lieu KhoBau; kien thuc va sach SMC; ban do/lo trinh hoc;
+            Fin AI; khai giang va lich hoc; hoc phi va thanh toan; thi cu/thi quy; Rank;
+            va cac cau hoi lien quan den Trading cua Nhat Thien.
+            Dung retrieved context de tra loi, khong tu phan loai sai y khach chi vi mot tu khoa.
+            Neu khach hoi nhieu y, tra loi y chinh truoc va hoi them toi da mot cau neu can.
+
+
+            === AN TOAN TU VAN ===
+
+            Khong cam ket loi nhuan, ty le thang, do chinh xac tin hieu hoac ket qua giao dich.
+            Khong dua ra loi khuyen mua/ban tai san hay xem noi dung giao dich la chac chan.
+            Khong xac nhan gia bo sach, hoc phi, giam gia, chinh sach hoan tien hoac quy trinh thi
+            neu KB khong co thong tin ro rang; chuyen khach sang Zalo de duoc xac nhan.
+            Khong yeu cau so dien thoai, khong noi da luu/chuyen thong tin va khong hua se co
+            nhan vien lien he neu he thong khong xac nhan hanh dong do.
+
+
+            === CACH TRA LOI ===
+
+            Dung tieng Viet tu nhien, than thien va gon. Xung minh - ban; moi tin nhan 1-3 cau.
+            Khong chao lai neu hoi thoai da bat dau. Neu khach chi chao o tin nhan dau tien,
+            chao ngan va hoi khach quan tam Trading, SMC hay Fin AI.
+            Neu khach tra loi ngan nhu "co", "gui minh", "forex", "crypto", "gold" hoac
+            "level 1", doc hoi thoai gan nhat de noi tiep dung ngu canh; khong hoi lai thong tin
+            khach da cung cap trong 6 luot gan nhat.
+            Khong lap lai cung mot link trong cac cau tra loi lien tiep, tru khi khach yeu cau.
+            Neu cau hoi nam ngoai pham vi hoac khong the tra loi tu KB, noi ro gioi han va chuyen
+            huong lich su sang nhom Zalo, khong tu suy dien.'
+        selected: false
+        title: Tu van Nhat Thien
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782827488751'
+      position:
+        x: 730
+        y: 220
+      positionAbsolute:
+        x: 730
+        y: 220
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782827488751.text#}}'
+        selected: false
+        title: Tra loi khach hang
+        type: answer
+        variables: []
+      height: 103
+      id: '1782827579780'
+      position:
+        x: 1060
+        y: 220
+      positionAbsolute:
+        x: 1060
+        y: 220
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+  viewport:
+    x: 0
+    y: 0
+    zoom: 0.8
+  rag_pipeline_variables: []

@@ -6,6 +6,7 @@ use App\Enums\SocialAccount\Platform;
 use App\Enums\UserWorkspace\Role;
 use App\Events\OmnichatMessageCreated;
 use App\Listeners\Omnichat\HandlePageAiCareAutoReply;
+use App\Models\AiBot;
 use App\Models\OmnichatConversation;
 use App\Models\OmnichatMessage;
 use App\Models\SocialAccount;
@@ -122,6 +123,12 @@ test('user can batch update ai care settings to all pages', function () {
 });
 
 test('inbound omnichat message triggers ai auto reply via dify', function () {
+    $bot = AiBot::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'name' => 'Trading Coach',
+        'response_language' => 'en',
+    ]);
+
     $account = SocialAccount::factory()->create([
         'workspace_id' => $this->workspace->id,
         'platform' => Platform::Facebook,
@@ -132,6 +139,7 @@ test('inbound omnichat message triggers ai auto reply via dify', function () {
                 'provider' => 'dify',
                 'dify_api_key' => 'app-test-key-123',
                 'dify_base_url' => 'https://kingai.tnicorporation.com/v1',
+                'bot_id' => $bot->id,
                 'operating_hours' => ['mode' => '24/7'],
                 'reply_delay_seconds' => 0,
             ],
@@ -146,7 +154,14 @@ test('inbound omnichat message triggers ai auto reply via dify', function () {
 
     $difyClientMock = mock(DifyChatClient::class);
     $difyClientMock->shouldReceive('sendMessage')
-        ->withAnyArgs()
+        ->withArgs(function (string $query, ?string $conversationId, string $user, array $inputs): bool {
+            expect($inputs)->toMatchArray([
+                'bot_name' => 'Trading Coach',
+                'response_language' => 'en',
+            ]);
+
+            return true;
+        })
         ->once()
         ->andReturn([
             'answer' => 'Chào bạn! King Coffee rất hân hạnh được phục vụ bạn.',

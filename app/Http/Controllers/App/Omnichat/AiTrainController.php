@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\App\Omnichat;
 
 use App\Enums\Omnichat\ChannelProvider;
+use App\Enums\SocialAccount\Platform;
 use App\Http\Controllers\App\Controller;
 use App\Models\AiBot;
 use App\Models\AiSaleBotKnowledge;
@@ -54,6 +55,7 @@ class AiTrainController extends Controller
             ->map(fn (AiBot $bot) => [
                 'id' => $bot->id,
                 'name' => $bot->name,
+                'response_language' => $bot->response_language ?? 'vi',
                 'persona_tone' => $bot->persona_tone ?? 'friendly',
                 'bot_role' => $bot->bot_role ?? 'sales_consultant',
                 'greeting_message' => $bot->greeting_message,
@@ -74,9 +76,9 @@ class AiTrainController extends Controller
             ->where('workspace_id', $workspace->id)
             ->where('is_active', true)
             ->whereIn('platform', [
-                \App\Enums\SocialAccount\Platform::Facebook,
-                \App\Enums\SocialAccount\Platform::Instagram,
-                \App\Enums\SocialAccount\Platform::InstagramFacebook,
+                Platform::Facebook,
+                Platform::Instagram,
+                Platform::InstagramFacebook,
             ])
             ->get()
             ->each(fn (SocialAccount $account) => $channels->push([
@@ -335,6 +337,10 @@ class AiTrainController extends Controller
                 $difyRes = $this->difyChatClient->sendMessage(
                     query: $userMessage,
                     user: 'sandbox-user-'.$request->user()->id,
+                    inputs: [
+                        'bot_name' => $selectedBot->name,
+                        'response_language' => $selectedBot->response_language ?? 'vi',
+                    ],
                     apiKey: $selectedBot->dify_api_key,
                     baseUrl: $selectedBot->dify_base_url ?: 'https://kingai.tnicorporation.com/v1',
                 );
