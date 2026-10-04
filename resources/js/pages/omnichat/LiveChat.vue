@@ -155,6 +155,7 @@ type ConversationSummary = {
     last_message_at: string | null;
     unread_count: number;
     ai_paused?: boolean;
+    ai_enabled?: boolean;
     assigned_user?: AssignedUser | null;
     labels: Array<{ id: string; name: string; color: string | null }>;
 };
@@ -184,6 +185,7 @@ const toChatItem = (conversation: ConversationSummary): ChatItem => {
                 : undefined,
         unreadType: 'blue',
         aiPaused: conversation.ai_paused ?? false,
+        aiEnabled: conversation.ai_enabled ?? false,
         lastMessage: { text: conversation.last_message_preview ?? '' },
     };
 };
@@ -585,6 +587,7 @@ const openChat = async (chat: ChatItem): Promise<void> => {
         const { data } = await axios.get(livechatConversation.url(chat.id));
         const conv = data.conversation as {
             ai_paused?: boolean;
+            ai_enabled?: boolean;
             contact: {
                 id: string;
                 email?: string | null;
@@ -602,6 +605,7 @@ const openChat = async (chat: ChatItem): Promise<void> => {
             assignedUser: conv.assigned_user ?? null,
             channelName: conv.channel?.name ?? chat.channelName,
             aiPaused: conv.ai_paused ?? false,
+            aiEnabled: conv.ai_enabled ?? chat.aiEnabled ?? false,
             messages: (data.messages.data as MessagePayload[]).map(toMessage),
         };
 

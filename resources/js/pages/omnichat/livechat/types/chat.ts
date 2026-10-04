@@ -57,6 +57,7 @@ export interface ChatItem {
     unreadCount?: string | number;
     unreadType?: 'blue' | 'gray';
     aiPaused?: boolean;
+    aiEnabled?: boolean;
     lastMessage: {
         sender?: string;
         prefixIcon?: string;

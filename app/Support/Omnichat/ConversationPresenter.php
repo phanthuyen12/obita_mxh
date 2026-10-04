@@ -43,6 +43,7 @@ class ConversationPresenter
             'last_message_at' => $conversation->last_message_at?->toIso8601String(),
             'unread_count' => $unreadCount,
             'ai_paused' => (bool) data_get($conversation->meta, 'ai_paused', false),
+            'ai_enabled' => $hasAiCare,
             'has_ai_care' => $hasAiCare,
             'status' => $conversation->status,
             'assigned_user' => $conversation->assignedUser ? [
@@ -82,6 +83,7 @@ class ConversationPresenter
             'last_message_at' => $conversation->last_message_at?->toIso8601String(),
             'unread_count' => $unreadCount,
             'ai_paused' => (bool) data_get($conversation->meta, 'ai_paused', false),
+            'ai_enabled' => $hasAiCare,
             'has_ai_care' => $hasAiCare,
             'contact' => [
                 'id' => $conversation->contact->id,

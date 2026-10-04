@@ -134,6 +134,21 @@ class DifyKnowledgeClient
 
         if (! $response->successful()) {
             $message = (string) ($response->json('message') ?: $response->body());
+            if ($this->isDocumentNotFound($response->status(), $message)) {
+                Log::notice('Dify document no longer exists; creating a replacement document', [
+                    'dataset_id' => $datasetId,
+                    'document_id' => $documentId,
+                ]);
+
+                return $this->createDocumentByFile(
+                    datasetId: $datasetId,
+                    file: $file,
+                    apiKey: $apiKey,
+                    baseUrl: $baseUrl,
+                    customName: $customName,
+                );
+            }
+
             Log::error('Dify updateDocumentByFile failed', [
                 'status' => $response->status(),
                 'dataset_id' => $datasetId,
@@ -175,6 +190,21 @@ class DifyKnowledgeClient
 
         if (! $response->successful()) {
             $message = (string) ($response->json('message') ?: $response->body());
+            if ($this->isDocumentNotFound($response->status(), $message)) {
+                Log::notice('Dify text document no longer exists; creating a replacement document', [
+                    'dataset_id' => $datasetId,
+                    'document_id' => $documentId,
+                ]);
+
+                return $this->createDocumentByText(
+                    datasetId: $datasetId,
+                    name: $name,
+                    text: $text,
+                    apiKey: $apiKey,
+                    baseUrl: $baseUrl,
+                );
+            }
+
             Log::error('Dify updateDocumentByText failed', [
                 'status' => $response->status(),
                 'dataset_id' => $datasetId,
@@ -185,6 +215,11 @@ class DifyKnowledgeClient
         }
 
         return $response->json();
+    }
+
+    private function isDocumentNotFound(int $status, string $message): bool
+    {
+        return $status === 404 && str_contains(mb_strtolower($message), 'document not found');
     }
 
     /**

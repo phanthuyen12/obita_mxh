@@ -59,8 +59,18 @@ const messages = ref<Message[]>(
 
 // AI auto-reply state for this conversation (sales can pause/resume per chat).
 const aiPaused = ref(props.chat.aiPaused ?? false);
+const isChannelAiEnabled = computed(() => props.chat.aiEnabled ?? true);
+const isAiRunning = computed(() => isChannelAiEnabled.value && !aiPaused.value);
 const isTogglingAi = ref(false);
 const aiToast = ref('');
+
+watch(
+    () => [props.chat.id, props.chat.aiPaused] as const,
+    ([, paused]) => {
+        aiPaused.value = paused ?? false;
+        aiToast.value = '';
+    },
+);
 
 const toggleAi = async (): Promise<void> => {
     if (isTogglingAi.value || props.chat.id.startsWith('contact_')) return;
@@ -427,12 +437,14 @@ const persistConversationTags = async (): Promise<void> => {
             <div class="header-right-actions">
                 <!-- Nút bật/tắt AI Bot cho riêng hội thoại này -->
                 <button
-                    :class="['ai-toggle-btn', { paused: aiPaused }]"
-                    :disabled="isTogglingAi"
+                    :class="['ai-toggle-btn', { paused: !isAiRunning }]"
+                    :disabled="isTogglingAi || !isChannelAiEnabled"
                     :title="
-                        aiPaused
-                            ? 'AI đang tạm dừng — chạm để bật lại'
-                            : 'AI đang trả lời tự động — chạm để tạm dừng'
+                        !isChannelAiEnabled
+                            ? 'AI đã tắt cho kênh này — bật lại trong cài đặt kênh'
+                            : aiPaused
+                              ? 'AI đang tạm dừng — chạm để bật lại'
+                              : 'AI đang trả lời tự động — chạm để tạm dừng'
                     "
                     @click="toggleAi"
                 >
@@ -494,13 +506,15 @@ const persistConversationTags = async (): Promise<void> => {
         </div>
 
         <!-- Trạng thái AI hội thoại -->
-        <div v-else-if="aiToast || aiPaused" class="ai-status-bar">
-            <span class="ai-status-dot" :class="{ paused: aiPaused }"></span>
+        <div v-else-if="aiToast || !isAiRunning" class="ai-status-bar">
+            <span class="ai-status-dot" :class="{ paused: !isAiRunning }"></span>
             <span>{{
                 aiToast ||
-                (aiPaused
-                    ? 'AI Bot đang tạm dừng — nhân viên đang tiếp quản'
-                    : 'AI Bot đang trả lời tự động')
+                (!isChannelAiEnabled
+                    ? 'AI đang tắt cho kênh này'
+                    : aiPaused
+                      ? 'AI Bot đang tạm dừng — nhân viên đang tiếp quản'
+                      : 'AI Bot đang trả lời tự động')
             }}</span>
         </div>
 

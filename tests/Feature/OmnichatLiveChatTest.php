@@ -149,6 +149,23 @@ it('shows a conversation with its paginated messages', function () use ($makeCon
         ]);
 });
 
+it('includes the channel ai enabled state in conversation list and detail responses', function () use ($makeConversation): void {
+    $conversation = $makeConversation();
+    $this->channel->forceFill([
+        'meta' => ['ai_care' => ['enabled' => false]],
+    ])->save();
+
+    $this->actingAs($this->user->fresh())
+        ->getJson(route('app.omnichat.livechat.conversations.index'))
+        ->assertOk()
+        ->assertJsonPath('data.0.ai_enabled', false);
+
+    $this->actingAs($this->user->fresh())
+        ->getJson(route('app.omnichat.livechat.conversations.show', $conversation))
+        ->assertOk()
+        ->assertJsonPath('conversation.ai_enabled', false);
+});
+
 it('lists telegram bot conversations in livechat', function (): void {
     $telegramChannel = OmnichatChannel::factory()->create([
         'workspace_id' => $this->workspace->id,

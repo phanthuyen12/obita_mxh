@@ -204,6 +204,88 @@ it('re-indexes an already synced knowledge file instead of creating a duplicate'
         && str_contains($request->url(), '/datasets/dataset-123/documents/existing-dify-doc'));
 });
 
+it('creates a replacement in the configured dataset when Dify no longer has the saved document', function (): void {
+    Storage::fake('public');
+    Storage::disk('public')->put('ai-knowledges/thuyendevm-mmo.txt', 'Noi dung Trading.');
+
+    $bot = AiBot::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'dify_dataset_id' => 'dataset-123',
+        'dify_dataset_api_key' => 'dataset-secret',
+    ]);
+    $knowledge = AiSaleBotKnowledge::query()->create([
+        'workspace_id' => $this->workspace->id,
+        'ai_bot_id' => $bot->id,
+        'title' => 'THUYENDEVM MMO',
+        'file_type' => 'txt',
+        'file_path' => 'ai-knowledges/thuyendevm-mmo.txt',
+        'dify_document_id' => 'stale-dify-doc',
+        'content' => 'Noi dung Trading.',
+        'token_count' => 17,
+        'status' => 'ready',
+    ]);
+
+    Http::fake([
+        '*/datasets/dataset-123/documents/stale-dify-doc' => Http::response([
+            'message' => 'Document not found.',
+        ], 404),
+        '*/datasets/dataset-123/document/create-by-file' => Http::response([
+            'document' => ['id' => 'replacement-dify-doc'],
+            'batch' => 'replacement-batch',
+        ]),
+    ]);
+
+    $this->actingAs($this->owner->fresh())
+        ->postJson(route('app.omnichat.ai-train.knowledge.sync', $knowledge))
+        ->assertOk()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('knowledge.dify_document_id', 'replacement-dify-doc')
+        ->assertJsonPath('knowledge.dify_batch_id', 'replacement-batch');
+
+    expect($knowledge->fresh()->dify_document_id)->toBe('replacement-dify-doc');
+
+    Http::assertSentCount(2);
+    Http::assertSent(fn (Request $request): bool => $request->method() === 'PATCH'
+        && str_contains($request->url(), '/documents/stale-dify-doc'));
+    Http::assertSent(fn (Request $request): bool => $request->method() === 'POST'
+        && str_contains($request->url(), '/document/create-by-file'));
+});
+
+it('re-indexes an already synced text knowledge item in Dify', function (): void {
+    $bot = AiBot::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'dify_dataset_id' => 'dataset-123',
+        'dify_dataset_api_key' => 'dataset-secret',
+    ]);
+    $knowledge = AiSaleBotKnowledge::query()->create([
+        'workspace_id' => $this->workspace->id,
+        'ai_bot_id' => $bot->id,
+        'title' => 'THUYENDEVM MMO',
+        'file_type' => 'manual_text',
+        'dify_document_id' => 'existing-text-doc',
+        'content' => 'Noi dung huong dan da cap nhat.',
+        'token_count' => 30,
+        'status' => 'ready',
+    ]);
+
+    Http::fake([
+        '*/datasets/dataset-123/documents/existing-text-doc/update-by-text' => Http::response([
+            'document' => ['id' => 'existing-text-doc'],
+            'batch' => 'text-reindex-batch',
+        ]),
+    ]);
+
+    $this->actingAs($this->owner->fresh())
+        ->postJson(route('app.omnichat.ai-train.knowledge.sync', $knowledge))
+        ->assertOk()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('knowledge.dify_batch_id', 'text-reindex-batch');
+
+    Http::assertSent(fn (Request $request): bool => $request->method() === 'POST'
+        && str_contains($request->url(), '/existing-text-doc/update-by-text')
+        && $request['text'] === 'Noi dung huong dan da cap nhat.');
+});
+
 it('returns a useful error when retrying Dify sync without dataset setup', function (): void {
     $knowledge = AiSaleBotKnowledge::query()->create([
         'workspace_id' => $this->workspace->id,
