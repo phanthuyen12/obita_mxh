@@ -2,11 +2,14 @@
 
 declare(strict_types=1);
 
+use App\Jobs\Omnichat\SendBroadcastMessageJob;
 use App\Models\BroadcastCampaign;
+use App\Models\BroadcastMessage;
 use App\Models\OmnichatContact;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Queue;
 
 beforeEach(function (): void {
     $this->user = User::factory()->create();
@@ -17,6 +20,7 @@ beforeEach(function (): void {
 });
 
 it('runs due daily campaigns and schedules their next run for the following day', function (): void {
+    Queue::fake();
     Carbon::setTestNow('2026-10-04 09:00:00');
 
     $campaign = BroadcastCampaign::query()->create([
@@ -35,9 +39,13 @@ it('runs due daily campaigns and schedules their next run for the following day'
 
     $this->artisan('omnichat:process-scheduled-broadcasts')->assertSuccessful();
 
-    expect($campaign->fresh()->status)->toBe('scheduled')
+    $broadcastMessage = BroadcastMessage::query()->where('contact_id', $contact->id)->firstOrFail();
+
+    expect($campaign->fresh()->status)->toBe('sending')
         ->and($campaign->fresh()->scheduled_at->toDateTimeString())->toBe('2026-10-05 08:59:00')
-        ->and($campaign->messages()->where('contact_id', $contact->id)->where('status', 'sent')->exists())->toBeTrue();
+        ->and($broadcastMessage->status)->toBe('queued');
+
+    Queue::assertPushed(SendBroadcastMessageJob::class, fn (SendBroadcastMessageJob $job): bool => $job->broadcastMessageId === $broadcastMessage->id);
 });
 
 it('completes one-time campaigns after their scheduled run', function (): void {

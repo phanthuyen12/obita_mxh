@@ -28,6 +28,8 @@ use Illuminate\Support\Str;
 
 class HandlePageAiCareAutoReply
 {
+    private const int IMAGE_REPLY_COOLDOWN_SECONDS = 600;
+
     public function __construct(
         private readonly DifyChatClient $difyChatClient,
         private readonly FacebookMessengerClient $facebookMessengerClient,
@@ -175,8 +177,19 @@ class HandlePageAiCareAutoReply
             $this->sendOutboundReply($conversation, $account, $channel, $replyText);
         }
 
-        foreach ($imageUrls as $imageUrl) {
-            $this->sendOutboundImageReply($conversation, $channel, $imageUrl);
+        if ($imageUrls !== []) {
+            $imageBatchKey = 'ai_care_image_batch_'.$conversation->id;
+
+            if (Cache::add($imageBatchKey, true, self::IMAGE_REPLY_COOLDOWN_SECONDS)) {
+                foreach ($imageUrls as $imageUrl) {
+                    $this->sendOutboundImageReply($conversation, $channel, $imageUrl);
+                }
+            } else {
+                Log::info('[AI-Care] Skipping AI image batch because the conversation is cooling down', [
+                    'conversation_id' => $conversation->id,
+                    'image_count' => count($imageUrls),
+                ]);
+            }
         }
     }
 

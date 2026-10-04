@@ -9,6 +9,7 @@ use App\Models\BroadcastCampaign;
 use App\Models\BroadcastMessage;
 use App\Models\CustomerSegment;
 use App\Models\OmnichatContact;
+use App\Services\Omnichat\BroadcastCampaignDispatcher;
 use App\Services\Omnichat\CustomerSegmentFilterService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -58,7 +59,8 @@ class BroadcastCampaignController extends Controller
         $sentMessages = BroadcastMessage::query()
             ->where('workspace_id', $workspace->id)
             ->with(['contact:id,name,display_name,phone,avatar_url', 'campaign:id,name,trigger_type'])
-            ->latest('sent_at')
+            ->orderByRaw("CASE WHEN status IN ('queued', 'sending') THEN 0 ELSE 1 END")
+            ->latest('created_at')
             ->paginate(50);
 
         return Inertia::render('omnichat/Broadcast', [
@@ -79,7 +81,7 @@ class BroadcastCampaignController extends Controller
     /**
      * Tạo và kích hoạt chiến dịch gửi tin hàng loạt.
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, BroadcastCampaignDispatcher $dispatcher): JsonResponse
     {
         $workspace = $request->user()->currentWorkspace;
         $validated = $request->validate([
@@ -160,50 +162,13 @@ class BroadcastCampaignController extends Controller
 
         $contacts = $contactsQuery->take(500)->get();
 
-        // Tạo danh sách tin nhắn gửi
-        $sentCount = 0;
-        foreach ($contacts as $contact) {
-            $customerName = $contact->name ?: $contact->display_name ?: 'anh/chị';
-            $phone = $contact->phone ?: '';
-
-            // Cá nhân hóa nội dung
-            $personalizedBody = str_replace(
-                ['{name}', '{ho_ten}', '{phone}', '{sdt}'],
-                [$customerName, $customerName, $phone, $phone],
-                $validated['message_template']
-            );
-
-            // Tìm conversation gần nhất của contact này nếu có
-            $conversation = $contact->conversations()->latest()->first();
-
-            BroadcastMessage::query()->create([
-                'workspace_id' => $workspace->id,
-                'broadcast_campaign_id' => $campaign->id,
-                'contact_id' => $contact->id,
-                'conversation_id' => $conversation?->id,
-                'sent_body' => $personalizedBody,
-                'image_url' => $imageUrl,
-                'status' => 'sent',
-                'sent_at' => now(),
-            ]);
-
-            $sentCount++;
-        }
-
-        $campaign->update([
-            'status' => 'completed',
-            'completed_at' => now(),
-            'stats' => [
-                'total_targeted' => $contacts->count(),
-                'total_sent' => $sentCount,
-                'failed' => 0,
-            ],
-        ]);
+        $queuedCount = $dispatcher->createAndQueueMessages($campaign, $contacts);
 
         return response()->json([
             'success' => true,
             'campaign' => $campaign->fresh(['customerSegment', 'channel']),
-            'sent_count' => $sentCount,
+            'queued_count' => $queuedCount,
+            'sent_count' => 0,
         ]);
     }
 
@@ -280,7 +245,7 @@ class BroadcastCampaignController extends Controller
     /**
      * Thử lại (Retry) gửi các tin nhắn đã chọn từ checklist.
      */
-    public function retryMessages(Request $request): JsonResponse
+    public function retryMessages(Request $request, BroadcastCampaignDispatcher $dispatcher): JsonResponse
     {
         $workspace = $request->user()->currentWorkspace;
         $validated = $request->validate([
@@ -290,24 +255,32 @@ class BroadcastCampaignController extends Controller
 
         $messages = BroadcastMessage::query()
             ->where('workspace_id', $workspace->id)
+            ->where('status', 'failed')
             ->whereIn('id', $validated['message_ids'])
+            ->with('campaign')
             ->get();
 
-        $retriedCount = 0;
-        foreach ($messages as $msg) {
-            // Cập nhật trạng thái sang sent và thời gian sent_at mới nhất
-            $msg->update([
-                'status' => 'sent',
+        foreach ($messages as $message) {
+            $message->update([
+                'status' => 'queued',
                 'error_message' => null,
-                'sent_at' => now(),
+                'sent_at' => null,
             ]);
-            $retriedCount++;
         }
+
+        $messages->groupBy('broadcast_campaign_id')->each(function ($campaignMessages) use ($dispatcher): void {
+            $campaign = $campaignMessages->first()?->campaign;
+            if ($campaign !== null) {
+                $dispatcher->queueMessages($campaign, $campaignMessages);
+            }
+        });
+
+        $retriedCount = $messages->count();
 
         return response()->json([
             'success' => true,
             'retried_count' => $retriedCount,
-            'message' => "Đã gửi lại thành công {$retriedCount} tin nhắn!",
+            'message' => "Đã đưa {$retriedCount} tin nhắn lỗi vào hàng chờ gửi lại.",
         ]);
     }
 }

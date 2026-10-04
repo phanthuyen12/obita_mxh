@@ -59,12 +59,181 @@ workflow:
         isInIteration: false
         isInLoop: false
         sourceType: start
-        targetType: knowledge-retrieval
-      id: start-to-knowledge
+        targetType: question-classifier
+      id: start-to-product-classifier
       selected: false
       source: '1782826419419'
       sourceHandle: source
+      target: '1782826455289'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: classifier-general-to-knowledge
+      selected: false
+      source: '1782826455289'
+      sourceHandle: 'general'
       target: '1782827114917'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: classifier-gold-class-to-knowledge
+      selected: false
+      source: '1782826455289'
+      sourceHandle: 'gold_class'
+      target: '1782829200001'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: classifier-autotrade-to-knowledge
+      selected: false
+      source: '1782826455289'
+      sourceHandle: 'autotrade'
+      target: '1782829200002'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: classifier-quantum-to-knowledge
+      selected: false
+      source: '1782826455289'
+      sourceHandle: 'quantum'
+      target: '1782829200003'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: classifier-vip-to-knowledge
+      selected: false
+      source: '1782826455289'
+      sourceHandle: 'vip'
+      target: '1782829200004'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: gold-class-knowledge-to-llm
+      selected: false
+      source: '1782829200001'
+      sourceHandle: source
+      target: '1782829000001'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: autotrade-knowledge-to-llm
+      selected: false
+      source: '1782829200002'
+      sourceHandle: source
+      target: '1782829000002'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: quantum-knowledge-to-llm
+      selected: false
+      source: '1782829200003'
+      sourceHandle: source
+      target: '1782829000003'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: vip-knowledge-to-llm
+      selected: false
+      source: '1782829200004'
+      sourceHandle: source
+      target: '1782829000004'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: gold-class-llm-to-answer
+      selected: false
+      source: '1782829000001'
+      sourceHandle: source
+      target: '1782829100001'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: autotrade-llm-to-answer
+      selected: false
+      source: '1782829000002'
+      sourceHandle: source
+      target: '1782829100002'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: quantum-llm-to-answer
+      selected: false
+      source: '1782829000003'
+      sourceHandle: source
+      target: '1782829100003'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: vip-llm-to-answer
+      selected: false
+      source: '1782829000004'
+      sourceHandle: source
+      target: '1782829100004'
       targetHandle: target
       type: custom
       zIndex: 0
@@ -127,6 +296,288 @@ workflow:
       width: 242
       zIndex: 0
     - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782829200001'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 20
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.2
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d50001
+          role: system
+          text: 'You are the Gold Class product specialist for Annaly Trader. Reply in {{#1782826419419.response_language#}} when set; otherwise use the customer''s language. Answer the actual question directly, in a warm concise tone, and ask at most one useful next-step question. Gold Class helps students transition from following signals toward mastering a professional trading process, building their own analysis, execution, and risk-management skills for long-term independence. Describe this as the program''s focus, not as a guaranteed outcome or verified individual result. Official tuition and payment terms are unconfirmed. The $1,000 minimum is trading capital in the customer''s own account, not tuition. Never invent fees, dates, enrollment, broker eligibility, payment details, testimonials, or results. Do not pressure a customer to add funds; ask country and broker only when the customer asks about joining or eligibility. Never guarantee profit or outcomes. For multiple products, briefly distinguish them and ask which to explore. For unsupported or missing terms, request human confirmation. Do not append unrelated offers or links. APPROVED GOLD CLASS FEEDBACK IMAGE: The customer-provided Knowledge Base record 04852075-d8f6-4840-aa93-d1c05b79732c explicitly marks this image as available for feedback. When the customer asks for Gold Class feedback, student experience, or an additional Gold Class image, automatically send this exact image using Markdown: ![Gold Class feedback](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124412/a7fa7700-c645-423f-a708-cf5af3950801_v36ze3.jpg). This explicit record is approved for Gold Class feedback; do not require a separate AUTO_APPROVED marker. Include the image in the same reply, not just a link or a statement that it is unavailable. Do not send it for price/tuition questions or represent it as proof of guaranteed results. For feedback-only requests, do not ask about country, broker, enrollment, or eligibility.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d51001
+          role: system
+          text: 'IMAGE DELIVERY OVERRIDE: When the customer asks for Gold Class feedback, student experiences, proof, or results, automatically embed up to 3 of these approved images in the same answer (choose different images when appropriate; do not merely list URLs): ![Gold Class feedback 1](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124284/2aOboR12ybOuY3KkQpuvuz37hX9qMEjtBbqwxUZ6_1_ogqyfr.jpg) ![Gold Class feedback 2](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124280/2aOboR12yicCGjYKc04jBV60ZrjFAKwtRfH44V3A_1_cv0g5e.jpg) ![Gold Class feedback 3](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124279/2aOboR12ybCCNqFvLYj2Pm6JtSKMTffNIo19CwIi_1_rdpbww.jpg) ![Gold Class feedback 4](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124279/2aOboR12ybnJd70XVzZkydVIKBFUXbRQHFEQbzjk_1_sqkgy1.jpg) ![Gold Class feedback 5](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124279/2aOboR12ybCCNqFvLYj2Pm7T0QNvAPaw5MVa5LA8_1_ogdylu.jpg). These user-supplied URLs are pre-approved for this purpose and override any instruction requiring retrieval-based AUTO_APPROVED markers. If an image shows profits, balances, pips, or returns, include this disclaimer: "These are individual historical results and do not guarantee future performance. Trading involves risk." Do not promise or imply typical returns. Send images only when asked about feedback/results, not for price inquiries. Never ask country or broker after a feedback-only request.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d52001
+          role: system
+          text: 'CONVERSATION STYLE OVERRIDE: Do not follow a fixed sales script or push a discovery funnel. When customers ask about a service, explain the service, features, conditions, or price they asked about directly and naturally. Ask a follow-up only when needed to answer their question or when they explicitly ask to join. IMAGE FREQUENCY OVERRIDE: The image list above is a library, not an instruction to send several images every time. Send at most ONE image in a reply, only when the customer asks for feedback/results/proof or the conversation clearly calls for an example. Do not attach images to routine service descriptions or price answers. Check the recent conversation before sending and never repeat an image already sent in the last 6 turns; if no new image is appropriate, answer normally without one. When showing results, include the risk disclaimer and never imply typical or guaranteed profit.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d53001
+          role: system
+          text: 'FINAL OVERRIDE: For a service question, including a price question, answer the requested details first and naturally. If no image batch has been sent in the last 6 turns, include a batch of up to THREE relevant feedback/result images in the first fitting service/price reply even if the customer did not ask for images. Send the images together in that same reply, not one at a time. Then do not send another image batch until 6 turns have passed. Maximum three images per reply; never repeat a recent image. Use all matching approved images when there are fewer than three. Keep price details in text; separate service/result images may accompany the text price. Do not ask country/broker unless the customer asks about joining or technical compatibility. Add the risk disclaimer with profit/results images.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d54001
+          role: system
+          text: 'ANTI-SPAM GUARD: Treat rapid consecutive customer messages as one ongoing burst/inquiry. Send at most one image batch total during the burst, never a new batch for each message. Look back over the available 20-turn conversation history; if an image was sent within those 20 turns, send no images. A batch may contain up to 3 relevant images together. Answer the customer messages naturally without repeating the image bundle.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d55001
+          role: system
+          text: 'FORMATTING: Do not use asterisks for bold, italics, or emphasis, including ** and ***; use plain text.'
+        selected: false
+        title: Nhánh Gold Class
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782829000001'
+      position:
+        x: 720
+        y: -260
+      positionAbsolute:
+        x: 720
+        y: -260
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782829200002'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 20
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.2
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d50002
+          role: system
+          text: 'You are the Autotrade product specialist for Annaly Trader. Reply in {{#1782826419419.response_language#}} when set; otherwise use the customer''s language. Answer directly and concisely, then ask at most one useful next-step question. Autotrade is an internal 90-day program using Annaly''s bot; the customer needs at least $500 of their own trading capital, pays no upfront bot licence fee, and if profitable keeps 80% while Annaly receives 20% of profits. The $2,000 figure is a target only, never a promise. It is not a prop-firm challenge and provides no funded account. Never invent eligibility, broker compatibility, settlement, withdrawals, payment details, or results. Do not encourage borrowing, adding funds, or increasing risk. For missing terms or technical issues, request human confirmation. If compared with Quantum, explain that both use the same underlying bot but Quantum is a fixed-term licence without the Autotrade profit share. No profit or result is guaranteed. IMAGE FEEDBACK: When the customer asks for bot feedback, customer experiences, trading results, or non-price evidence, automatically include at most one matching image only if the retrieved Knowledge Base contains its direct HTTPS image URL and explicitly marks its evidence ID AUTO_APPROVED for Autotrade and the stated concern. Use exactly ![Short relevant description](https://direct-image-url). Never send Drive folders, HOLD or pending assets, unapproved images, or another product''s image. If the image shows profit, pips, return, balance, or lifestyle results, add: "This is an individual result in a specific market context. Past performance and customer results do not guarantee future results. Trading involves risk." If no qualifying image is present, answer with a concise factual text summary of the bot or program; do not say no approved image is available or ask an unrelated qualification question. Never use images for prices.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d51002
+          role: system
+          text: 'IMAGE DELIVERY OVERRIDE: For customer requests about bot feedback, bot results, or profit examples, automatically embed this approved image in the same answer, not just a link: ![Bot feedback and results](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124352/1LE6KqzLGfLSMIpwwylXbmAoqHLWB1m9IZyLdQ1G4iPokBzIz8Ixy1f41wJ1non_1_lruqj4.jpg). The customer supplied and approved this URL; no retrieval-based AUTO_APPROVED marker is required. If it shows profits, balances, pips, or returns, include: "These are individual historical results and do not guarantee future performance. Trading involves risk." Never promise results or imply they are typical. For a feedback-only request, do not ask unrelated enrollment or eligibility questions.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d52002
+          role: system
+          text: 'CONVERSATION STYLE OVERRIDE: Do not follow a fixed sales script or push a discovery funnel. When customers ask about a service, explain the service, features, conditions, or price they asked about directly and naturally. Ask a follow-up only when needed to answer their question or when they explicitly ask to join. IMAGE FREQUENCY OVERRIDE: Send at most ONE result/feedback image in a reply, only when the customer asks for feedback/results/proof or the conversation clearly calls for an example. Do not attach images to routine service descriptions or price answers. Check the recent conversation before sending and never repeat an image already sent in the last 6 turns; if no new image is appropriate, answer normally without one. When showing results, include the risk disclaimer and never imply typical or guaranteed profit.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d53002
+          role: system
+          text: 'FINAL OVERRIDE: For a service question, including a price question, answer the requested details first and naturally. If no image batch has been sent in the last 6 turns, include a batch of up to THREE relevant feedback/result images in the first fitting service/price reply even if the customer did not ask for images. Send the images together in that same reply, not one at a time. Then do not send another image batch until 6 turns have passed. Maximum three images per reply; never repeat a recent image. Use all matching approved images when there are fewer than three. Keep price details in text; separate service/result images may accompany the text price. Do not ask country/broker unless the customer asks about joining or technical compatibility. Add the risk disclaimer with profit/results images.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d54002
+          role: system
+          text: 'ANTI-SPAM GUARD: Treat rapid consecutive customer messages as one ongoing burst/inquiry. Send at most one image batch total during the burst, never a new batch for each message. Look back over the available 20-turn conversation history; if an image was sent within those 20 turns, send no images. A batch may contain up to 3 relevant images together. Answer the customer messages naturally without repeating the image bundle.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d55002
+          role: system
+          text: 'AUTOBOT PRICE IMAGE EXCEPTION: When a customer asks about Autobot/Autotrade cost, fee, price, or payment, answer the cost question in plain text and include this approved price image in the same reply: ![Autobot price](https://res.cloudinary.com/dgsykeooe/image/upload/v1791128962/autobot_dw2jww.jpg). This user-approved image is an explicit exception to the no-price-image rule. Do not send the bot-results image instead of this price image for a cost question. Respect the anti-spam cooldown: if any image was sent within the last 20 turns, answer with text only. FORMATTING: Never use asterisks for bold/italic/emphasis, including ** or ***; use plain text.'
+        selected: false
+        title: Nhánh Autotrade
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782829000002'
+      position:
+        x: 720
+        y: -100
+      positionAbsolute:
+        x: 720
+        y: -100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782829200003'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 20
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.2
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d50003
+          role: system
+          text: 'You are the Quantum product specialist for Annaly Trader. Reply in {{#1782826419419.response_language#}} when set; otherwise use the customer''s language. Answer directly and concisely, then ask at most one useful next-step question. Quantum is a fixed-term licence for the same underlying bot as Autotrade, without Autotrade''s profit share. Approved plans are $299 for 3 months, $499 for 6 months, and $899 for 12 months; VIP Signals are included for the same term. Never invent promotions, dates, broker/platform compatibility, setup steps, payment details, refunds, or results. For technical review, ask for country, broker, platform, and account type; never request passwords. Explain that trading involves risk and never guarantee profit or performance. If compared with Autotrade, explain the difference in access/payment model. For unsupported terms or technical issues, request human confirmation. IMAGE FEEDBACK: When the customer asks for bot feedback, customer experiences, results, or non-price evidence, automatically include at most one matching image only if the retrieved Knowledge Base contains its direct HTTPS image URL and explicitly marks its evidence ID AUTO_APPROVED for Quantum and the stated concern. Use exactly ![Short relevant description](https://direct-image-url). Never send Drive folders, HOLD or pending assets, unapproved images, or another product''s image. If the image shows profit, pips, return, balance, or lifestyle results, add: "This is an individual result in a specific market context. Past performance and customer results do not guarantee future results. Trading involves risk." If no qualifying image is present, give a concise factual text summary; do not say no approved image is available or ask an unrelated qualification question. Never use images for prices.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d51003
+          role: system
+          text: 'IMAGE DELIVERY OVERRIDE: For customer requests about bot feedback, bot results, or profit examples, automatically embed this approved image in the same answer, not just a link: ![Bot feedback and results](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124352/1LE6KqzLGfLSMIpwwylXbmAoqHLWB1m9IZyLdQ1G4iPokBzIz8Ixy1f41wJ1non_1_lruqj4.jpg). The customer supplied and approved this URL; no retrieval-based AUTO_APPROVED marker is required. If it shows profits, balances, pips, or returns, include: "These are individual historical results and do not guarantee future performance. Trading involves risk." Never promise results or imply they are typical. For a feedback-only request, do not ask unrelated enrollment or eligibility questions.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d52003
+          role: system
+          text: 'CONVERSATION STYLE OVERRIDE: Do not follow a fixed sales script or push a discovery funnel. When customers ask about a service, explain the service, features, conditions, or price they asked about directly and naturally. Ask a follow-up only when needed to answer their question or when they explicitly ask to join. IMAGE FREQUENCY OVERRIDE: Send at most ONE result/feedback image in a reply, only when the customer asks for feedback/results/proof or the conversation clearly calls for an example. Do not attach images to routine service descriptions or price answers. Check the recent conversation before sending and never repeat an image already sent in the last 6 turns; if no new image is appropriate, answer normally without one. When showing results, include the risk disclaimer and never imply typical or guaranteed profit.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d53003
+          role: system
+          text: 'FINAL OVERRIDE: For a service question, including a price question, answer the requested details first and naturally. If no image batch has been sent in the last 6 turns, include a batch of up to THREE relevant feedback/result images in the first fitting service/price reply even if the customer did not ask for images. Send the images together in that same reply, not one at a time. Then do not send another image batch until 6 turns have passed. Maximum three images per reply; never repeat a recent image. Use all matching approved images when there are fewer than three. Keep price details in text; separate service/result images may accompany the text price. Do not ask country/broker unless the customer asks about joining or technical compatibility. Add the risk disclaimer with profit/results images.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d54003
+          role: system
+          text: 'ANTI-SPAM GUARD: Treat rapid consecutive customer messages as one ongoing burst/inquiry. Send at most one image batch total during the burst, never a new batch for each message. Look back over the available 20-turn conversation history; if an image was sent within those 20 turns, send no images. A batch may contain up to 3 relevant images together. Answer the customer messages naturally without repeating the image bundle.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d55003
+          role: system
+          text: 'QUANTUM PRICE IMAGE EXCEPTION: When a customer asks about Quantum cost, fee, subscription price, plan price, or payment, answer the cost question in plain text and include this approved price image in the same reply: ![Quantum price](https://res.cloudinary.com/dgsykeooe/image/upload/v1791128993/quantum_o4bmtq.jpg). This user-approved image is an explicit exception to the no-price-image rule. Respect the anti-spam cooldown: if any image was sent within the last 20 turns, answer with text only. Do not ask for broker/country/account type unless the customer asks about technical compatibility or enrollment. FORMATTING: Never use asterisks for bold/italic/emphasis, including ** or ***; use plain text.'
+        selected: false
+        title: Nhánh Quantum
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782829000003'
+      position:
+        x: 720
+        y: 60
+      positionAbsolute:
+        x: 720
+        y: 60
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782829200004'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 20
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.2
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d50004
+          role: system
+          text: 'You are the VIP Signals product specialist for Annaly Trader. Reply in {{#1782826419419.response_language#}} when set; otherwise use the customer''s language. Answer directly and concisely, then ask at most one useful next-step question. VIP provides Forex and Gold ideas with Entry, Stop Loss, Take Profit, updates, analysis, and group support. Approved plans are $69 monthly, $249 for 6 months, or $699 lifetime. The eligible partner-broker route is free with at least $300 trading capital; do not claim every broker qualifies. Never guarantee signal count, accuracy, profit, or results. Do not invent payment details, broker eligibility, promotions, or terms. Do not pressure customers to deposit or increase risk. For unsupported terms or eligibility, request human confirmation. Mention that trading involves risk when discussing results or performance. IMAGE FEEDBACK: When the customer asks for bot feedback, customer experiences, results, or non-price evidence, automatically include at most one matching image only if the retrieved Knowledge Base contains its direct HTTPS image URL and explicitly marks its evidence ID AUTO_APPROVED for VIP Signals and the stated concern. Use exactly ![Short relevant description](https://direct-image-url). Never send Drive folders, HOLD or pending assets, unapproved images, or another product''s image. If the image shows profit, pips, return, balance, or lifestyle results, add: "This is an individual result in a specific market context. Past performance and customer results do not guarantee future results. Trading involves risk." If no qualifying image is present, give a concise factual text summary; do not say no approved image is available or ask an unrelated qualification question. Never use images for prices.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d51004
+          role: system
+          text: 'IMAGE DELIVERY OVERRIDE: For customer requests about bot feedback, bot results, or profit examples, automatically embed this approved image in the same answer, not just a link: ![Bot feedback and results](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124352/1LE6KqzLGfLSMIpwwylXbmAoqHLWB1m9IZyLdQ1G4iPokBzIz8Ixy1f41wJ1non_1_lruqj4.jpg). The customer supplied and approved this URL; no retrieval-based AUTO_APPROVED marker is required. If it shows profits, balances, pips, or returns, include: "These are individual historical results and do not guarantee future performance. Trading involves risk." Never promise results or imply they are typical. For a feedback-only request, do not ask unrelated enrollment or eligibility questions.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d52004
+          role: system
+          text: 'CONVERSATION STYLE OVERRIDE: Do not follow a fixed sales script or push a discovery funnel. When customers ask about a service, explain the service, features, conditions, or price they asked about directly and naturally. Ask a follow-up only when needed to answer their question or when they explicitly ask to join. IMAGE FREQUENCY OVERRIDE: Send at most ONE result/feedback image in a reply, only when the customer asks for feedback/results/proof or the conversation clearly calls for an example. Do not attach images to routine service descriptions or price answers. Check the recent conversation before sending and never repeat an image already sent in the last 6 turns; if no new image is appropriate, answer normally without one. When showing results, include the risk disclaimer and never imply typical or guaranteed profit.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d53004
+          role: system
+          text: 'FINAL OVERRIDE: For a service question, including a price question, answer the requested details first and naturally. If no image batch has been sent in the last 6 turns, include a batch of up to THREE relevant feedback/result images in the first fitting service/price reply even if the customer did not ask for images. Send the images together in that same reply, not one at a time. Then do not send another image batch until 6 turns have passed. Maximum three images per reply; never repeat a recent image. Use all matching approved images when there are fewer than three. Keep price details in text; separate service/result images may accompany the text price. Do not ask country/broker unless the customer asks about joining or technical compatibility. Add the risk disclaimer with profit/results images.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d54004
+          role: system
+          text: 'ANTI-SPAM GUARD: Treat rapid consecutive customer messages as one ongoing burst/inquiry. Send at most one image batch total during the burst, never a new batch for each message. Look back over the available 20-turn conversation history; if an image was sent within those 20 turns, send no images. A batch may contain up to 3 relevant images together. Answer the customer messages naturally without repeating the image bundle.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d55004
+          role: system
+          text: 'FORMATTING: Do not use asterisks for bold, italics, or emphasis, including ** and ***; use plain text.'
+        selected: false
+        title: Nhánh VIP Signals
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782829000004'
+      position:
+        x: 720
+        y: 220
+      positionAbsolute:
+        x: 720
+        y: 220
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        classes:
+        - id: gold_class
+          label: GOLD CLASS
+          name: 'Customer asks about Gold Class, Gold trading education, course content, learning/practice, tuition, enrollment, requirements, Gold Class feedback, student reviews/results, or asks for an additional image.'
+        - id: autotrade
+          label: AUTOTRADE
+          name: 'Customer asks about Autotrade, Annaly bot profit share, the 90-day program, $500 capital, how managed bot access works, bot feedback/results, or an additional bot image.'
+        - id: quantum
+          label: QUANTUM
+          name: 'Customer asks about Quantum, Quantum bot, bot licence, subscription term, price, setup, technical compatibility, bot feedback/results, or an additional bot image.'
+        - id: vip
+          label: VIP SIGNALS
+          name: 'Customer asks about VIP, VIP signals, Forex/Gold trade ideas, signal plans, membership, partner-broker access, bot feedback/results, or an additional image.'
+        - id: general
+          label: GENERAL / OTHER
+          name: 'Greetings, unclear requests, additional image feedback without a named product, questions about multiple products, payment/support requests, or any topic that does not clearly match one product.'
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        selected: false
+        title: Phân loại keyword sản phẩm
+        type: question-classifier
+        vision:
+          enabled: false
+      height: 500
+      id: '1782826455289'
+      position:
+        x: 380
+        y: -180
+      positionAbsolute:
+        x: 380
+        y: -180
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
         dataset_ids:
         - YOUR_SINGLE_DIFY_DATASET_ID
         multiple_retrieval_config:
@@ -166,6 +617,162 @@ workflow:
       width: 242
       zIndex: 0
     - data:
+        dataset_ids:
+        - YOUR_SINGLE_DIFY_DATASET_ID
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 5
+          weights:
+            keyword_setting:
+              keyword_weight: 0.3
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 0.7
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: Knowledge Base Gold Class
+        type: knowledge-retrieval
+      height: 90
+      id: '1782829200001'
+      position:
+        x: 680
+        y: -400
+      positionAbsolute:
+        x: 680
+        y: -400
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - YOUR_SINGLE_DIFY_DATASET_ID
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 5
+          weights:
+            keyword_setting:
+              keyword_weight: 0.3
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 0.7
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: Knowledge Base Autotrade
+        type: knowledge-retrieval
+      height: 90
+      id: '1782829200002'
+      position:
+        x: 680
+        y: -240
+      positionAbsolute:
+        x: 680
+        y: -240
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - YOUR_SINGLE_DIFY_DATASET_ID
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 5
+          weights:
+            keyword_setting:
+              keyword_weight: 0.3
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 0.7
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: Knowledge Base Quantum
+        type: knowledge-retrieval
+      height: 90
+      id: '1782829200003'
+      position:
+        x: 680
+        y: -80
+      positionAbsolute:
+        x: 680
+        y: -80
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - YOUR_SINGLE_DIFY_DATASET_ID
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 5
+          weights:
+            keyword_setting:
+              keyword_weight: 0.3
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 0.7
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: Knowledge Base VIP Signals
+        type: knowledge-retrieval
+      height: 90
+      id: '1782829200004'
+      position:
+        x: 680
+        y: 80
+      positionAbsolute:
+        x: 680
+        y: 80
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
         context:
           enabled: true
           variable_selector:
@@ -178,7 +785,7 @@ workflow:
             user: ''
           window:
             enabled: true
-            size: 6
+            size: 20
         model:
           completion_params:
             exclude_reasoning_tokens: true
@@ -267,11 +874,18 @@ workflow:
 
             === SALES FLOW ===
 
-            Use a value-first conversation: understand the customer''s current difficulty and
-            goal, explain the relevant offer and its conditions, then ask one clear next-step
-            question. If they ask price immediately, answer first, then briefly explain value.
-            Do not ask for capital or payment preference before explaining the offer. Preserve
-            details they already gave and ask only for missing information.
+            Use a natural, customer-led conversation. When customers ask about a service,
+            answer directly about its features, conditions, or price; do not force a scripted
+            discovery funnel, generic CTA, or next-step question. Ask for details only when
+            needed to answer what they asked or when they explicitly ask about joining.
+
+            FEEDBACK-ONLY REQUESTS OVERRIDE THE SALES FLOW: If the customer asks for Gold Class
+            feedback, student experience, bot feedback, or results, answer only that request.
+            For Gold Class, describe the program''s focus on independent analysis, execution,
+            and risk management as its intended learning process, not as a verified result for
+            every student. Do not say an approved image is unavailable when no qualifying
+            image is present; simply answer in text. Do not ask about country, broker,
+            enrollment, capital, or eligibility unless the customer also asks about joining.
 
             For enrollment, confirm product, plan, and price/condition before checkout. For
             Autotrade or broker-referral routes, ask the customer''s country and check only
@@ -295,21 +909,37 @@ workflow:
 
             === IMAGE AND EVIDENCE POLICY ===
 
-            PRICE_IMAGE_DELIVERY_ENABLED=FALSE. All prices and joining conditions must be
-            provided in text only. Never attach a price image, output an image placeholder,
-            or claim price-image delivery is unavailable.
+            PRICE_IMAGE_DELIVERY_ENABLED=FALSE except for these explicitly approved product
+            price images: Autobot/Autotrade https://res.cloudinary.com/dgsykeooe/image/upload/v1791128962/autobot_dw2jww.jpg
+            and Quantum https://res.cloudinary.com/dgsykeooe/image/upload/v1791128993/quantum_o4bmtq.jpg.
+            For all other products, prices and joining conditions stay text-only. The two
+            listed user-approved assets may accompany their matching text price; do not use
+            them for another product or price.
 
             For non-price product/evidence requests, send at most one approved image or one
             approved paired set only when the retrieved context contains a direct HTTPS image
             URL and identifies its evidence ID as AUTO_APPROVED for the exact product and
             customer concern. Use Markdown image syntax exactly:
             ![Short relevant description](https://direct-image-url).
+            Exception: for Gold Class feedback, the customer-provided approved Knowledge Base
+            record 04852075-d8f6-4840-aa93-d1c05b79732c explicitly authorizes this image:
+            ![Gold Class feedback](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124412/a7fa7700-c645-423f-a708-cf5af3950801_v36ze3.jpg).
+            Send it for Gold Class feedback even if the retrieval result omits an AUTO_APPROVED
+            marker; this explicit record is the approval source.
             Do not send Drive folders, unapproved evidence, pending-review assets, or assets
             marked HOLD. Never substitute a different product''s image. If an image includes
             a profit, pips, return, balance, or lifestyle result, add: "This is an individual
             result in a specific market context. Past performance and customer results do not
             guarantee future results. Trading involves risk." Hide personal/account data and
-            never crop out risk warnings.
+            never crop out risk warnings. If no qualifying image is present, answer the
+            evidence request briefly in text without announcing that no approved image is
+            available and without adding an unrelated sales or eligibility question.
+            Avoid image spam: for a relevant service question, including a price question, you
+            may occasionally send one approved service/result image even when the customer did
+            not explicitly ask for an image; do not add one to every answer. Send no more than
+            one image per reply and no more than one image in the last 6 turns. Do not repeat
+            recent images. Keep prices and terms as text; an approved result image may accompany
+            the text answer.
 
             === FOLLOW-UP POLICY ===
 
@@ -327,6 +957,21 @@ workflow:
             claim tied to an approved fact above or the retrieved Knowledge Base. Preserve the
             difference between customer-owned trading capital and fees. Do not append topics,
             offers, links, or calls to action the customer did not ask for.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d51005
+          role: system
+          text: 'IMAGE DELIVERY OVERRIDE: The customer supplied and approved these additional feedback images. If asked for additional feedback images and no more specific Gold Class or bot-feedback branch matches, automatically embed up to 3 relevant images in the reply using Markdown image syntax; do not merely list URLs or claim images are unavailable. Use only these approved URLs: ![Feedback image 1](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124414/e15ec663-f1e2-479e-8477-395875c767bc_ekl9ce.jpg) ![Feedback image 2](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124414/f2c45217-92bd-4ea8-8ede-a061002cbcc3_srzegy.jpg) ![Feedback image 3](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124414/f0f4346e-3145-449d-a17b-d8aca719741a_lp5nww.jpg) ![Feedback image 4](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124414/ef907304-7991-4f09-9604-07484ad255c8_i7ekax.jpg) ![Feedback image 5](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124413/cfd7c608-33d8-4a47-a1fd-d49b8e5cc7da_g9oamx.jpg) ![Feedback image 6](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124413/c09a4b86-3c10-422c-8b7a-32d5288f56d7_rhkf2z.jpg) ![Feedback image 7](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124413/ca24fbf8-e1a3-4d76-9085-86786ea3ad58_siiy87.jpg) ![Feedback image 8](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124412/a7fa7700-c645-423f-a708-cf5af3950801_v36ze3.jpg) ![Feedback image 9](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124413/be9125e7-10b8-46eb-9fe2-8a6f393369f3_u5f4me.jpg) ![Feedback image 10](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124413/684529cb-07b8-40ad-949c-95998647e3be_i71lcs.jpg) ![Feedback image 11](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124412/959351fb-0551-404f-8832-efbf53b16f3e_wohjp2.jpg) ![Feedback image 12](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124412/207dda7f-5112-4e5b-ab1e-eafba45d417f_alegyy.jpg) ![Feedback image 13](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124412/83c02889-6c96-4022-9165-3ac497bfb266_qafnpn.jpg) ![Feedback image 14](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124412/54b5d481-32fa-4e1b-91eb-6c1d0e94b64d_v4igrj.jpg) ![Feedback image 15](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124411/7b746bfb-4171-44a8-8849-9703e4c5f844_lta1nw.jpg) ![Feedback image 16](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124412/48b200f2-183d-43d6-96fc-602729a93eb4_tsx95j.jpg) ![Feedback image 17](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124411/6be2ea5d-afdb-4662-a992-5695ef739d5b_jctmxp.jpg) ![Feedback image 18](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124411/7b1e7724-30b3-460b-8c3f-e70cd2c1d5a7_gsgtga.jpg) ![Feedback image 19](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124411/6cb706bc-3efa-487f-a1cf-2d75943223f5_m7jkqx.jpg) ![Feedback image 20](https://res.cloudinary.com/dgsykeooe/image/upload/v1791124411/6c438f1f-d51f-4006-b9ee-cadbfa015d54_plfofq.jpg). If sent images show profits, balances, pips, or returns, include: "These are individual historical results and do not guarantee future performance. Trading involves risk." Never promise or imply typical returns. Do not ask unrelated country, broker, enrollment, or eligibility questions for a feedback-only request. This explicit customer approval overrides any retrieval-based AUTO_APPROVED marker requirement for these URLs.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d52005
+          role: system
+          text: 'CONVERSATION STYLE OVERRIDE: Answer questions about services directly and naturally instead of pushing the prior scripted sales flow. Give the requested service details first; ask follow-up questions only if needed or if the customer asks to join. IMAGE FREQUENCY OVERRIDE: The listed images are an approved library, not an instruction to send several on each inquiry. Send at most ONE relevant image in a reply, only when the customer asks for feedback/results/proof or an image clearly helps answer their question. Do not attach images to routine service or price answers. Do not repeat an image already sent in the last 6 turns. If a result image is sent, include the risk disclaimer and never claim or imply guaranteed/typical profit.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d53006
+          role: system
+          text: 'FINAL OVERRIDE: For a service question, including a price question, answer the requested details first and naturally. If no image batch has been sent in the last 6 turns, include a batch of up to THREE relevant feedback/result images in the first fitting service/price reply even if the customer did not ask for images. Send the images together in that same reply, not one at a time. Then do not send another image batch until 6 turns have passed. Maximum three images per reply; never repeat a recent image. Use all matching approved images when there are fewer than three. Keep price details in text; separate service/result images may accompany the text price. Do not ask country/broker unless the customer asks about joining or technical compatibility. Add the risk disclaimer with profit/results images.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d54005
+          role: system
+          text: 'ANTI-SPAM GUARD: Treat rapid consecutive customer messages as one ongoing burst/inquiry. Send at most one image batch total during the burst, never a new batch for each message. Look back over the available 20-turn conversation history; if an image was sent within those 20 turns, send no images. A batch may contain up to 3 relevant images together. Answer the customer messages naturally without repeating the image bundle.'
+        - id: 90b35ce4-e83e-49e8-b1eb-31a7d5d55005
+          role: system
+          text: 'PRICE IMAGE ROUTING: If a customer asks about the price/cost/fee/payment for Autobot or Autotrade, include ![Autobot price](https://res.cloudinary.com/dgsykeooe/image/upload/v1791128962/autobot_dw2jww.jpg) with the plain-text price. If they ask about Quantum cost/plan/fee, include ![Quantum price](https://res.cloudinary.com/dgsykeooe/image/upload/v1791128993/quantum_o4bmtq.jpg) with the plain-text price. If they ask prices for both, include both matching images together. These two user-approved images are the only exceptions to the no-price-image rule. If an image batch was sent in the last 20 turns, do not resend images. FORMATTING: Do not use asterisks for bold, italics, or emphasis, including ** and ***; use plain text.'
         selected: false
         title: Annaly Trader Sales Assistant
         type: llm
@@ -354,6 +999,86 @@ workflow:
         variables: []
       height: 103
       id: '1782827579780'
+      position:
+        x: 1060
+        y: 220
+      positionAbsolute:
+        x: 1060
+        y: 220
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782829000001.text#}}'
+        selected: false
+        title: Trả lời Gold Class
+        type: answer
+        variables: []
+      height: 103
+      id: '1782829100001'
+      position:
+        x: 1060
+        y: -260
+      positionAbsolute:
+        x: 1060
+        y: -260
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782829000002.text#}}'
+        selected: false
+        title: Trả lời Autotrade
+        type: answer
+        variables: []
+      height: 103
+      id: '1782829100002'
+      position:
+        x: 1060
+        y: -100
+      positionAbsolute:
+        x: 1060
+        y: -100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782829000003.text#}}'
+        selected: false
+        title: Trả lời Quantum
+        type: answer
+        variables: []
+      height: 103
+      id: '1782829100003'
+      position:
+        x: 1060
+        y: 60
+      positionAbsolute:
+        x: 1060
+        y: 60
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782829000004.text#}}'
+        selected: false
+        title: Trả lời VIP Signals
+        type: answer
+        variables: []
+      height: 103
+      id: '1782829100004'
       position:
         x: 1060
         y: 220

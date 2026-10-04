@@ -283,6 +283,93 @@ test('telegram ai reply downloads and sends linked images as photo messages', fu
     Http::assertSent(fn ($request): bool => $request->url() === 'https://8.8.8.8/product.jpg');
 });
 
+test('telegram ai care sends only one image batch during a burst in the same conversation', function (): void {
+    $channel = OmnichatChannel::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'provider' => ChannelProvider::Telegram,
+        'settings' => [
+            'ai_care' => [
+                'enabled' => true,
+                'provider' => 'dify',
+                'dify_api_key' => 'telegram-app-key',
+                'dify_base_url' => 'https://kingai.tnicorporation.com/v1',
+                'operating_hours' => ['mode' => '24/7'],
+            ],
+        ],
+    ]);
+    $conversation = OmnichatConversation::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'channel_id' => $channel->id,
+        'social_account_id' => null,
+        'external_id' => 'telegram-burst-chat',
+    ]);
+
+    $difyClientMock = mock(DifyChatClient::class);
+    $difyClientMock->shouldReceive('sendMessage')
+        ->twice()
+        ->andReturn(
+            [
+                'answer' => "Thông tin dịch vụ.\n\n![Kết quả](https://8.8.8.8/result.jpg)",
+                'conversation_id' => 'dify-burst-conv',
+            ],
+            [
+                'answer' => "Thông tin thêm.\n\n![Kết quả](https://8.8.8.8/result.jpg)",
+                'conversation_id' => 'dify-burst-conv',
+            ],
+        );
+    app()->instance(DifyChatClient::class, $difyClientMock);
+
+    $telegramClientMock = mock(TelegramOmnichatClient::class);
+    $telegramClientMock->shouldReceive('sendMessage')->twice()
+        ->andReturn(
+            ['id' => 'telegram-text-1', 'payload' => []],
+            ['id' => 'telegram-text-2', 'payload' => []],
+        );
+    $telegramClientMock->shouldReceive('sendPhoto')->once()
+        ->andReturn([
+            'id' => 'telegram-photo',
+            'payload' => ['ok' => true],
+            'attachment' => [
+                'id' => 'telegram-file',
+                'type' => 'image',
+                'url' => '',
+                'original_name' => 'result.jpg',
+                'mime_type' => 'image/jpeg',
+                'size' => 12,
+            ],
+        ]);
+    app()->instance(TelegramOmnichatClient::class, $telegramClientMock);
+
+    $imageContent = UploadedFile::fake()->image('fixture.jpg')->getContent();
+    Http::fake([
+        'https://8.8.8.8/result.jpg' => Http::response($imageContent, 200, ['Content-Type' => 'image/jpeg']),
+    ]);
+
+    foreach (['Giá dịch vụ thế nào?', 'Cho mình biết thêm'] as $body) {
+        $inboundMessage = OmnichatMessage::factory()->create([
+            'workspace_id' => $this->workspace->id,
+            'channel_id' => $channel->id,
+            'conversation_id' => $conversation->id,
+            'direction' => 'inbound',
+            'body' => $body,
+        ]);
+
+        app(HandlePageAiCareAutoReply::class)->handle(new OmnichatMessageCreated($inboundMessage));
+    }
+
+    expect(OmnichatMessage::query()
+        ->where('conversation_id', $conversation->id)
+        ->where('direction', 'outbound')
+        ->where('type', 'image')
+        ->count())->toBe(1);
+
+    expect(OmnichatMessage::query()
+        ->where('conversation_id', $conversation->id)
+        ->where('direction', 'outbound')
+        ->where('type', 'text')
+        ->count())->toBe(2);
+});
+
 test('remote ai images cannot be downloaded from private network addresses', function (): void {
     expect(fn () => app(RemoteImageDownloader::class)->withDownloadedImage(
         'https://127.0.0.1/private.jpg',
