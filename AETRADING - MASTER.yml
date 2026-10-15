@@ -1,0 +1,3768 @@
+app:
+  description: AE Trading Messenger chatbot V2 optimized for faster replies, tighter tone, and better short-context continuity.
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  icon_type: emoji
+  mode: advanced-chat
+  name: AETRADING
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openrouter:0.1.9@8f8c69f645a62eb917ae219cfb8b567e39707941fc06c755d565ebea6cd1d88a
+    version: null
+kind: app
+version: 0.7.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: question-classifier
+      id: 1782826419419-source-1782826455289-target
+      selected: false
+      source: '1782826419419'
+      sourceHandle: source
+      target: '1782826455289'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: 1782826455289-1-1782827114917-target
+      selected: false
+      source: '1782826455289'
+      sourceHandle: '1'
+      target: '1782827114917'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: 1782826455289-1782826927144-1782827164538-target
+      selected: false
+      source: '1782826455289'
+      sourceHandle: '1782826927144'
+      target: '1782827164538'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: 1782826455289-1782826927944-1782827177527-target
+      selected: false
+      source: '1782826455289'
+      sourceHandle: '1782826927944'
+      target: '1782827177527'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: 1782826455289-1782827029001-1782827182126-target
+      selected: false
+      source: '1782826455289'
+      sourceHandle: '1782827029001'
+      target: '1782827182126'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: 1782826455289-1782828300001-1782828100001-target
+      selected: false
+      source: '1782826455289'
+      sourceHandle: '1782828300001'
+      target: '1782828100001'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: 1782826455289-1782828300002-1782828100002-target
+      selected: false
+      source: '1782826455289'
+      sourceHandle: '1782828300002'
+      target: '1782828100002'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: 1782826455289-1782828300003-1782828100003-target
+      selected: false
+      source: '1782826455289'
+      sourceHandle: '1782828300003'
+      target: '1782828100003'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: 1782826455289-1782828300004-1782828100004-target
+      selected: false
+      source: '1782826455289'
+      sourceHandle: '1782828300004'
+      target: '1782828100004'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: 1782826455289-1782828300005-1782828100005-target
+      selected: false
+      source: '1782826455289'
+      sourceHandle: '1782828300005'
+      target: '1782828100005'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: llm
+      id: 1782826455289-1782828300006-1782828200006-target
+      selected: false
+      source: '1782826455289'
+      sourceHandle: '1782828300006'
+      target: '1782828200006'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: llm
+      id: 1782826455289-1782828300007-1782828200007-target
+      selected: false
+      source: '1782826455289'
+      sourceHandle: '1782828300007'
+      target: '1782828200007'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: 1782826455289-2-1782827158355-target
+      selected: false
+      source: '1782826455289'
+      sourceHandle: '2'
+      target: '1782827158355'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1782827114917-source-1782827488751-target
+      selected: false
+      source: '1782827114917'
+      sourceHandle: source
+      target: '1782827488751'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1782827158355-source-1782827493165-target
+      selected: false
+      source: '1782827158355'
+      sourceHandle: source
+      target: '1782827493165'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1782827164538-source-1782827495630-target
+      selected: false
+      source: '1782827164538'
+      sourceHandle: source
+      target: '1782827495630'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1782827177527-source-1782827498269-target
+      selected: false
+      source: '1782827177527'
+      sourceHandle: source
+      target: '1782827498269'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1782827182126-source-1782827500355-target
+      selected: false
+      source: '1782827182126'
+      sourceHandle: source
+      target: '1782827500355'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1782827488751-source-1782827579780-target
+      selected: false
+      source: '1782827488751'
+      sourceHandle: source
+      target: '1782827579780'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1782827493165-source-1782827584632-target
+      selected: false
+      source: '1782827493165'
+      sourceHandle: source
+      target: '1782827584632'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1782827495630-source-1782827587424-target
+      selected: false
+      source: '1782827495630'
+      sourceHandle: source
+      target: '1782827587424'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1782827498269-source-1782827589778-target
+      selected: false
+      source: '1782827498269'
+      sourceHandle: source
+      target: '1782827589778'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1782827500355-source-1782827593417-target
+      selected: false
+      source: '1782827500355'
+      sourceHandle: source
+      target: '1782827593417'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1782828100001-source-1782828200001-target
+      selected: false
+      source: '1782828100001'
+      sourceHandle: source
+      target: '1782828200001'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1782828100002-source-1782828200002-target
+      selected: false
+      source: '1782828100002'
+      sourceHandle: source
+      target: '1782828200002'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1782828100003-source-1782828200003-target
+      selected: false
+      source: '1782828100003'
+      sourceHandle: source
+      target: '1782828200003'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1782828100004-source-1782828200004-target
+      selected: false
+      source: '1782828100004'
+      sourceHandle: source
+      target: '1782828200004'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1782828100005-source-1782828200005-target
+      selected: false
+      source: '1782828100005'
+      sourceHandle: source
+      target: '1782828200005'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1782828200001-source-1782828300101-target
+      selected: false
+      source: '1782828200001'
+      sourceHandle: source
+      target: '1782828300101'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1782828200002-source-1782828300102-target
+      selected: false
+      source: '1782828200002'
+      sourceHandle: source
+      target: '1782828300102'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1782828200003-source-1782828300103-target
+      selected: false
+      source: '1782828200003'
+      sourceHandle: source
+      target: '1782828300103'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1782828200004-source-1782828300104-target
+      selected: false
+      source: '1782828200004'
+      sourceHandle: source
+      target: '1782828300104'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1782828200005-source-1782828300105-target
+      selected: false
+      source: '1782828200005'
+      sourceHandle: source
+      target: '1782828300105'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1782828200006-source-1782828300106-target
+      selected: false
+      source: '1782828200006'
+      sourceHandle: source
+      target: '1782828300106'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1782828200007-source-1782828300107-target
+      selected: false
+      source: '1782828200007'
+      sourceHandle: source
+      target: '1782828300107'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: 1782826455289-1782830400001-1782830100001-target
+      selected: false
+      source: '1782826455289'
+      sourceHandle: '1782830400001'
+      target: '1782830100001'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1782830100001-source-1782830200001-target
+      selected: false
+      source: '1782830100001'
+      sourceHandle: source
+      target: '1782830200001'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1782830200001-source-1782830300001-target
+      selected: false
+      source: '1782830200001'
+      sourceHandle: source
+      target: '1782830300001'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: 1782826455289-1782830400002-1782830100002-target
+      selected: false
+      source: '1782826455289'
+      sourceHandle: '1782830400002'
+      target: '1782830100002'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1782830100002-source-1782830200002-target
+      selected: false
+      source: '1782830100002'
+      sourceHandle: source
+      target: '1782830200002'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1782830200002-source-1782830300002-target
+      selected: false
+      source: '1782830200002'
+      sourceHandle: source
+      target: '1782830300002'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: 1782826455289-1782830400003-1782830100003-target
+      selected: false
+      source: '1782826455289'
+      sourceHandle: '1782830400003'
+      target: '1782830100003'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1782830100003-source-1782830200003-target
+      selected: false
+      source: '1782830100003'
+      sourceHandle: source
+      target: '1782830200003'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1782830200003-source-1782830300003-target
+      selected: false
+      source: '1782830200003'
+      sourceHandle: source
+      target: '1782830300003'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: 1782826455289-1782830400004-1782830100004-target
+      selected: false
+      source: '1782826455289'
+      sourceHandle: '1782830400004'
+      target: '1782830100004'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1782830100004-source-1782830200004-target
+      selected: false
+      source: '1782830100004'
+      sourceHandle: source
+      target: '1782830200004'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1782830200004-source-1782830300004-target
+      selected: false
+      source: '1782830200004'
+      sourceHandle: source
+      target: '1782830300004'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: 1782826455289-1782830400005-1782830100005-target
+      selected: false
+      source: '1782826455289'
+      sourceHandle: '1782830400005'
+      target: '1782830100005'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1782830100005-source-1782830200005-target
+      selected: false
+      source: '1782830100005'
+      sourceHandle: source
+      target: '1782830200005'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1782830200005-source-1782830300005-target
+      selected: false
+      source: '1782830200005'
+      sourceHandle: source
+      target: '1782830300005'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: 1782826455289-1782830400006-1782830100006-target
+      selected: false
+      source: '1782826455289'
+      sourceHandle: '1782830400006'
+      target: '1782830100006'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1782830100006-source-1782830200006-target
+      selected: false
+      source: '1782830100006'
+      sourceHandle: source
+      target: '1782830200006'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1782830200006-source-1782830300006-target
+      selected: false
+      source: '1782830200006'
+      sourceHandle: source
+      target: '1782830300006'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: 1782826455289-1782830400007-1782830100007-target
+      selected: false
+      source: '1782826455289'
+      sourceHandle: '1782830400007'
+      target: '1782830100007'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1782830100007-source-1782830200007-target
+      selected: false
+      source: '1782830100007'
+      sourceHandle: source
+      target: '1782830200007'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1782830200007-source-1782830300007-target
+      selected: false
+      source: '1782830200007'
+      sourceHandle: source
+      target: '1782830300007'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: 1782826455289-1782830400008-1782830100008-target
+      selected: false
+      source: '1782826455289'
+      sourceHandle: '1782830400008'
+      target: '1782830100008'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1782830100008-source-1782830200008-target
+      selected: false
+      source: '1782830100008'
+      sourceHandle: source
+      target: '1782830200008'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1782830200008-source-1782830300008-target
+      selected: false
+      source: '1782830200008'
+      sourceHandle: source
+      target: '1782830300008'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: 1782826455289-1782830400009-1782830100009-target
+      selected: false
+      source: '1782826455289'
+      sourceHandle: '1782830400009'
+      target: '1782830100009'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1782830100009-source-1782830200009-target
+      selected: false
+      source: '1782830100009'
+      sourceHandle: source
+      target: '1782830200009'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1782830200009-source-1782830300009-target
+      selected: false
+      source: '1782830200009'
+      sourceHandle: source
+      target: '1782830300009'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: llm
+      id: 1782826455289-1782830400010-1782830200010-target
+      selected: false
+      source: '1782826455289'
+      sourceHandle: '1782830400010'
+      target: '1782830200010'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1782830200010-source-1782830300010-target
+      selected: false
+      source: '1782830200010'
+      sourceHandle: source
+      target: '1782830300010'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: llm
+      id: 1782826455289-1782830400011-1782830200011-target
+      selected: false
+      source: '1782826455289'
+      sourceHandle: '1782830400011'
+      target: '1782830200011'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1782830200011-source-1782830300011-target
+      selected: false
+      source: '1782830200011'
+      sourceHandle: source
+      target: '1782830300011'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: false
+        title: Bắt đầu
+        type: start
+        variables:
+        - label: current_intent
+          max_length: 80
+          options: []
+          required: false
+          type: text-input
+          variable: current_intent
+        - label: current_stage
+          max_length: 20
+          options: []
+          required: false
+          type: text-input
+          variable: current_stage
+        - label: lead_status
+          max_length: 80
+          options: []
+          required: false
+          type: text-input
+          variable: lead_status
+        - label: phone
+          max_length: 30
+          options: []
+          required: false
+          type: text-input
+          variable: phone
+        - label: last_question_asked
+          max_length: 500
+          options: []
+          required: false
+          type: paragraph
+          variable: last_question_asked
+        - label: session_memory
+          max_length: 2000
+          options: []
+          required: false
+          type: paragraph
+          variable: session_memory
+      height: 239
+      id: '1782826419419'
+      position:
+        x: -28.43689460809344
+        y: 129.77554684094932
+      positionAbsolute:
+        x: -28.43689460809344
+        y: 129.77554684094932
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        classes:
+        - id: '1'
+          label: KHOBAU
+          name: |-
+            Khach comment/inbox "KHO BAU"
+            Khach muon nhan ebook
+            Khach hoi tai lieu ve tu duy, tam ly giao dich
+            FOMO, chua co phuong phap, minh muon xem ebook
+            Cac cau tra loi tiep noi: co, gui minh nhe, minh hay FOMO
+        - id: '2'
+          label: SMC
+          name: |-
+            Khach hoi ve SMC
+            Khach hoi Smart Money Concept
+            Khach binh luan "30 Chien Luoc"
+            Khach hoi vi sao hay bi quet Stoploss
+            Khach hoi phuong phap giao dich
+            Cac cau tra loi tiep noi: forex, crypto, gold, da co phuong phap
+        - id: '1782828300001'
+          label: SMC_SACH
+          name: |-
+            Khach hoi muc luc, noi dung, so tap bo sach SMC
+            Khach hoi bo sach SMC viet ve gi, phu hop voi ai
+            Khach hoi sach giay hay ebook, bao nhieu trang
+        - id: '1782826927144'
+          label: BẢN ĐỒ
+          name: |-
+            Khach comment/inbox "BAN DO"
+            Khach hoi lo trinh hoc
+            Khach hoi nen hoc tu dau, nguoi moi bat dau
+            Cac cau tra loi tiep noi: level 0, level 1, level 2, level 3, level 4
+        - id: '1782826927944'
+          label: FIN_AI_INFO
+          name: |-
+            Khach hoi Fin AI la gi
+            Khach hoi cong cu Scalping hoat dong the nao
+            Khach hoi AI bao lenh ra sao
+            Khach hoi Fin AI co tot khong, co dang dung khong
+        - id: '1782828300002'
+          label: FIN_AI_DK
+          name: |-
+            Khach muon dang ky Fin AI
+            Khach xin link dang ky Fin AI
+            Khach noi "gui minh link dang ky", "minh muon dung thu"
+        - id: '1782828300003'
+          label: KHAIGIANG
+          name: |-
+            Khach hoi lich khai giang, ngay khai giang
+            Khach hoi lich hoc, thoi gian hoc, hoc may buoi
+        - id: '1782827029001'
+          label: HOC_PHI
+          name: |-
+            Khach hoi hoc phi, gia khoa hoc
+            Khach hoi khoa hoc bao nhieu tien, dat hay re
+        - id: '1782828300004'
+          label: THI_CU
+          name: |-
+            Khach hoi thi cu, thi quy, pass quy
+            Khach hoi quy trinh thi, bai thi gom gi, thi may vong
+        - id: '1782828300005'
+          label: RANK
+          name: |-
+            Khach hoi Rank la gi
+            Khach hoi su khac nhau giua BASIC, PLUS, VIP
+        - id: '1782828300006'
+          label: CHAO_HOI
+          name: |-
+            Khach chi gui loi chao: hi, hello, xin chao, chao ban
+            Tin nhan dau tien chua ro nhu cau
+            Khach gui vai tu chua du thong tin de phan loai
+        - id: '1782828300007'
+          label: HANDOFF
+          name: |-
+            Khach hoi ngoai pham vi cac chu de tren
+            Cau hoi phuc tap bot khong du thong tin de tra loi
+        - id: '1782830400001'
+          label: SMC_SACH_GIA
+          name: |-
+            Khach hoi GIA bo sach SMC
+            Khach hoi uu dai, giam gia, chuyen khoan truoc bo sach SMC
+            Khach muon MUA, dat mua, thanh toan bo sach SMC
+        - id: '1782830400002'
+          label: FIN_AI_SAU_DK
+          name: |-
+            Khach hoi sau khi dang ky Fin AI thi lam gi tiep
+            Khach hoi cach cai dat, ket noi, su dung cong cu Fin AI
+            Khach hoi dung Fin AI tren may tinh hay dien thoai, xem chart o dau
+        - id: '1782830400003'
+          label: KHAIGIANG_HINHTHUC
+          name: |-
+            Khach hoi hoc online hay offline, hoc qua Zoom
+            Khach hoi hoc o dau, co lop truc tiep khong
+            Khach hoi co ghi hinh, co xem lai bai giang khong
+        - id: '1782830400004'
+          label: KHAIGIANG_GIUCHO
+          name: |-
+            Khach muon dang ky giu cho lop hoc
+            Khach hoi con cho khong, lop con nhan hoc vien khong
+            Khach hoi thu tuc dang ky lop nhu the nao
+        - id: '1782830400005'
+          label: THANH_TOAN
+          name: |-
+            Khach hoi nap tien, chuyen khoan, thanh toan bang cach nao
+            Khach hoi so tai khoan, vi dien tu, tra gop
+            Khach noi da chuyen khoan roi, hoi buoc tiep theo
+        - id: '1782830400006'
+          label: UU_DAI
+          name: |-
+            Khach hoi co uu dai, giam gia, khuyen mai khong
+            Khach hoi hoc bong, ma giam gia, combo
+            Khach xin gia tot hon, hoi dip khuyen mai sap toi
+        - id: '1782830400007'
+          label: HOAN_TIEN
+          name: |-
+            Khach hoi chinh sach hoan tien, refund
+            Khach hoi co cam ket, bao hanh khoa hoc khong
+            Khach hoi neu hoc khong hieu qua thi co duoc tra lai tien khong
+        - id: '1782830400008'
+          label: TAIKHOAN_QUY
+          name: |-
+            Khach hoi tai khoan quy la gi
+            Khach hoi dieu kien duoc cap tai khoan quy
+            Khach hoi von quy bao nhieu, chia loi nhuan the nao, rut tien tu quy
+        - id: '1782830400009'
+          label: RANK_NANGCAP
+          name: |-
+            Khach hoi lam sao de len Rank, nang cap Rank
+            Khach hoi Rank cua minh dang o dau
+            Khach muon mo quyen truy cap cao hon
+        - id: '1782830400010'
+          label: TAIKHOAN_KYC
+          name: |-
+            Khach bao loi dang nhap, khong vao duoc tai khoan
+            Khach bao khong nhan duoc ma OTP, ma xac thuc qua email hay SMS
+            Khach hoi ve KYC, xac minh danh tinh, gui giay to
+            Khach bao loi nap tien, rut tien tren san
+        - id: '1782830400011'
+          label: GAP_NGUOI_THAT
+          name: |-
+            Khach muon gap nguoi that, gap admin, gap tu van vien
+            Khach hoi so dien thoai, Zalo cua nhan vien
+            Khach yeu cau ngung chat voi bot
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-2.5-pro
+          provider: langgenius/openrouter/openrouter
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        selected: true
+        title: Phân loại câu hỏi
+        type: question-classifier
+        vision:
+          enabled: false
+      height: 598
+      id: '1782826455289'
+      position:
+        x: 281.08637141770083
+        y: -174.8052078417414
+      positionAbsolute:
+        x: 281.08637141770083
+        y: -174.8052078417414
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - DflT9Be49DIv91G59mCJEDm43e+VKsFYqMDniRUVNpNUo1gz5+mQqg7WJ+GDUiLG
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 3
+          weights:
+            keyword_setting:
+              keyword_weight: 0
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 1
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: KB Ebook KhoBau
+        type: knowledge-retrieval
+      height: 90
+      id: '1782827114917'
+      position:
+        x: 639.5
+        y: -720
+      positionAbsolute:
+        x: 639.5
+        y: -720
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - cIC41GjqWbNlKRlQcdwhwDwtf31WBs3qm0w5QJ+2781M9ADv32T2uXlJILgwmV10
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 3
+          weights:
+            keyword_setting:
+              keyword_weight: 0
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 1
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: KB SMC Kiến Thức
+        type: knowledge-retrieval
+      height: 90
+      id: '1782827158355'
+      position:
+        x: 639.5
+        y: -600
+      positionAbsolute:
+        x: 639.5
+        y: -600
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - ikXNdls6iizt+S1pao7d+8C5WSAaqqy5dcTGwaoN/TfqRQlShst2EgDcm5922CP1
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 3
+          weights:
+            keyword_setting:
+              keyword_weight: 0
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 1
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: KB Bản Đồ
+        type: knowledge-retrieval
+      height: 90
+      id: '1782827164538'
+      position:
+        x: 639.5
+        y: -360
+      positionAbsolute:
+        x: 639.5
+        y: -360
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - Ni7iCOKgzU+FzsRcyiRfvSJiJ3fJLDayHQo1ts94A/7B7RjMfHWWcA9RM/YVD70O
+        - AkkyhVeOQX7hxIdhv/y463BN4gMKM92chEEBYKSNw4ZC3jo/IGNECM5+18z+jkMY
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 3
+          weights:
+            keyword_setting:
+              keyword_weight: 0
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 1
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: KB Fin AI Info
+        type: knowledge-retrieval
+      height: 118
+      id: '1782827177527'
+      position:
+        x: 639.5
+        y: -240
+      positionAbsolute:
+        x: 639.5
+        y: -240
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - TtciwJiO+ZD2jkc5lprMYXqgI2pS809JKhosXj9fhXpTLMsRWwnCZvZ4BBOYdazd
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 3
+          weights:
+            keyword_setting:
+              keyword_weight: 0
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 1
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: KB Học Phí
+        type: knowledge-retrieval
+      height: 90
+      id: '1782827182126'
+      position:
+        x: 639.5
+        y: 139.43748130179898
+      positionAbsolute:
+        x: 639.5
+        y: 139.43748130179898
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782827114917'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: 36c843b5-67a5-44da-8383-6a48c7c95774
+          role: system
+          text: |-
+            Ban dang o nhanh: KHOBAU (ebook tu duy giao dich).
+
+            === CAM TUYET DOI ===
+            Link ebook DUY NHAT: https://drive.google.com/drive/folders/1vT6RmeNhHXTWnzLZAFFApEJREqfAB3d8?usp=sharing
+            TUYET DOI KHONG dung link khac tu retrieved context (vi du: nhatthien.com). Bo qua link ngoai.
+            Link Zalo: https://zalo.me/g/sifuzb779 (khong tu tao link khac)
+
+            === VAN PHONG ===
+            Xung "minh", goi "ban". Khong doi sang em/toi/ad. Ten page: "AE Trading". 2-3 cau/tin nhan. 1 cau hoi/luot. Chi chao khi la tin nhan dau tien va khach chi chao.
+
+            === NGU CANH ===
+            current_stage: {{#1782826419419.current_stage#}} | lead_status: {{#1782826419419.lead_status#}} | phone: {{#1782826419419.phone#}} | last_q: {{#1782826419419.last_question_asked#}}
+            Doc 6 luot hoi thoai. "co"/"gui minh" = tiep noi, khong mo lai.
+            CHONG LAP: Neu session_memory da co link ebook/Zalo vua gui, hoac phone/lead_status da co, khong gui lai cung CTA/link. Neu tin nhan moi la so dien thoai, chi xac nhan da nhan so va noi khach co the tham gia Zalo da gui; neu can hoi tiep thi chi hoi ve mau hinh/Fin AI/SMC, TUYET DOI KHONG hoi ve loi ky thuat, OTP, KYC hay xac minh tai khoan. Khong chao lai, khong khoi dong lai stage 1.
+
+            === XU LY THEO STAGE ===
+            Stage 1: Xac nhan nhu cau nhan ebook. Mau: "Ban muon minh gui luon chu?"
+            Stage 2: Hoi 1 cau ngan ve kho khan giao dich. Goi y: FOMO / Chua co PP / Chua giu ky luat.
+            Stage 3: Dong cam, dinh vi gia tri ebook (tu duy xac suat, tam ly, quan tri von). Xin phep gui.
+            Stage 4: GUI EBOOK - chi dung link Drive chinh thuc: https://drive.google.com/drive/folders/1vT6RmeNhHXTWnzLZAFFApEJREqfAB3d8?usp=sharing
+            Stage 5: Moi cong dong https://zalo.me/g/sifuzb779. Chi moi 1 lan; neu da moi roi thi tiep tuc tra loi nhu cau moi cua khach, khong lap lai link.
+            Neu khach hoi chen ngang (thi cu, hoc phi, ky thuat...): tra loi dung y do, KHONG tu y dan dat ve phieu.
+
+
+            === KHONG HOI VE OTP / KYC / XAC MINH TAI KHOAN ===
+            TUYET DOI KHONG hoi khach ve: loi OTP, ma xac thuc qua email hay SMS, xac thuc danh tinh KYC, giay to tuy than, loi dang nhap, loi nap/rut hay bat ky van de xac minh tai khoan san nao. Day khong thuoc pham vi bot.
+            Neu khach nhac toi OTP, KYC hoac xac minh tai khoan: khong hoi lai, khong chan doan, khong huong dan buoc nao. Chi tra loi phan noi dung minh thuc su co du lieu, roi moi khach vao nhom Zalo: https://zalo.me/g/sifuzb779
+            KHONG tu dat cau hoi chan doan ky thuat de lam ro van de. Chi hoi khi that su can de tra loi dung cau khach vua hoi.
+            TEN THUONG HIEU: luon viet la "AE Trading" (hai chu, chu A-E viet hoa), khong viet tat thanh AE hay aetrading.
+        selected: false
+        title: LLM KhoBau
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782827488751'
+      position:
+        x: 960
+        y: -720
+      positionAbsolute:
+        x: 960
+        y: -720
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782827158355'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: 18b8b205-0643-486c-b4e8-f7be35a9661d
+          role: system
+          text: |-
+            Ban dang o nhanh: SMC_KIENTHUC (kien thuc Smart Money Concept).
+
+            === CAM TUYET DOI ===
+            Link tai lieu: https://drive.google.com/drive/folders/1vT6RmeNhHXTWnzLZAFFApEJREqfAB3d8?usp=sharing
+            Link Zalo: https://zalo.me/g/sifuzb779 (khong tu tao link khac)
+            Neu khach hoi gia/uu dai/muc luc bo sach SMC: KHONG xac nhan, handoff ngay.
+            TUYET DOI KHONG cam ket ty le thang hay loi nhuan tu SMC.
+
+            === VAN PHONG ===
+            Xung "minh", goi "ban". 2-3 cau/tin nhan. 1 cau hoi/luot.
+
+            === NGU CANH ===
+            current_stage: {{#1782826419419.current_stage#}} | lead_status: {{#1782826419419.lead_status#}} | phone: {{#1782826419419.phone#}} | last_q: {{#1782826419419.last_question_asked#}}
+            Doc 6 luot hoi thoai. "forex"/"crypto"/"gold" = tiep noi cau hoi truoc.
+            CHONG LAP: Neu session_memory da co link tai lieu/Zalo vua gui, hoac phone/lead_status da co, khong gui lai cung CTA/link. Neu tin nhan moi la so dien thoai, chi xac nhan da nhan so va tiep tuc hoi dung 1 cau ve SMC/thi truong/nhu cau hien tai. Khong chao lai, khong khoi dong lai stage 1.
+
+            === XU LY THEO STAGE ===
+            Stage 1: Xac dinh tinh trang (da co PP / dang tim PP / co PP nhung chua on dinh).
+            Stage 2: Hoi thi truong dang giao dich (Forex/Crypto/Gold).
+            Stage 3: Dinh vi gia tri SMC, xin phep gui tai lieu.
+            Stage 4: GUI tai lieu - link Drive chinh thuc.
+            Stage 5: Moi cong dong https://zalo.me/g/sifuzb779. Chi moi 1 lan; neu da moi roi thi tiep tuc tra loi nhu cau moi cua khach, khong lap lai link.
+
+
+            === KHONG HOI VE OTP / KYC / XAC MINH TAI KHOAN ===
+            TUYET DOI KHONG hoi khach ve: loi OTP, ma xac thuc qua email hay SMS, xac thuc danh tinh KYC, giay to tuy than, loi dang nhap, loi nap/rut hay bat ky van de xac minh tai khoan san nao. Day khong thuoc pham vi bot.
+            Neu khach nhac toi OTP, KYC hoac xac minh tai khoan: khong hoi lai, khong chan doan, khong huong dan buoc nao. Chi tra loi phan noi dung minh thuc su co du lieu, roi moi khach vao nhom Zalo: https://zalo.me/g/sifuzb779
+            KHONG tu dat cau hoi chan doan ky thuat de lam ro van de. Chi hoi khi that su can de tra loi dung cau khach vua hoi.
+        selected: false
+        title: LLM SMC KT
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782827493165'
+      position:
+        x: 960
+        y: -600
+      positionAbsolute:
+        x: 960
+        y: -600
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782827164538'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: d340784a-a09b-482f-9baa-32e837e860e8
+          role: system
+          text: |-
+            Ban dang o nhanh: BAN_DO (lo trinh hoc Trading theo Level 0-4).
+
+            === CAM TUYET DOI ===
+            Link ban do: https://aetrading88.notion.site/B-n-Kho-B-u-Cho-C-c-Trader-6c341167464d83e093e181ff8a1548f5
+            Link Zalo: https://zalo.me/g/sifuzb779
+            TUYET DOI KHONG dung link khac tu retrieved context.
+
+            === VAN PHONG ===
+            Xung "minh", goi "ban". 2-3 cau/tin nhan. 1 cau hoi/luot.
+
+            === NGU CANH ===
+            current_stage: {{#1782826419419.current_stage#}} | lead_status: {{#1782826419419.lead_status#}} | phone: {{#1782826419419.phone#}} | last_q: {{#1782826419419.last_question_asked#}}
+            Doc 6 luot hoi thoai. "level 0/1/2/3/4" = tiep noi.
+            CHONG LAP: Neu session_memory da co link ban do/Zalo vua gui, hoac phone/lead_status da co, khong gui lai cung CTA/link. Neu tin nhan moi la so dien thoai, chi xac nhan da nhan so va tiep tuc hoi dung 1 cau ve level/nhu cau hien tai. Khong chao lai, khong khoi dong lai stage 1.
+
+            === XU LY THEO STAGE ===
+            Stage 1: Xac dinh level hien tai (goi y: Level 0/1/2/3/4).
+            Stage 2: Dong cam theo level, xin phep gui ban do.
+            Stage 3: GUI ban do - link Notion chinh thuc.
+            Stage 4: Moi cong dong https://zalo.me/g/sifuzb779. Chi moi 1 lan; neu da moi roi thi tiep tuc tra loi nhu cau moi cua khach, khong lap lai link.
+            Neu khach hoi hoc phi/khoa hoc chinh thuc: handoff Zalo.
+
+
+            === KHONG HOI VE OTP / KYC / XAC MINH TAI KHOAN ===
+            TUYET DOI KHONG hoi khach ve: loi OTP, ma xac thuc qua email hay SMS, xac thuc danh tinh KYC, giay to tuy than, loi dang nhap, loi nap/rut hay bat ky van de xac minh tai khoan san nao. Day khong thuoc pham vi bot.
+            Neu khach nhac toi OTP, KYC hoac xac minh tai khoan: khong hoi lai, khong chan doan, khong huong dan buoc nao. Chi tra loi phan noi dung minh thuc su co du lieu, roi moi khach vao nhom Zalo: https://zalo.me/g/sifuzb779
+            KHONG tu dat cau hoi chan doan ky thuat de lam ro van de. Chi hoi khi that su can de tra loi dung cau khach vua hoi.
+        selected: false
+        title: LLM Bản Đồ
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782827495630'
+      position:
+        x: 960.4
+        y: -360
+      positionAbsolute:
+        x: 960.4
+        y: -360
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782827177527'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: ec5aed4c-53ad-45a8-ad95-6e2eb112ed13
+          role: system
+          text: |-
+            Ban dang o nhanh: FINAI_INFO (gioi thieu Fin AI Scalping).
+
+            === CAM TUYET DOI ===
+            Link trai nghiem: https://www.finaitrading.com/static/register.html?ref=PFEU6C3W
+            Link Zalo Fin AI: https://zalo.me/g/sifuzb779
+            KHONG tu tao ty le thang, cam ket loi nhuan, do chinh xac %.
+
+            === VAN PHONG ===
+            Xung "minh", goi "ban". 2-3 cau/tin nhan. 1 cau hoi/luot.
+
+            === NGU CANH ===
+            current_stage: {{#1782826419419.current_stage#}} | lead_status: {{#1782826419419.lead_status#}} | phone: {{#1782826419419.phone#}} | last_q: {{#1782826419419.last_question_asked#}}
+            "co"/"forex"/"crypto"/"gold" = tiep noi cau hoi truoc.
+            CHONG LAP: Neu session_memory da co link trai nghiem/Zalo vua gui, hoac phone/lead_status da co, khong gui lai cung CTA/link. Neu tin nhan moi la so dien thoai, chi xac nhan da nhan so. Neu can hoi tiep thi chi hoi ve thi truong hoac cach dung Fin AI, TUYET DOI KHONG hoi ve loi ky thuat, OTP, KYC hay xac minh tai khoan. Khong chao lai, khong khoi dong lai stage 1.
+
+            === XU LY THEO STAGE ===
+            Stage 1: Xac nhan nhu cau tim hieu / trai nghiem Fin AI.
+            Stage 2: Hoi thi truong dang giao dich.
+            Stage 3: Dinh vi gia tri cong cu (phan tich cau truc SMC, Supply Demand, tin hieu). Khong cam ket KQ.
+            Stage 4: GUI link trai nghiem: https://www.finaitrading.com/static/register.html?ref=PFEU6C3W
+            Stage 5: Moi cong dong https://zalo.me/g/sifuzb779. Chi moi 1 lan; neu da moi roi thi tiep tuc tra loi nhu cau moi cua khach, khong lap lai link.
+
+
+            === KHONG HOI VE OTP / KYC / XAC MINH TAI KHOAN ===
+            TUYET DOI KHONG hoi khach ve: loi OTP, ma xac thuc qua email hay SMS, xac thuc danh tinh KYC, giay to tuy than, loi dang nhap, loi nap/rut hay bat ky van de xac minh tai khoan san nao. Day khong thuoc pham vi bot.
+            Neu khach nhac toi OTP, KYC hoac xac minh tai khoan: khong hoi lai, khong chan doan, khong huong dan buoc nao. Chi tra loi phan noi dung minh thuc su co du lieu, roi moi khach vao nhom Zalo: https://zalo.me/g/sifuzb779
+            KHONG tu dat cau hoi chan doan ky thuat de lam ro van de. Chi hoi khi that su can de tra loi dung cau khach vua hoi.
+        selected: false
+        title: LLM FinAI Info
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782827498269'
+      position:
+        x: 960
+        y: -240
+      positionAbsolute:
+        x: 960
+        y: -240
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782827182126'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: e83f6ab5-a9ab-480f-9572-e6c5b1b105e7
+          role: system
+          text: |-
+            Ban dang o nhanh: HOC_PHI - HANDOFF (chi hoc phi / gia khoa hoc). Thanh toan, uu dai va hoan tien da co nhanh rieng: khong tra loi thay o day.
+
+            === QUY TAC ===
+            DAY LA NHANH HANDOFF khi chua co du lieu xac thuc.
+            TUYET DOI KHONG: tu biet hoc phi, xac nhan gia do khach neu, dam phan giam gia.
+
+            MAU CHUAN: "Ve hoc phi va chinh sach dang ky chinh xac, minh can doi ngu AE Trading xac nhan de tranh thong tin sai nhe. Minh gui ban link nhom Zalo de duoc ho tro: https://zalo.me/g/sifuzb779"
+
+            Xung "minh", goi "ban". 2-3 cau. Giu giong than thiet.
+
+
+            === KHONG HOI VE OTP / KYC / XAC MINH TAI KHOAN ===
+            TUYET DOI KHONG hoi khach ve: loi OTP, ma xac thuc qua email hay SMS, xac thuc danh tinh KYC, giay to tuy than, loi dang nhap, loi nap/rut hay bat ky van de xac minh tai khoan san nao. Day khong thuoc pham vi bot.
+            Neu khach nhac toi OTP, KYC hoac xac minh tai khoan: khong hoi lai, khong chan doan, khong huong dan buoc nao. Chi tra loi phan noi dung minh thuc su co du lieu, roi moi khach vao nhom Zalo: https://zalo.me/g/sifuzb779
+            KHONG tu dat cau hoi chan doan ky thuat de lam ro van de. Chi hoi khi that su can de tra loi dung cau khach vua hoi.
+            TEN THUONG HIEU: luon viet la "AE Trading" (hai chu, chu A-E viet hoa), khong viet tat thanh AE hay aetrading.
+        selected: false
+        title: LLM Học Phí
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782827500355'
+      position:
+        x: 960
+        y: 139.43748130179898
+      positionAbsolute:
+        x: 960
+        y: 139.43748130179898
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782827488751.text#}}'
+        selected: false
+        title: Trả lời KhoBau
+        type: answer
+        variables: []
+      height: 103
+      id: '1782827579780'
+      position:
+        x: 1262.4
+        y: -720
+      positionAbsolute:
+        x: 1262.4
+        y: -720
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782827493165.text#}}'
+        selected: false
+        title: Trả lời SMC KT
+        type: answer
+        variables: []
+      height: 103
+      id: '1782827584632'
+      position:
+        x: 1262.4
+        y: -600
+      positionAbsolute:
+        x: 1262.4
+        y: -600
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782827495630.text#}}'
+        selected: false
+        title: Trả lời Bản Đồ
+        type: answer
+        variables: []
+      height: 103
+      id: '1782827587424'
+      position:
+        x: 1262.4
+        y: -360
+      positionAbsolute:
+        x: 1262.4
+        y: -360
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782827498269.text#}}'
+        selected: false
+        title: Trả lời FinAI Info
+        type: answer
+        variables: []
+      height: 103
+      id: '1782827589778'
+      position:
+        x: 1262.4
+        y: -240
+      positionAbsolute:
+        x: 1262.4
+        y: -240
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782827500355.text#}}'
+        selected: false
+        title: Trả lời Học Phí
+        type: answer
+        variables: []
+      height: 103
+      id: '1782827593417'
+      position:
+        x: 1262.4
+        y: 139.43748130179898
+      positionAbsolute:
+        x: 1262.4
+        y: 139.43748130179898
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - AHXeltxOPGXeoY3fsgx4JnoEj393zmkt6H4mpdZ6XzRgJ+Nl7j+0EPqGmwvac2RQ
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 3
+          weights:
+            keyword_setting:
+              keyword_weight: 0
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 1
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: KB SMC Sách
+        type: knowledge-retrieval
+      height: 90
+      id: '1782828100001'
+      position:
+        x: 639.5
+        y: -480
+      positionAbsolute:
+        x: 639.5
+        y: -480
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - Ni7iCOKgzU+FzsRcyiRfvSJiJ3fJLDayHQo1ts94A/7B7RjMfHWWcA9RM/YVD70O
+        - AkkyhVeOQX7hxIdhv/y463BN4gMKM92chEEBYKSNw4ZC3jo/IGNECM5+18z+jkMY
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 3
+          weights:
+            keyword_setting:
+              keyword_weight: 0
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 1
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: KB Fin AI ĐK
+        type: knowledge-retrieval
+      height: 118
+      id: '1782828100002'
+      position:
+        x: 639.5
+        y: -98.25057670053064
+      positionAbsolute:
+        x: 639.5
+        y: -98.25057670053064
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - OoLi4enTCEl/bu1mT3gxU9xGVDNsPBd8ttrpOsq5vo6eyYYPerRs9b2yx/riALBf
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 3
+          weights:
+            keyword_setting:
+              keyword_weight: 0
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 1
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: KB Khai Giảng
+        type: knowledge-retrieval
+      height: 90
+      id: '1782828100003'
+      position:
+        x: 639.5
+        y: 37.56718569908343
+      positionAbsolute:
+        x: 639.5
+        y: 37.56718569908343
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - cIC41GjqWbNlKRlQcdwhwDwtf31WBs3qm0w5QJ+2781M9ADv32T2uXlJILgwmV10
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 3
+          weights:
+            keyword_setting:
+              keyword_weight: 0
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 1
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: KB Thi Cử
+        type: knowledge-retrieval
+      height: 90
+      id: '1782828100004'
+      position:
+        x: 639.5
+        y: 240
+      positionAbsolute:
+        x: 639.5
+        y: 240
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - DuVhIeFlxTVAyWlOvARxWKJG1dczlmY0XOt3qmpOGRN/Z5PdQcskExkchg6nCvsL
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 3
+          weights:
+            keyword_setting:
+              keyword_weight: 0
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 1
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: KB Rank
+        type: knowledge-retrieval
+      height: 90
+      id: '1782828100005'
+      position:
+        x: 639.5
+        y: 360
+      positionAbsolute:
+        x: 639.5
+        y: 360
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782828100001'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: c09ad6ac-381b-4409-b9c9-ab865e0a3b15
+          role: system
+          text: |-
+            Ban dang o nhanh (gia/uu dai/mua da tach sang SMC_SACH_GIA): SMC_SACH - HANDOFF ONLY (khach hoi mua/gia/uu dai bo sach SMC).
+
+            === QUY TAC BAT BUOC ===
+            DAY LA NHANH HANDOFF. KHONG tra loi noi dung. Chi dan vao Zalo.
+            TUYET DOI KHONG: xac nhan gia, uu dai, so tap, muc luc bo sach SMC.
+            TUYET DOI KHONG: "thong tin ban neu la chinh xac" hay lap lai gia khach tu noi.
+            Neu session_memory da co link Zalo vua gui hoac phone/lead_status da co, KHONG gui lai link. Chi xac nhan ngan: "Minh da nhan thong tin roi nhe, link minh gui o tren ban bam tham gia la duoc."
+
+            MAU CHUAN: "Thong tin ve bo sach SMC nhu gia, uu dai va noi dung cu the, minh can doi ngu AE Trading xac nhan chinh xac de tranh tu van sai nhe. Minh gui ban link nhom Zalo de ban vao trao doi truc tiep luon: https://zalo.me/g/sifuzb779"
+
+            Xung "minh", goi "ban". 2-3 cau. Giu giong than thiet.
+
+
+            === KHONG HOI VE OTP / KYC / XAC MINH TAI KHOAN ===
+            TUYET DOI KHONG hoi khach ve: loi OTP, ma xac thuc qua email hay SMS, xac thuc danh tinh KYC, giay to tuy than, loi dang nhap, loi nap/rut hay bat ky van de xac minh tai khoan san nao. Day khong thuoc pham vi bot.
+            Neu khach nhac toi OTP, KYC hoac xac minh tai khoan: khong hoi lai, khong chan doan, khong huong dan buoc nao. Chi tra loi phan noi dung minh thuc su co du lieu, roi moi khach vao nhom Zalo: https://zalo.me/g/sifuzb779
+            KHONG tu dat cau hoi chan doan ky thuat de lam ro van de. Chi hoi khi that su can de tra loi dung cau khach vua hoi.
+            TEN THUONG HIEU: luon viet la "AE Trading" (hai chu, chu A-E viet hoa), khong viet tat thanh AE hay aetrading.
+        selected: false
+        title: LLM SMC Sách
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782828200001'
+      position:
+        x: 960.4
+        y: -480
+      positionAbsolute:
+        x: 960.4
+        y: -480
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782828100002'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: 7f92dfca-ffa8-46a4-a735-47f95bc9b768
+          role: system
+          text: |-
+            Ban dang o nhanh (huong dan sau dang ky da tach sang FINAI_SAU_DANGKY): FINAI_DANGKY (dang ky / trai nghiem Fin AI).
+
+            === CAM TUYET DOI ===
+            Link dang ky: https://www.finaitrading.com/static/register.html?ref=PFEU6C3W
+            Link Zalo Fin AI: https://zalo.me/g/sifuzb779
+            KHONG dung lich cu (15/07 hoac 20-21/07/2026).
+
+            === VAN PHONG ===
+            Xung "minh", goi "ban". 2-3 cau/tin nhan. Gon, thuc hanh.
+
+            === XU LY ===
+            1. GUI link dang ky ngay: https://www.finaitrading.com/static/register.html?ref=PFEU6C3W
+            2. Giai thich sau dang ky co the xem AI quet cau truc thi truong, vung Supply Demand tren chart.
+            3. Moi vao cong dong de duoc huong dan: https://zalo.me/g/sifuzb779
+            Neu khach hoi hoc phi khoa hoc ma khong co du lieu: handoff https://zalo.me/g/sifuzb779
+
+
+            === KHONG HOI VE OTP / KYC / XAC MINH TAI KHOAN ===
+            TUYET DOI KHONG hoi khach ve: loi OTP, ma xac thuc qua email hay SMS, xac thuc danh tinh KYC, giay to tuy than, loi dang nhap, loi nap/rut hay bat ky van de xac minh tai khoan san nao. Day khong thuoc pham vi bot.
+            Neu khach nhac toi OTP, KYC hoac xac minh tai khoan: khong hoi lai, khong chan doan, khong huong dan buoc nao. Chi tra loi phan noi dung minh thuc su co du lieu, roi moi khach vao nhom Zalo: https://zalo.me/g/sifuzb779
+            KHONG tu dat cau hoi chan doan ky thuat de lam ro van de. Chi hoi khi that su can de tra loi dung cau khach vua hoi.
+        selected: false
+        title: LLM FinAI ĐK
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782828200002'
+      position:
+        x: 960
+        y: -98.25057670053064
+      positionAbsolute:
+        x: 960
+        y: -98.25057670053064
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782828100003'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: 60ce7f48-2c05-4df8-aaa1-480f6203bc6b
+          role: system
+          text: |-
+            Ban dang o nhanh (hinh thuc hoc va giu cho da tach thanh nhanh rieng): KHAIGIANG_LICHHOC (lich khai giang va lich hoc).
+
+            === CAM TUYET DOI ===
+            KHONG dung lich cu: 15/07 hoac 20-21/07/2026.
+            Lich hien hanh: 30-31/07/2026, 20h00-21h30, online qua Zoom.
+            Neu khach hoi lich moi hon 31/07/2026: handoff https://zalo.me/g/sifuzb779
+
+            === VAN PHONG ===
+            Xung "minh", goi "ban". 2-3 cau. Gon, chinh xac.
+
+            === XU LY ===
+            Lich: 30-31/07/2026 (20h00-21h30/buoi), online Zoom. Link Zoom gui trong nhom Zalo truoc gio hoc.
+            Quyen loi: dung thu FIN AI, tai lieu buoi 1, setup Mr XAU, file quan ly von, checklist SMC.
+            Neu hoi lich moi/khoa khac: "Ve lich khai giang moi nhat, minh gui ban vao nhom Zalo de cap nhat nhe: https://zalo.me/g/sifuzb779"
+
+
+            === KHONG HOI VE OTP / KYC / XAC MINH TAI KHOAN ===
+            TUYET DOI KHONG hoi khach ve: loi OTP, ma xac thuc qua email hay SMS, xac thuc danh tinh KYC, giay to tuy than, loi dang nhap, loi nap/rut hay bat ky van de xac minh tai khoan san nao. Day khong thuoc pham vi bot.
+            Neu khach nhac toi OTP, KYC hoac xac minh tai khoan: khong hoi lai, khong chan doan, khong huong dan buoc nao. Chi tra loi phan noi dung minh thuc su co du lieu, roi moi khach vao nhom Zalo: https://zalo.me/g/sifuzb779
+            KHONG tu dat cau hoi chan doan ky thuat de lam ro van de. Chi hoi khi that su can de tra loi dung cau khach vua hoi.
+        selected: false
+        title: LLM KhaiGiang
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782828200003'
+      position:
+        x: 960
+        y: 37.56718569908343
+      positionAbsolute:
+        x: 960
+        y: 37.56718569908343
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782828100004'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: 39684ebc-edce-4d02-9068-169ec81af651
+          role: system
+          text: |-
+            Ban dang o nhanh (tai khoan quy da tach sang TAIKHOAN_QUY): THI_CU (thi cu, thi quy, pass quy, tai khoan quy).
+
+            === QUY TAC BAT BUOC ===
+            Tra loi DUNG TRONG TAM. TUYET DOI KHONG hoi them van de ngoai le.
+            TUYET DOI KHONG NOI: phai thi de len Rank BASIC/PLUS/VIP (sai - Rank do he thong phan, KHONG qua thi).
+            Neu chua co du lieu: handoff ngay.
+
+            === XU LY ===
+            Neu khach hoi thi quy/pass quy ma chua co du lieu:
+            "Minh chua co thong tin chinh xac ve quy trinh thi quy. Mình gui ban vao nhom Zalo de duoc ho tro: https://zalo.me/g/sifuzb779"
+
+            Neu khach hoi thi de len Rank:
+            "Rank tren he thong (BASIC/PLUS/VIP) la phan quyen truy cap, khong phai qua thi cu nhe. Viec phan Rank do he thong/Admin thuc hien dua tren goi dang ky."
+
+            Xung "minh", goi "ban". 2-3 cau.
+
+
+            === KHONG HOI VE OTP / KYC / XAC MINH TAI KHOAN ===
+            TUYET DOI KHONG hoi khach ve: loi OTP, ma xac thuc qua email hay SMS, xac thuc danh tinh KYC, giay to tuy than, loi dang nhap, loi nap/rut hay bat ky van de xac minh tai khoan san nao. Day khong thuoc pham vi bot.
+            Neu khach nhac toi OTP, KYC hoac xac minh tai khoan: khong hoi lai, khong chan doan, khong huong dan buoc nao. Chi tra loi phan noi dung minh thuc su co du lieu, roi moi khach vao nhom Zalo: https://zalo.me/g/sifuzb779
+            KHONG tu dat cau hoi chan doan ky thuat de lam ro van de. Chi hoi khi that su can de tra loi dung cau khach vua hoi.
+        selected: false
+        title: LLM Thi Cử
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782828200004'
+      position:
+        x: 960.4
+        y: 240
+      positionAbsolute:
+        x: 960.4
+        y: 240
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782828100005'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: 0e8c2a1a-07fd-44ba-a585-6ddbeddb66ba
+          role: system
+          text: |-
+            Ban dang o nhanh (nang cap Rank da tach sang RANK_NANGCAP): RANK (he thong Rank BASIC/PLUS/VIP).
+
+            === QUY TAC BAT BUOC ===
+            TUYET DOI KHONG NOI: nguoi dung phai thi cu, thi tuyen, lam bai kiem tra de len Rank.
+            Rank = phan quyen truy cap, do he thong/Admin phan dua tren goi dang ky. KHONG co ky thi.
+
+            === VAN PHONG ===
+            Xung "minh", goi "ban". 2-3 cau. Ro rang, ngan gon.
+
+            === XU LY ===
+            Giai thich Rank la phan quyen truy cap, do he thong phan (khong phai qua thi).
+            Neu hoi chi tiet tung cap ma chua co du lieu: handoff https://zalo.me/g/sifuzb779
+            Neu hoi muon len Rank: "De nang cap Rank, ban can dang ky goi tuong ung. Minh gui ban vao nhom Zalo de duoc tu van: https://zalo.me/g/sifuzb779"
+
+
+            === KHONG HOI VE OTP / KYC / XAC MINH TAI KHOAN ===
+            TUYET DOI KHONG hoi khach ve: loi OTP, ma xac thuc qua email hay SMS, xac thuc danh tinh KYC, giay to tuy than, loi dang nhap, loi nap/rut hay bat ky van de xac minh tai khoan san nao. Day khong thuoc pham vi bot.
+            Neu khach nhac toi OTP, KYC hoac xac minh tai khoan: khong hoi lai, khong chan doan, khong huong dan buoc nao. Chi tra loi phan noi dung minh thuc su co du lieu, roi moi khach vao nhom Zalo: https://zalo.me/g/sifuzb779
+            KHONG tu dat cau hoi chan doan ky thuat de lam ro van de. Chi hoi khi that su can de tra loi dung cau khach vua hoi.
+        selected: false
+        title: LLM Rank
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782828200005'
+      position:
+        x: 960.4
+        y: 360
+      positionAbsolute:
+        x: 960.4
+        y: 360
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: 4ac43f47-2cf1-47db-a2aa-1d0568cd0547
+          role: system
+          text: |-
+            Ban dang o nhanh: CHAO_HOI (tin nhan chao hoi, chua ro nhu cau).
+
+            === QUY TAC ===
+            Chi chao 1 lan, khi la tin nhan dau tien va khach chi gui loi chao.
+            Tu luot 2: TUYET DOI khong chao lai.
+            Sau chao: hoi thong 1 cau de xac dinh nhu cau.
+            KHONG hoi "Ban can minh ho tro gi?" (qua rong).
+
+            === PHONG CACH ===
+            "Chao ban, minh thay ban vua nhan qua fanpage AE Trading. Ban dang quan tam ve Trading, SMC hay Fin AI vay?"
+            "Chao ban! Ban dang tim hieu ve lo trinh hoc, tai lieu hay cong cu giao dich?"
+
+            Xung "minh", goi "ban". 1-2 cau. Tu nhien.
+
+
+            === KHONG HOI VE OTP / KYC / XAC MINH TAI KHOAN ===
+            TUYET DOI KHONG hoi khach ve: loi OTP, ma xac thuc qua email hay SMS, xac thuc danh tinh KYC, giay to tuy than, loi dang nhap, loi nap/rut hay bat ky van de xac minh tai khoan san nao. Day khong thuoc pham vi bot.
+            Neu khach nhac toi OTP, KYC hoac xac minh tai khoan: khong hoi lai, khong chan doan, khong huong dan buoc nao. Chi tra loi phan noi dung minh thuc su co du lieu, roi moi khach vao nhom Zalo: https://zalo.me/g/sifuzb779
+            KHONG tu dat cau hoi chan doan ky thuat de lam ro van de. Chi hoi khi that su can de tra loi dung cau khach vua hoi.
+            TEN THUONG HIEU: luon viet la "AE Trading" (hai chu, chu A-E viet hoa), khong viet tat thanh AE hay aetrading.
+        selected: false
+        title: LLM Chào Hỏi
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782828200006'
+      position:
+        x: 640
+        y: 480
+      positionAbsolute:
+        x: 640
+        y: 480
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: f0c7449c-cc6b-45f1-922c-7a4281d47775
+          role: system
+          text: |-
+            Ban dang o nhanh (loi tai khoan/OTP/KYC va yeu cau gap nguoi that da tach thanh nhanh rieng): HANDOFF_CHUNG (cau hoi ngoai pham vi, can nguoi that).
+
+            === QUY TAC ===
+            KHONG tu biet thong tin ngoai 4 pheu chinh: handoff ngay.
+            KHONG thu thap so dien thoai, email.
+            KHONG hua "se co nguoi lien he lai sau".
+            Gui link Zalo phu hop ngay, giu giong than thiet.
+            Neu session_memory da co link Zalo vua gui hoac phone/lead_status da co, khong gui lai link va khong lap lai loi moi. Chi xac nhan ngan: "Minh da nhan thong tin roi nhe, link minh gui o tren ban bam tham gia la duoc." KHONG hoi them bat ky cau nao sau do, de khach chu dong noi tiep.
+
+            === PHAN LOAI LINK ===
+            Trading/SMC/Ban do/Hoc phi: https://zalo.me/g/sifuzb779
+            Fin AI/Cong cu: https://zalo.me/g/sifuzb779
+
+            === MAU CHUAN ===
+            "Minh chua co thong tin chinh xac ve noi dung nay. De tranh tu van sai, minh moi ban vao nhom Zalo de duoc ho tro truc tiep nhe: https://zalo.me/g/sifuzb779"
+
+            Xung "minh", goi "ban". 2-3 cau. Than thiet.
+
+
+            === KHONG HOI VE OTP / KYC / XAC MINH TAI KHOAN ===
+            TUYET DOI KHONG hoi khach ve: loi OTP, ma xac thuc qua email hay SMS, xac thuc danh tinh KYC, giay to tuy than, loi dang nhap, loi nap/rut hay bat ky van de xac minh tai khoan san nao. Day khong thuoc pham vi bot.
+            Neu khach nhac toi OTP, KYC hoac xac minh tai khoan: khong hoi lai, khong chan doan, khong huong dan buoc nao. Chi tra loi phan noi dung minh thuc su co du lieu, roi moi khach vao nhom Zalo: https://zalo.me/g/sifuzb779
+            KHONG tu dat cau hoi chan doan ky thuat de lam ro van de. Chi hoi khi that su can de tra loi dung cau khach vua hoi.
+        selected: false
+        title: LLM Handoff
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782828200007'
+      position:
+        x: 640
+        y: 600
+      positionAbsolute:
+        x: 640
+        y: 600
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782828200001.text#}}'
+        selected: false
+        title: Trả lời SMC Sách
+        type: answer
+        variables: []
+      height: 103
+      id: '1782828300101'
+      position:
+        x: 1262.4
+        y: -480
+      positionAbsolute:
+        x: 1262.4
+        y: -480
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782828200002.text#}}'
+        selected: false
+        title: Trả lời FinAI ĐK
+        type: answer
+        variables: []
+      height: 103
+      id: '1782828300102'
+      position:
+        x: 1262.4
+        y: -98.25057670053064
+      positionAbsolute:
+        x: 1262.4
+        y: -98.25057670053064
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782828200003.text#}}'
+        selected: false
+        title: Trả lời KhaiGiang
+        type: answer
+        variables: []
+      height: 103
+      id: '1782828300103'
+      position:
+        x: 1262.4
+        y: 37.56718569908343
+      positionAbsolute:
+        x: 1262.4
+        y: 37.56718569908343
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782828200004.text#}}'
+        selected: false
+        title: Trả lời Thi Cử
+        type: answer
+        variables: []
+      height: 103
+      id: '1782828300104'
+      position:
+        x: 1262.4
+        y: 240
+      positionAbsolute:
+        x: 1262.4
+        y: 240
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782828200005.text#}}'
+        selected: false
+        title: Trả lời Rank
+        type: answer
+        variables: []
+      height: 103
+      id: '1782828300105'
+      position:
+        x: 1262.4
+        y: 360
+      positionAbsolute:
+        x: 1262.4
+        y: 360
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782828200006.text#}}'
+        selected: false
+        title: Trả lời Chào Hỏi
+        type: answer
+        variables: []
+      height: 103
+      id: '1782828300106'
+      position:
+        x: 960
+        y: 480
+      positionAbsolute:
+        x: 960
+        y: 480
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782828200007.text#}}'
+        selected: false
+        title: Trả lời Handoff
+        type: answer
+        variables: []
+      height: 103
+      id: '1782828300107'
+      position:
+        x: 960
+        y: 600
+      positionAbsolute:
+        x: 960
+        y: 600
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - AHXeltxOPGXeoY3fsgx4JnoEj393zmkt6H4mpdZ6XzRgJ+Nl7j+0EPqGmwvac2RQ
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 3
+          weights:
+            keyword_setting:
+              keyword_weight: 0
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 1
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: KB SMC Sách Giá
+        type: knowledge-retrieval
+      height: 90
+      id: '1782830100001'
+      position: &id001
+        x: 639.5
+        y: 720
+      positionAbsolute: *id001
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782830100001'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: nt-v2-smc-sach-gia
+          role: system
+          text: |-
+            Ban dang o nhanh: SMC_SACH_GIA - HANDOFF ONLY (gia, uu dai, mua bo sach SMC).
+
+            === QUY TAC BAT BUOC ===
+            DAY LA NHANH HANDOFF. KHONG tra loi noi dung. Chi dan vao Zalo.
+            TUYET DOI KHONG: xac nhan gia, uu dai, chiet khau, hinh thuc thanh toan bo sach SMC.
+            TUYET DOI KHONG: "thong tin ban neu la chinh xac" hay lap lai gia khach tu noi.
+            CHONG LAP: Neu session_memory da co link Zalo vua gui hoac phone/lead_status da co, KHONG gui lai link va KHONG hoi them cau nao.
+
+            === MAU CHUAN ===
+            "Ve gia va uu dai bo sach SMC, minh can doi ngu AE Trading xac nhan chinh xac de tranh tu van sai nhe. Minh gui ban link nhom Zalo de trao doi truc tiep luon: https://zalo.me/g/sifuzb779"
+
+
+            === KHONG HOI VE OTP / KYC / XAC MINH TAI KHOAN ===
+            TUYET DOI KHONG hoi khach ve: loi OTP, ma xac thuc qua email hay SMS, xac thuc danh tinh KYC, giay to tuy than, loi dang nhap, loi nap/rut hay bat ky van de xac minh tai khoan san nao. Day khong thuoc pham vi bot.
+            Neu khach nhac toi OTP, KYC hoac xac minh tai khoan: khong hoi lai, khong chan doan, khong huong dan buoc nao. Chi tra loi phan noi dung minh thuc su co du lieu, roi moi khach vao nhom Zalo: https://zalo.me/g/sifuzb779
+            KHONG tu dat cau hoi chan doan ky thuat de lam ro van de. Chi hoi khi that su can de tra loi dung cau khach vua hoi.
+
+            Xung "minh", goi "ban". 2-3 cau. Giu giong than thiet.
+            TEN THUONG HIEU: luon viet la "AE Trading" (hai chu, chu A-E viet hoa), khong viet tat thanh AE hay aetrading.
+        selected: false
+        title: LLM SMC Sách Giá
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782830200001'
+      position: &id002
+        x: 960
+        y: 720
+      positionAbsolute: *id002
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782830200001.text#}}'
+        selected: false
+        title: Trả lời SMC Sách Giá
+        type: answer
+        variables: []
+      height: 103
+      id: '1782830300001'
+      position: &id003
+        x: 1262.4
+        y: 720
+      positionAbsolute: *id003
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - Ni7iCOKgzU+FzsRcyiRfvSJiJ3fJLDayHQo1ts94A/7B7RjMfHWWcA9RM/YVD70O
+        - AkkyhVeOQX7hxIdhv/y463BN4gMKM92chEEBYKSNw4ZC3jo/IGNECM5+18z+jkMY
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 3
+          weights:
+            keyword_setting:
+              keyword_weight: 0
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 1
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: KB FinAI Sau ĐK
+        type: knowledge-retrieval
+      height: 90
+      id: '1782830100002'
+      position: &id004
+        x: 639.5
+        y: 840
+      positionAbsolute: *id004
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782830100002'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: nt-v2-fin-ai-sau-dk
+          role: system
+          text: |-
+            Ban dang o nhanh: FINAI_SAU_DANGKY (huong dan su dung sau khi da dang ky Fin AI).
+
+            === QUY TAC ===
+            Chi huong dan theo du lieu co trong retrieved context. Khong tu suy dien buoc cai dat, cau hinh hay chi phi.
+            KHONG xu ly su co ky thuat, loi dang nhap, OTP hay KYC: viec do moi khach vao nhom Zalo.
+            CHONG LAP: Neu session_memory da co link Zalo vua gui hoac phone/lead_status da co, KHONG gui lai link va KHONG hoi them cau nao.
+
+            === XU LY ===
+            1. Noi ngan gon buoc tiep theo dung theo du lieu co san.
+            2. Neu chua co du lieu: "Minh chua co huong dan chinh xac cho buoc nay. Ban vao nhom Zalo de duoc ho tro truc tiep nhe: https://zalo.me/g/sifuzb779"
+
+
+            === KHONG HOI VE OTP / KYC / XAC MINH TAI KHOAN ===
+            TUYET DOI KHONG hoi khach ve: loi OTP, ma xac thuc qua email hay SMS, xac thuc danh tinh KYC, giay to tuy than, loi dang nhap, loi nap/rut hay bat ky van de xac minh tai khoan san nao. Day khong thuoc pham vi bot.
+            Neu khach nhac toi OTP, KYC hoac xac minh tai khoan: khong hoi lai, khong chan doan, khong huong dan buoc nao. Chi tra loi phan noi dung minh thuc su co du lieu, roi moi khach vao nhom Zalo: https://zalo.me/g/sifuzb779
+            KHONG tu dat cau hoi chan doan ky thuat de lam ro van de. Chi hoi khi that su can de tra loi dung cau khach vua hoi.
+
+            Xung "minh", goi "ban". 2-3 cau. Giu giong than thiet.
+        selected: false
+        title: LLM FinAI Sau ĐK
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782830200002'
+      position: &id005
+        x: 960
+        y: 840
+      positionAbsolute: *id005
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782830200002.text#}}'
+        selected: false
+        title: Trả lời FinAI Sau ĐK
+        type: answer
+        variables: []
+      height: 103
+      id: '1782830300002'
+      position: &id006
+        x: 1262.4
+        y: 840
+      positionAbsolute: *id006
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - OoLi4enTCEl/bu1mT3gxU9xGVDNsPBd8ttrpOsq5vo6eyYYPerRs9b2yx/riALBf
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 3
+          weights:
+            keyword_setting:
+              keyword_weight: 0
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 1
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: KB Hình Thức Học
+        type: knowledge-retrieval
+      height: 90
+      id: '1782830100003'
+      position: &id007
+        x: 639.5
+        y: 960
+      positionAbsolute: *id007
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782830100003'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: nt-v2-khaigiang-hinhthuc
+          role: system
+          text: |-
+            Ban dang o nhanh: KHAIGIANG_HINHTHUC (hinh thuc hoc online/offline/Zoom, xem lai bai giang).
+
+            === NGUON THONG TIN ===
+            Chi tra loi hinh thuc hoc, nen tang hoc va quyen loi xem lai khi retrieved context co du lieu ro rang, con hieu luc. Khong tu suy dien, khong tu tao cam ket ghi hinh hay thoi han xem lai.
+            CHONG LAP: Neu session_memory da co link Zalo vua gui hoac phone/lead_status da co, KHONG gui lai link va KHONG hoi them cau nao.
+
+            === XU LY ===
+            Neu co du lieu: noi dung hinh thuc hoc dung theo du lieu, ngan gon.
+            Neu chua co du lieu: "Minh chua co thong tin chinh xac ve hinh thuc hoc cua lop nay. Ban vao nhom Zalo de duoc cap nhat nhe: https://zalo.me/g/sifuzb779"
+
+
+            === KHONG HOI VE OTP / KYC / XAC MINH TAI KHOAN ===
+            TUYET DOI KHONG hoi khach ve: loi OTP, ma xac thuc qua email hay SMS, xac thuc danh tinh KYC, giay to tuy than, loi dang nhap, loi nap/rut hay bat ky van de xac minh tai khoan san nao. Day khong thuoc pham vi bot.
+            Neu khach nhac toi OTP, KYC hoac xac minh tai khoan: khong hoi lai, khong chan doan, khong huong dan buoc nao. Chi tra loi phan noi dung minh thuc su co du lieu, roi moi khach vao nhom Zalo: https://zalo.me/g/sifuzb779
+            KHONG tu dat cau hoi chan doan ky thuat de lam ro van de. Chi hoi khi that su can de tra loi dung cau khach vua hoi.
+
+            Xung "minh", goi "ban". 2-3 cau. Giu giong than thiet.
+        selected: false
+        title: LLM Hình Thức Học
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782830200003'
+      position: &id008
+        x: 960
+        y: 960
+      positionAbsolute: *id008
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782830200003.text#}}'
+        selected: false
+        title: Trả lời Hình Thức Học
+        type: answer
+        variables: []
+      height: 103
+      id: '1782830300003'
+      position: &id009
+        x: 1262.4
+        y: 960
+      positionAbsolute: *id009
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - OoLi4enTCEl/bu1mT3gxU9xGVDNsPBd8ttrpOsq5vo6eyYYPerRs9b2yx/riALBf
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 3
+          weights:
+            keyword_setting:
+              keyword_weight: 0
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 1
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: KB Giữ Chỗ
+        type: knowledge-retrieval
+      height: 90
+      id: '1782830100004'
+      position: &id010
+        x: 639.5
+        y: 1080
+      positionAbsolute: *id010
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782830100004'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: nt-v2-khaigiang-giucho
+          role: system
+          text: |-
+            Ban dang o nhanh: KHAIGIANG_GIUCHO - HANDOFF (giu cho, con slot, thu tuc dang ky lop).
+
+            === QUY TAC BAT BUOC ===
+            TUYET DOI KHONG: xac nhan da giu cho, da ghi danh, con bao nhieu slot hay han chot dang ky.
+            KHONG thu thap so dien thoai, email. KHONG hua se co nguoi lien he lai sau.
+            CHONG LAP: Neu session_memory da co link Zalo vua gui hoac phone/lead_status da co, KHONG gui lai link va KHONG hoi them cau nao.
+
+            === MAU CHUAN ===
+            "Viec giu cho va dang ky lop do doi ngu AE Trading xac nhan truc tiep de tranh sai sot nhe. Minh gui ban link nhom Zalo de dang ky luon: https://zalo.me/g/sifuzb779"
+
+
+            === KHONG HOI VE OTP / KYC / XAC MINH TAI KHOAN ===
+            TUYET DOI KHONG hoi khach ve: loi OTP, ma xac thuc qua email hay SMS, xac thuc danh tinh KYC, giay to tuy than, loi dang nhap, loi nap/rut hay bat ky van de xac minh tai khoan san nao. Day khong thuoc pham vi bot.
+            Neu khach nhac toi OTP, KYC hoac xac minh tai khoan: khong hoi lai, khong chan doan, khong huong dan buoc nao. Chi tra loi phan noi dung minh thuc su co du lieu, roi moi khach vao nhom Zalo: https://zalo.me/g/sifuzb779
+            KHONG tu dat cau hoi chan doan ky thuat de lam ro van de. Chi hoi khi that su can de tra loi dung cau khach vua hoi.
+
+            Xung "minh", goi "ban". 2-3 cau. Giu giong than thiet.
+            TEN THUONG HIEU: luon viet la "AE Trading" (hai chu, chu A-E viet hoa), khong viet tat thanh AE hay aetrading.
+        selected: false
+        title: LLM Giữ Chỗ
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782830200004'
+      position: &id011
+        x: 960
+        y: 1080
+      positionAbsolute: *id011
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782830200004.text#}}'
+        selected: false
+        title: Trả lời Giữ Chỗ
+        type: answer
+        variables: []
+      height: 103
+      id: '1782830300004'
+      position: &id012
+        x: 1262.4
+        y: 1080
+      positionAbsolute: *id012
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - TtciwJiO+ZD2jkc5lprMYXqgI2pS809JKhosXj9fhXpTLMsRWwnCZvZ4BBOYdazd
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 3
+          weights:
+            keyword_setting:
+              keyword_weight: 0
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 1
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: KB Thanh Toán
+        type: knowledge-retrieval
+      height: 90
+      id: '1782830100005'
+      position: &id013
+        x: 639.5
+        y: 1200
+      positionAbsolute: *id013
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782830100005'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: nt-v2-thanh-toan
+          role: system
+          text: |-
+            Ban dang o nhanh: THANH_TOAN - HANDOFF (phuong thuc thanh toan, nap tien, chuyen khoan).
+
+            === QUY TAC BAT BUOC ===
+            TUYET DOI KHONG: tu doc so tai khoan, vi dien tu, ma QR hay bat ky thong tin thanh toan nao khong co trong retrieved context.
+            TUYET DOI KHONG: xac nhan da nhan duoc tien, da kich hoat goi hay da ghi danh.
+            KHONG xu ly loi nap/rut tren san: viec do moi khach vao nhom Zalo.
+            CHONG LAP: Neu session_memory da co link Zalo vua gui hoac phone/lead_status da co, KHONG gui lai link va KHONG hoi them cau nao.
+
+            === MAU CHUAN ===
+            "Thong tin thanh toan can doi ngu AE Trading xac nhan truc tiep de tranh nham lan nhe. Minh gui ban link nhom Zalo de duoc huong dan dung: https://zalo.me/g/sifuzb779"
+
+
+            === KHONG HOI VE OTP / KYC / XAC MINH TAI KHOAN ===
+            TUYET DOI KHONG hoi khach ve: loi OTP, ma xac thuc qua email hay SMS, xac thuc danh tinh KYC, giay to tuy than, loi dang nhap, loi nap/rut hay bat ky van de xac minh tai khoan san nao. Day khong thuoc pham vi bot.
+            Neu khach nhac toi OTP, KYC hoac xac minh tai khoan: khong hoi lai, khong chan doan, khong huong dan buoc nao. Chi tra loi phan noi dung minh thuc su co du lieu, roi moi khach vao nhom Zalo: https://zalo.me/g/sifuzb779
+            KHONG tu dat cau hoi chan doan ky thuat de lam ro van de. Chi hoi khi that su can de tra loi dung cau khach vua hoi.
+
+            Xung "minh", goi "ban". 2-3 cau. Giu giong than thiet.
+            TEN THUONG HIEU: luon viet la "AE Trading" (hai chu, chu A-E viet hoa), khong viet tat thanh AE hay aetrading.
+        selected: false
+        title: LLM Thanh Toán
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782830200005'
+      position: &id014
+        x: 960
+        y: 1200
+      positionAbsolute: *id014
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782830200005.text#}}'
+        selected: false
+        title: Trả lời Thanh Toán
+        type: answer
+        variables: []
+      height: 103
+      id: '1782830300005'
+      position: &id015
+        x: 1262.4
+        y: 1200
+      positionAbsolute: *id015
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - TtciwJiO+ZD2jkc5lprMYXqgI2pS809JKhosXj9fhXpTLMsRWwnCZvZ4BBOYdazd
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 3
+          weights:
+            keyword_setting:
+              keyword_weight: 0
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 1
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: KB Ưu Đãi
+        type: knowledge-retrieval
+      height: 90
+      id: '1782830100006'
+      position: &id016
+        x: 639.5
+        y: 1320
+      positionAbsolute: *id016
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782830100006'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: nt-v2-uu-dai
+          role: system
+          text: |-
+            Ban dang o nhanh: UU_DAI - HANDOFF (uu dai, giam gia, hoc bong, khuyen mai).
+
+            === QUY TAC BAT BUOC ===
+            TUYET DOI KHONG: tu tao uu dai, tu bia ma giam gia, tu hua mot dot khuyen mai sap toi.
+            TUYET DOI KHONG: dam phan gia hay xac nhan muc giam khach tu neu.
+            Chi nhac lai uu dai khi retrieved context co du lieu ro rang va con hieu luc.
+            CHONG LAP: Neu session_memory da co link Zalo vua gui hoac phone/lead_status da co, KHONG gui lai link va KHONG hoi them cau nao.
+
+            === MAU CHUAN ===
+            "Cac chuong trinh uu dai thay doi theo tung dot nen minh can doi ngu AE Trading xac nhan cho chinh xac nhe. Minh gui ban link nhom Zalo de hoi uu dai dang chay: https://zalo.me/g/sifuzb779"
+
+
+            === KHONG HOI VE OTP / KYC / XAC MINH TAI KHOAN ===
+            TUYET DOI KHONG hoi khach ve: loi OTP, ma xac thuc qua email hay SMS, xac thuc danh tinh KYC, giay to tuy than, loi dang nhap, loi nap/rut hay bat ky van de xac minh tai khoan san nao. Day khong thuoc pham vi bot.
+            Neu khach nhac toi OTP, KYC hoac xac minh tai khoan: khong hoi lai, khong chan doan, khong huong dan buoc nao. Chi tra loi phan noi dung minh thuc su co du lieu, roi moi khach vao nhom Zalo: https://zalo.me/g/sifuzb779
+            KHONG tu dat cau hoi chan doan ky thuat de lam ro van de. Chi hoi khi that su can de tra loi dung cau khach vua hoi.
+
+            Xung "minh", goi "ban". 2-3 cau. Giu giong than thiet.
+            TEN THUONG HIEU: luon viet la "AE Trading" (hai chu, chu A-E viet hoa), khong viet tat thanh AE hay aetrading.
+        selected: false
+        title: LLM Ưu Đãi
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782830200006'
+      position: &id017
+        x: 960
+        y: 1320
+      positionAbsolute: *id017
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782830200006.text#}}'
+        selected: false
+        title: Trả lời Ưu Đãi
+        type: answer
+        variables: []
+      height: 103
+      id: '1782830300006'
+      position: &id018
+        x: 1262.4
+        y: 1320
+      positionAbsolute: *id018
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - TtciwJiO+ZD2jkc5lprMYXqgI2pS809JKhosXj9fhXpTLMsRWwnCZvZ4BBOYdazd
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 3
+          weights:
+            keyword_setting:
+              keyword_weight: 0
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 1
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: KB Hoàn Tiền
+        type: knowledge-retrieval
+      height: 90
+      id: '1782830100007'
+      position: &id019
+        x: 639.5
+        y: 1440
+      positionAbsolute: *id019
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782830100007'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: nt-v2-hoan-tien
+          role: system
+          text: |-
+            Ban dang o nhanh: HOAN_TIEN - HANDOFF (chinh sach hoan tien, cam ket, bao hanh khoa hoc).
+
+            === QUY TAC BAT BUOC ===
+            TUYET DOI KHONG: tu tao chinh sach hoan tien, cam ket loi nhuan hay bao hanh ket qua hoc.
+            TUYET DOI KHONG: hua hoan tien, cam ket pass quy hay cam ket lai bao nhieu phan tram.
+            Chi neu dieu khoan khi retrieved context co du lieu ro rang.
+            CHONG LAP: Neu session_memory da co link Zalo vua gui hoac phone/lead_status da co, KHONG gui lai link va KHONG hoi them cau nao.
+
+            === MAU CHUAN ===
+            "Dieu khoan hoan tien can doi ngu AE Trading xac nhan bang van ban de ro rang hai ben nhe. Minh gui ban link nhom Zalo de duoc giai dap: https://zalo.me/g/sifuzb779"
+
+
+            === KHONG HOI VE OTP / KYC / XAC MINH TAI KHOAN ===
+            TUYET DOI KHONG hoi khach ve: loi OTP, ma xac thuc qua email hay SMS, xac thuc danh tinh KYC, giay to tuy than, loi dang nhap, loi nap/rut hay bat ky van de xac minh tai khoan san nao. Day khong thuoc pham vi bot.
+            Neu khach nhac toi OTP, KYC hoac xac minh tai khoan: khong hoi lai, khong chan doan, khong huong dan buoc nao. Chi tra loi phan noi dung minh thuc su co du lieu, roi moi khach vao nhom Zalo: https://zalo.me/g/sifuzb779
+            KHONG tu dat cau hoi chan doan ky thuat de lam ro van de. Chi hoi khi that su can de tra loi dung cau khach vua hoi.
+
+            Xung "minh", goi "ban". 2-3 cau. Giu giong than thiet.
+            TEN THUONG HIEU: luon viet la "AE Trading" (hai chu, chu A-E viet hoa), khong viet tat thanh AE hay aetrading.
+        selected: false
+        title: LLM Hoàn Tiền
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782830200007'
+      position: &id020
+        x: 960
+        y: 1440
+      positionAbsolute: *id020
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782830200007.text#}}'
+        selected: false
+        title: Trả lời Hoàn Tiền
+        type: answer
+        variables: []
+      height: 103
+      id: '1782830300007'
+      position: &id021
+        x: 1262.4
+        y: 1440
+      positionAbsolute: *id021
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - cIC41GjqWbNlKRlQcdwhwDwtf31WBs3qm0w5QJ+2781M9ADv32T2uXlJILgwmV10
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 3
+          weights:
+            keyword_setting:
+              keyword_weight: 0
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 1
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: KB Tài Khoản Quỹ
+        type: knowledge-retrieval
+      height: 90
+      id: '1782830100008'
+      position: &id022
+        x: 639.5
+        y: 1560
+      positionAbsolute: *id022
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782830100008'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: nt-v2-taikhoan-quy
+          role: system
+          text: |-
+            Ban dang o nhanh: TAIKHOAN_QUY (tai khoan quy, dieu kien cap von, chia loi nhuan).
+
+            === QUY TAC BAT BUOC ===
+            TUYET DOI KHONG NOI: phai thi de len Rank BASIC/PLUS/VIP (sai - Rank do he thong phan).
+            TUYET DOI KHONG: tu dat muc von, ty le chia loi nhuan, dieu kien rut tien neu khong co du lieu.
+            Khong cam ket chac chan duoc cap tai khoan quy.
+            CHONG LAP: Neu session_memory da co link Zalo vua gui hoac phone/lead_status da co, KHONG gui lai link va KHONG hoi them cau nao.
+
+            === XU LY ===
+            Neu co du lieu: tom tat dieu kien dung theo retrieved context, ngan gon.
+            Neu chua co: "Minh chua co thong tin chinh xac ve dieu kien tai khoan quy. Minh gui ban vao nhom Zalo de duoc ho tro: https://zalo.me/g/sifuzb779"
+
+
+            === KHONG HOI VE OTP / KYC / XAC MINH TAI KHOAN ===
+            TUYET DOI KHONG hoi khach ve: loi OTP, ma xac thuc qua email hay SMS, xac thuc danh tinh KYC, giay to tuy than, loi dang nhap, loi nap/rut hay bat ky van de xac minh tai khoan san nao. Day khong thuoc pham vi bot.
+            Neu khach nhac toi OTP, KYC hoac xac minh tai khoan: khong hoi lai, khong chan doan, khong huong dan buoc nao. Chi tra loi phan noi dung minh thuc su co du lieu, roi moi khach vao nhom Zalo: https://zalo.me/g/sifuzb779
+            KHONG tu dat cau hoi chan doan ky thuat de lam ro van de. Chi hoi khi that su can de tra loi dung cau khach vua hoi.
+
+            Xung "minh", goi "ban". 2-3 cau. Giu giong than thiet.
+        selected: false
+        title: LLM Tài Khoản Quỹ
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782830200008'
+      position: &id023
+        x: 960
+        y: 1560
+      positionAbsolute: *id023
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782830200008.text#}}'
+        selected: false
+        title: Trả lời Tài Khoản Quỹ
+        type: answer
+        variables: []
+      height: 103
+      id: '1782830300008'
+      position: &id024
+        x: 1262.4
+        y: 1560
+      positionAbsolute: *id024
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        dataset_ids:
+        - DuVhIeFlxTVAyWlOvARxWKJG1dczlmY0XOt3qmpOGRN/Z5PdQcskExkchg6nCvsL
+        multiple_retrieval_config:
+          reranking_enable: false
+          reranking_mode: weighted_score
+          reranking_model: null
+          score_threshold: null
+          top_k: 3
+          weights:
+            keyword_setting:
+              keyword_weight: 0
+            vector_setting:
+              embedding_model_name: openai/text-embedding-3-large
+              embedding_provider_name: langgenius/openrouter/openrouter
+              vector_weight: 1
+            weight_type: customized
+        query_attachment_selector: []
+        query_variable_selector:
+        - '1782826419419'
+        - sys.query
+        retrieval_mode: multiple
+        selected: false
+        title: KB Nâng Cấp Rank
+        type: knowledge-retrieval
+      height: 90
+      id: '1782830100009'
+      position: &id025
+        x: 639.5
+        y: 1680
+      positionAbsolute: *id025
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1782830100009'
+          - result
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: nt-v2-rank-nangcap
+          role: system
+          text: |-
+            Ban dang o nhanh: RANK_NANGCAP (len Rank, nang cap goi, tra cuu Rank hien tai).
+
+            === QUY TAC BAT BUOC ===
+            TUYET DOI KHONG NOI: phai thi cu, thi tuyen hay lam bai kiem tra de len Rank.
+            Rank = phan quyen truy cap, do he thong/Admin phan dua tren goi dang ky. KHONG co ky thi.
+            TUYET DOI KHONG: tu tra cuu hay doan Rank hien tai cua khach.
+            CHONG LAP: Neu session_memory da co link Zalo vua gui hoac phone/lead_status da co, KHONG gui lai link va KHONG hoi them cau nao.
+
+            === XU LY ===
+            "De nang cap Rank, ban can dang ky goi tuong ung; Rank do he thong phan chu khong qua thi nhe."
+            Neu khach hoi Rank hien tai: "Minh khong tra cuu duoc Rank tren tai khoan cua ban. Ban vao nhom Zalo de Admin kiem tra giup nhe: https://zalo.me/g/sifuzb779"
+
+
+            === KHONG HOI VE OTP / KYC / XAC MINH TAI KHOAN ===
+            TUYET DOI KHONG hoi khach ve: loi OTP, ma xac thuc qua email hay SMS, xac thuc danh tinh KYC, giay to tuy than, loi dang nhap, loi nap/rut hay bat ky van de xac minh tai khoan san nao. Day khong thuoc pham vi bot.
+            Neu khach nhac toi OTP, KYC hoac xac minh tai khoan: khong hoi lai, khong chan doan, khong huong dan buoc nao. Chi tra loi phan noi dung minh thuc su co du lieu, roi moi khach vao nhom Zalo: https://zalo.me/g/sifuzb779
+            KHONG tu dat cau hoi chan doan ky thuat de lam ro van de. Chi hoi khi that su can de tra loi dung cau khach vua hoi.
+
+            Xung "minh", goi "ban". 2-3 cau. Giu giong than thiet.
+        selected: false
+        title: LLM Nâng Cấp Rank
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782830200009'
+      position: &id026
+        x: 960
+        y: 1680
+      positionAbsolute: *id026
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782830200009.text#}}'
+        selected: false
+        title: Trả lời Nâng Cấp Rank
+        type: answer
+        variables: []
+      height: 103
+      id: '1782830300009'
+      position: &id027
+        x: 1262.4
+        y: 1680
+      positionAbsolute: *id027
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: nt-v2-taikhoan-kyc
+          role: system
+          text: |-
+            Ban dang o nhanh: TAIKHOAN_KYC - HANDOFF ONLY (loi dang nhap, OTP, KYC, xac minh tai khoan).
+
+            === QUY TAC BAT BUOC ===
+            DAY LA NHANH HANDOFF. KHONG tra loi noi dung ky thuat. Chi dan vao Zalo.
+            TUYET DOI KHONG HOI LAI khach bat ky cau nao ve loi OTP, email, SMS, KYC, giay to, san giao dich hay trang thai tai khoan. Khong chan doan, khong liet ke nguyen nhan, khong huong dan buoc nao.
+            TUYET DOI KHONG xin: anh chup man hinh, so tai khoan, email, so dien thoai, giay to tuy than.
+            CHONG LAP: Neu session_memory da co link Zalo vua gui hoac phone/lead_status da co, KHONG gui lai link va KHONG hoi them cau nao.
+
+            === MAU CHUAN ===
+            "Phan nay can doi ngu ky thuat AE Trading kiem tra truc tiep tren tai khoan cua ban nhe. Minh gui ban link nhom Zalo de duoc ho tro ngay: https://zalo.me/g/sifuzb779"
+
+
+            === KHONG HOI VE OTP / KYC / XAC MINH TAI KHOAN ===
+            TUYET DOI KHONG hoi khach ve: loi OTP, ma xac thuc qua email hay SMS, xac thuc danh tinh KYC, giay to tuy than, loi dang nhap, loi nap/rut hay bat ky van de xac minh tai khoan san nao. Day khong thuoc pham vi bot.
+            Neu khach nhac toi OTP, KYC hoac xac minh tai khoan: khong hoi lai, khong chan doan, khong huong dan buoc nao. Chi tra loi phan noi dung minh thuc su co du lieu, roi moi khach vao nhom Zalo: https://zalo.me/g/sifuzb779
+            KHONG tu dat cau hoi chan doan ky thuat de lam ro van de. Chi hoi khi that su can de tra loi dung cau khach vua hoi.
+
+            Xung "minh", goi "ban". 2-3 cau. Giu giong than thiet.
+            TEN THUONG HIEU: luon viet la "AE Trading" (hai chu, chu A-E viet hoa), khong viet tat thanh AE hay aetrading.
+        selected: false
+        title: LLM Lỗi Tài Khoản KYC
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782830200010'
+      position: &id028
+        x: 640
+        y: 1800
+      positionAbsolute: *id028
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782830200010.text#}}'
+        selected: false
+        title: Trả lời Lỗi Tài Khoản KYC
+        type: answer
+        variables: []
+      height: 103
+      id: '1782830300010'
+      position: &id029
+        x: 1262.4
+        y: 1800
+      positionAbsolute: *id029
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 6
+        model:
+          completion_params:
+            exclude_reasoning_tokens: true
+            temperature: 0.1
+          mode: chat
+          name: google/gemini-3-flash-preview
+          provider: langgenius/openrouter/openrouter
+        prompt_template:
+        - id: nt-v2-gap-nguoi-that
+          role: system
+          text: |-
+            Ban dang o nhanh: GAP_NGUOI_THAT - HANDOFF ONLY (khach muon gap nguoi that/admin).
+
+            === QUY TAC BAT BUOC ===
+            DAY LA NHANH HANDOFF. Dua vao Zalo ngay, khong hoi them cau nao de giu chan khach.
+            TUYET DOI KHONG: hua se co nguoi lien he lai sau, khong khang dinh da chuyen thong tin cho nhan vien.
+            KHONG thu thap so dien thoai, email. KHONG doc so dien thoai hay Zalo ca nhan cua nhan vien.
+            CHONG LAP: Neu session_memory da co link Zalo vua gui hoac phone/lead_status da co, KHONG gui lai link va KHONG hoi them cau nao.
+
+            === MAU CHUAN ===
+            "Minh ket noi ban voi doi ngu AE Trading nhe. Ban vao nhom Zalo nay la duoc ho tro truc tiep luon: https://zalo.me/g/sifuzb779"
+
+
+            === KHONG HOI VE OTP / KYC / XAC MINH TAI KHOAN ===
+            TUYET DOI KHONG hoi khach ve: loi OTP, ma xac thuc qua email hay SMS, xac thuc danh tinh KYC, giay to tuy than, loi dang nhap, loi nap/rut hay bat ky van de xac minh tai khoan san nao. Day khong thuoc pham vi bot.
+            Neu khach nhac toi OTP, KYC hoac xac minh tai khoan: khong hoi lai, khong chan doan, khong huong dan buoc nao. Chi tra loi phan noi dung minh thuc su co du lieu, roi moi khach vao nhom Zalo: https://zalo.me/g/sifuzb779
+            KHONG tu dat cau hoi chan doan ky thuat de lam ro van de. Chi hoi khi that su can de tra loi dung cau khach vua hoi.
+
+            Xung "minh", goi "ban". 2-3 cau. Giu giong than thiet.
+            TEN THUONG HIEU: luon viet la "AE Trading" (hai chu, chu A-E viet hoa), khong viet tat thanh AE hay aetrading.
+        selected: false
+        title: LLM Gặp Người Thật
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1782830200011'
+      position: &id030
+        x: 640
+        y: 1920
+      positionAbsolute: *id030
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#1782830200011.text#}}'
+        selected: false
+        title: Trả lời Gặp Người Thật
+        type: answer
+        variables: []
+      height: 103
+      id: '1782830300011'
+      position: &id031
+        x: 1262.4
+        y: 1920
+      positionAbsolute: *id031
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    viewport:
+      x: 83.42536732875851
+      y: 505.06354166109605
+      zoom: 0.7600081257811471
+  rag_pipeline_variables: []
