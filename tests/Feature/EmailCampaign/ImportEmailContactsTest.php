@@ -13,6 +13,7 @@ use App\Models\Workspace;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
 
 beforeEach(function (): void {
     $this->user = User::factory()->create();
@@ -103,4 +104,21 @@ it('deletes the uploaded file once the import finishes', function () use ($csv):
 
     expect(EmailContactList::query()->firstOrFail()->source_path)->toBeNull()
         ->and(Storage::disk('local')->allFiles('email-imports'))->toBe([]);
+});
+
+it('keeps the uploaded file when the import fails so it can be inspected or retried', function () use ($csv): void {
+    Storage::fake('local');
+    Excel::shouldReceive('import')->once()->andThrow(new RuntimeException('Import failed'));
+
+    $this->actingAs($this->user->fresh())
+        ->post(route('app.email-campaigns.lists.store'), [
+            'name' => 'Import lỗi',
+            'file' => $csv("email\na@example.com\n"),
+        ]);
+
+    $list = EmailContactList::query()->firstOrFail()->fresh();
+
+    expect($list->status)->toBe(ImportStatus::Failed)
+        ->and($list->source_path)->not->toBeNull()
+        ->and(Storage::disk('local')->exists($list->source_path))->toBeTrue();
 });

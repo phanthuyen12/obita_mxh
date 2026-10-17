@@ -63,8 +63,6 @@ class ImportEmailContactsJob implements ShouldQueue
                 'error_message' => $e->getMessage(),
             ]);
 
-            Storage::disk('local')->delete($path);
-
             return;
         }
 
