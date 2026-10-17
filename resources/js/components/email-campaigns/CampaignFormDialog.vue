@@ -46,9 +46,13 @@ interface Campaign {
 interface Props {
     contactLists: ContactList[];
     campaign?: Campaign | null;
+    defaultContactListId?: string | null;
 }
 
-const props = withDefaults(defineProps<Props>(), { campaign: null });
+const props = withDefaults(defineProps<Props>(), {
+    campaign: null,
+    defaultContactListId: null,
+});
 const open = defineModel<boolean>('open', { default: false });
 const htmlFileInput = ref<HTMLInputElement | null>(null);
 const htmlFileName = ref('');
@@ -115,6 +119,7 @@ const fillFromCampaign = () => {
     }
 
     form.reset();
+    form.email_contact_list_id = props.defaultContactListId ?? '';
 };
 
 const submit = () => {

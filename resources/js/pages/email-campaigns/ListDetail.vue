@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Head, InfiniteScroll, Link, router } from '@inertiajs/vue3';
-import { IconArrowLeft, IconSearch } from '@tabler/icons-vue';
+import { IconArrowLeft, IconMail, IconSearch } from '@tabler/icons-vue';
 import { ref, watch } from 'vue';
 
+import CampaignFormDialog from '@/components/email-campaigns/CampaignFormDialog.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ import {
 } from '@/components/ui/table';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { index as campaignsIndex } from '@/routes/app/email-campaigns';
 import { index as listsIndex, show as listShow } from '@/routes/app/email-campaigns/lists';
 
 interface ContactList {
@@ -44,6 +46,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const isCreateOpen = ref(false);
 const searchQuery = ref(props.filters.search);
 
 const search = debounce(() => {
@@ -86,12 +89,21 @@ const statusLabel = (status: string): string =>
             <div
                 class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
             >
-                <Button as-child variant="outline">
-                    <Link :href="listsIndex.url()">
-                        <IconArrowLeft class="size-4" />
-                        Về danh sách
-                    </Link>
-                </Button>
+                <div class="flex flex-wrap gap-2">
+                    <Button as-child variant="outline">
+                        <Link :href="listsIndex.url()">
+                            <IconArrowLeft class="size-4" />
+                            Về danh sách
+                        </Link>
+                    </Button>
+                    <Button as-child variant="outline">
+                        <Link :href="campaignsIndex.url()">Về chiến dịch</Link>
+                    </Button>
+                    <Button @click="isCreateOpen = true">
+                        <IconMail class="size-4" />
+                        Tạo chiến dịch với danh sách này
+                    </Button>
+                </div>
 
                 <div class="relative w-full sm:w-auto">
                     <IconSearch
@@ -140,4 +152,10 @@ const statusLabel = (status: string): string =>
             </InfiniteScroll>
         </div>
     </AppLayout>
+
+    <CampaignFormDialog
+        v-model:open="isCreateOpen"
+        :contact-lists="[{ id: list.id, name: list.name }]"
+        :default-contact-list-id="list.id"
+    />
 </template>
