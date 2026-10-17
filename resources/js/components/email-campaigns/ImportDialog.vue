@@ -96,17 +96,29 @@ const handleOpenChange = (value: boolean) => {
                         :class="{ 'border-destructive': form.errors.file }"
                         @change="onFileChange"
                     />
+                    <a
+                        href="/email-contacts-template.csv"
+                        download="email-contacts-template.csv"
+                        class="text-sm text-primary underline underline-offset-4"
+                    >
+                        Tải file mẫu CSV
+                    </a>
                     <p v-if="form.errors.file" class="text-sm text-destructive">
                         {{ form.errors.file }}
                     </p>
-                    <p v-if="form.progress" class="text-sm text-muted-foreground">
+                    <p
+                        v-if="form.progress"
+                        class="text-sm text-muted-foreground"
+                    >
                         Đang tải lên… {{ form.progress.percentage }}%
                     </p>
                 </div>
 
                 <DialogFooter>
                     <Button type="submit" :disabled="form.processing">
-                        {{ form.processing ? 'Đang tải lên…' : 'Nhập danh sách' }}
+                        {{
+                            form.processing ? 'Đang tải lên…' : 'Nhập danh sách'
+                        }}
                     </Button>
                     <Button
                         type="button"

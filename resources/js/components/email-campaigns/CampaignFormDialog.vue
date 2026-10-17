@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { router, useForm } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,7 +18,11 @@ import {
     NativeSelectOption,
 } from '@/components/ui/native-select';
 import { Textarea } from '@/components/ui/textarea';
-import { store as campaignStore, update as campaignUpdate } from '@/routes/app/email-campaigns';
+import {
+    store as campaignStore,
+    testSend as campaignTestSend,
+    update as campaignUpdate,
+} from '@/routes/app/email-campaigns';
 
 interface ContactList {
     id: string;
@@ -46,6 +50,8 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), { campaign: null });
 const open = defineModel<boolean>('open', { default: false });
+const htmlFileInput = ref<HTMLInputElement | null>(null);
+const htmlFileName = ref('');
 
 const isEditing = computed(() => props.campaign !== null);
 
@@ -57,6 +63,27 @@ const emailVariable = `${open2} email ${close2}`;
 const fieldVariable = `${open2} fields.ten_cot ${close2}`;
 const subjectPlaceholder = `Chào ${nameVariable}, ưu đãi dành riêng cho bạn`;
 const bodyPlaceholder = `<p>Xin chào ${nameVariable},</p>`;
+const showPreview = ref(false);
+const testSending = ref(false);
+const testMailError = ref('');
+const welcomeTemplate = [
+    '<div style="margin:0;padding:32px 16px;background-color:#f3f4f6;font-family:Arial,sans-serif;color:#1f2937;">',
+    '<div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;">',
+    '<div style="padding:28px 32px;background:#111827;color:#ffffff;text-align:center;">',
+    '<h1 style="margin:0;font-size:24px;">Chào mừng bạn đến với dịch vụ của chúng tôi</h1>',
+    '</div>',
+    '<div style="padding:32px;line-height:1.7;">',
+    `<p>Xin chào ${nameVariable},</p>`,
+    '<p>Cảm ơn bạn đã đăng ký. Chúng tôi rất vui được đồng hành và hỗ trợ bạn.</p>',
+    '<p>Bạn có thể trả lời email này nếu cần trợ giúp.</p>',
+    '<p>Trân trọng,<br><strong>Đội ngũ chăm sóc khách hàng</strong></p>',
+    '</div>',
+    '<div style="padding:16px 32px;background:#f9fafb;color:#6b7280;font-size:12px;text-align:center;">',
+    'Bạn nhận được email này vì đã đăng ký dịch vụ của chúng tôi.',
+    '</div>',
+    '</div>',
+    '</div>',
+].join('');
 
 const form = useForm({
     name: '',
@@ -111,6 +138,54 @@ const submit = () => {
     form.post(campaignStore.url(), options);
 };
 
+const useWelcomeTemplate = () => {
+    form.body_html = welcomeTemplate;
+    htmlFileName.value = '';
+};
+
+const importHtmlFile = async (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) {
+        return;
+    }
+
+    form.body_html = await file.text();
+    htmlFileName.value = file.name;
+    showPreview.value = true;
+    input.value = '';
+};
+
+const sendTestEmail = () => {
+    testMailError.value = '';
+
+    router.post(
+        campaignTestSend.url(),
+        {
+            subject: form.subject,
+            preview_text: form.preview_text,
+            body_html: form.body_html,
+            from_name: form.from_name,
+            reply_to: form.reply_to,
+        },
+        {
+            preserveScroll: true,
+            onStart: () => {
+                testSending.value = true;
+            },
+            onFinish: () => {
+                testSending.value = false;
+            },
+            onError: (errors) => {
+                testMailError.value =
+                    errors.mail ??
+                    'Không gửi được email thử. Vui lòng kiểm tra nội dung và cấu hình SMTP.';
+            },
+        },
+    );
+};
+
 const handleOpenChange = (value: boolean) => {
     if (value) {
         form.clearErrors();
@@ -129,8 +204,8 @@ const handleOpenChange = (value: boolean) => {
                     {{ isEditing ? 'Sửa chiến dịch' : 'Tạo chiến dịch email' }}
                 </DialogTitle>
                 <DialogDescription>
-                    Soạn nội dung và chọn danh sách người nhận. Chiến dịch được lưu ở
-                    trạng thái nháp cho tới khi bạn bấm gửi.
+                    Soạn nội dung và chọn danh sách người nhận. Chiến dịch được
+                    lưu ở trạng thái nháp cho tới khi bạn bấm gửi.
                 </DialogDescription>
             </DialogHeader>
 
@@ -188,7 +263,10 @@ const handleOpenChange = (value: boolean) => {
                         :placeholder="subjectPlaceholder"
                         :class="{ 'border-destructive': form.errors.subject }"
                     />
-                    <p v-if="form.errors.subject" class="text-sm text-destructive">
+                    <p
+                        v-if="form.errors.subject"
+                        class="text-sm text-destructive"
+                    >
                         {{ form.errors.subject }}
                     </p>
                 </div>
@@ -203,7 +281,65 @@ const handleOpenChange = (value: boolean) => {
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="campaign-body">Nội dung (HTML)</Label>
+                    <div
+                        class="flex flex-wrap items-center justify-between gap-2"
+                    >
+                        <Label for="campaign-body">Nội dung (HTML)</Label>
+                        <div class="flex gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                :disabled="
+                                    testSending ||
+                                    form.processing ||
+                                    !form.subject ||
+                                    !form.body_html
+                                "
+                                @click="sendTestEmail"
+                            >
+                                {{ testSending ? 'Đang gửi thử…' : 'Gửi thử' }}
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                @click="htmlFileInput?.click()"
+                            >
+                                Nạp file HTML
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                @click="useWelcomeTemplate"
+                            >
+                                Dùng mẫu chào mừng
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                :disabled="!form.body_html"
+                                @click="showPreview = !showPreview"
+                            >
+                                {{ showPreview ? 'Ẩn xem trước' : 'Xem trước' }}
+                            </Button>
+                        </div>
+                    </div>
+                    <input
+                        ref="htmlFileInput"
+                        type="file"
+                        accept=".html,.htm,text/html"
+                        class="hidden"
+                        @change="importHtmlFile"
+                    />
+                    <p
+                        v-if="htmlFileName"
+                        class="text-sm text-muted-foreground"
+                    >
+                        Đã nạp: {{ htmlFileName }}
+                    </p>
                     <Textarea
                         id="campaign-body"
                         v-model="form.body_html"
@@ -215,9 +351,28 @@ const handleOpenChange = (value: boolean) => {
                     <p class="text-sm text-muted-foreground">
                         Biến dùng được: <code>{{ nameVariable }}</code
                         >, <code>{{ emailVariable }}</code> và
-                        <code>{{ fieldVariable }}</code> theo các cột khác
-                        trong file đã nhập.
+                        <code>{{ fieldVariable }}</code> theo các cột khác trong
+                        file đã nhập.
                     </p>
+                    <p class="text-sm text-muted-foreground">
+                        Có thể nhúng ảnh bằng thẻ
+                        <code>&lt;img src="https://..."&gt;</code> với URL ảnh
+                        công khai.
+                    </p>
+                    <p class="text-sm text-muted-foreground">
+                        Email thử sẽ được gửi đến địa chỉ email tài khoản đang
+                        đăng nhập.
+                    </p>
+                    <p v-if="testMailError" class="text-sm text-destructive">
+                        {{ testMailError }}
+                    </p>
+                    <iframe
+                        v-if="showPreview && form.body_html"
+                        :srcdoc="form.body_html"
+                        sandbox
+                        title="Xem trước nội dung email"
+                        class="h-80 w-full rounded-md border bg-white"
+                    />
                     <p
                         v-if="form.errors.body_html"
                         class="text-sm text-destructive"

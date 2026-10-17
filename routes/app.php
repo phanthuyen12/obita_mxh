@@ -534,6 +534,7 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
         Route::get('email-campaigns/settings/mail', [WorkspaceMailSettingController::class, 'edit'])->name('app.email-campaigns.mail-settings.edit');
         Route::put('email-campaigns/settings/mail', [WorkspaceMailSettingController::class, 'update'])->name('app.email-campaigns.mail-settings.update');
         Route::post('email-campaigns/settings/mail/test', [WorkspaceMailSettingController::class, 'test'])->name('app.email-campaigns.mail-settings.test');
+        Route::post('email-campaigns/test-send', [EmailCampaignController::class, 'sendTest'])->middleware('throttle:5,1')->name('app.email-campaigns.test-send');
 
         Route::get('email-campaigns/{campaign}', [EmailCampaignController::class, 'show'])->name('app.email-campaigns.show');
         Route::put('email-campaigns/{campaign}', [EmailCampaignController::class, 'update'])->name('app.email-campaigns.update');

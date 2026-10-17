@@ -9,17 +9,22 @@ use App\Enums\EmailCampaign\Status;
 use App\Exceptions\WorkspaceMailNotConfiguredException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\EmailCampaign\IndexEmailCampaignRequest;
+use App\Http\Requests\App\EmailCampaign\SendTestEmailCampaignRequest;
 use App\Http\Requests\App\EmailCampaign\ShowEmailCampaignRequest;
 use App\Http\Requests\App\EmailCampaign\StoreEmailCampaignRequest;
 use App\Http\Requests\App\EmailCampaign\UpdateEmailCampaignRequest;
+use App\Mail\EmailCampaignMessage;
 use App\Models\EmailCampaign;
+use App\Models\EmailCampaignRecipient;
 use App\Models\EmailContactList;
 use App\Services\EmailCampaign\EmailCampaignDispatcher;
 use App\Services\Mail\WorkspaceMailerResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 class CampaignController extends Controller
 {
@@ -167,6 +172,43 @@ class CampaignController extends Controller
             'queued' => $queued,
             'skipped' => data_get($counts, 'skipped', 0),
         ]));
+        session()->flash('flash.bannerStyle', 'success');
+
+        return back();
+    }
+
+    public function sendTest(SendTestEmailCampaignRequest $request): RedirectResponse
+    {
+        $workspace = $request->user()->currentWorkspace;
+
+        try {
+            $mailer = $this->mailerResolver->resolve($workspace);
+            $validated = $request->validated();
+            $campaign = new EmailCampaign($validated);
+            $campaign->setRelation('workspace', $workspace);
+
+            $recipient = new EmailCampaignRecipient([
+                'email' => $request->user()->email,
+                'name' => $request->user()->name,
+                'unsubscribe_token' => Str::random(48),
+            ]);
+
+            $mailer->to($request->user()->email, $request->user()->name)->send(
+                new EmailCampaignMessage(
+                    $campaign,
+                    $recipient,
+                    route('email.unsubscribe', $recipient->unsubscribe_token),
+                ),
+            );
+        } catch (WorkspaceMailNotConfiguredException) {
+            return back()->withErrors(['mail' => __('Workspace chưa cấu hình SMTP.')]);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->withErrors(['mail' => __('Không gửi được email thử. Vui lòng kiểm tra cấu hình SMTP.')]);
+        }
+
+        session()->flash('flash.banner', __('Đã gửi email thử tới :email.', ['email' => $request->user()->email]));
         session()->flash('flash.bannerStyle', 'success');
 
         return back();
