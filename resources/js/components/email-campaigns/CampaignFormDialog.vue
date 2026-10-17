@@ -70,6 +70,7 @@ const bodyPlaceholder = `<p>Xin chào ${nameVariable},</p>`;
 const showPreview = ref(false);
 const testSending = ref(false);
 const testMailError = ref('');
+const testEmail = ref('');
 const welcomeTemplate = [
     '<div style="margin:0;padding:32px 16px;background-color:#f3f4f6;font-family:Arial,sans-serif;color:#1f2937;">',
     '<div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;">',
@@ -168,6 +169,7 @@ const sendTestEmail = () => {
     router.post(
         campaignTestSend.url(),
         {
+            email: testEmail.value,
             subject: form.subject,
             preview_text: form.preview_text,
             body_html: form.body_html,
@@ -184,6 +186,7 @@ const sendTestEmail = () => {
             },
             onError: (errors) => {
                 testMailError.value =
+                    errors.email ??
                     errors.mail ??
                     'Không gửi được email thử. Vui lòng kiểm tra nội dung và cấu hình SMTP.';
             },
@@ -286,11 +289,18 @@ const handleOpenChange = (value: boolean) => {
                 </div>
 
                 <div class="grid gap-2">
-                    <div
-                        class="flex flex-wrap items-center justify-between gap-2"
-                    >
+                    <div class="flex flex-col gap-3">
                         <Label for="campaign-body">Nội dung (HTML)</Label>
-                        <div class="flex gap-2">
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                            <Input
+                                v-model="testEmail"
+                                type="email"
+                                required
+                                autocomplete="email"
+                                placeholder="Email nhận thử"
+                                aria-label="Email nhận thử"
+                                class="sm:max-w-xs"
+                            />
                             <Button
                                 type="button"
                                 variant="outline"
@@ -298,6 +308,7 @@ const handleOpenChange = (value: boolean) => {
                                 :disabled="
                                     testSending ||
                                     form.processing ||
+                                    !testEmail.trim() ||
                                     !form.subject ||
                                     !form.body_html
                                 "
@@ -305,6 +316,11 @@ const handleOpenChange = (value: boolean) => {
                             >
                                 {{ testSending ? 'Đang gửi thử…' : 'Gửi thử' }}
                             </Button>
+                        </div>
+                        <p v-if="testMailError" class="text-sm text-destructive">
+                            {{ testMailError }}
+                        </p>
+                        <div class="flex gap-2">
                             <Button
                                 type="button"
                                 variant="outline"
@@ -365,11 +381,7 @@ const handleOpenChange = (value: boolean) => {
                         công khai.
                     </p>
                     <p class="text-sm text-muted-foreground">
-                        Email thử sẽ được gửi đến địa chỉ email tài khoản đang
-                        đăng nhập.
-                    </p>
-                    <p v-if="testMailError" class="text-sm text-destructive">
-                        {{ testMailError }}
+                        Email thử chỉ được gửi tới địa chỉ bạn nhập ở trên.
                     </p>
                     <iframe
                         v-if="showPreview && form.body_html"

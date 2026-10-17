@@ -50,12 +50,13 @@ it('refuses to send when the workspace has no smtp configuration', function (): 
     expect($this->campaign->fresh()->status)->toBe(Status::Draft);
 });
 
-it('sends a test email to the signed-in user using the current form contents', function (): void {
+it('sends a test email to the requested address using the current form contents', function (): void {
     Mail::fake();
     WorkspaceMailSetting::factory()->create(['workspace_id' => $this->workspace->id]);
 
     $this->actingAs($this->user->fresh())
         ->post(route('app.email-campaigns.test-send'), [
+            'email' => 'preview@example.com',
             'subject' => 'Chào {{ name }}',
             'body_html' => '<p>Xin chào {{ name }}</p>',
             'preview_text' => 'Email xem thử',
@@ -68,8 +69,23 @@ it('sends a test email to the signed-in user using the current form contents', f
         $mail->assertHasSubject('Chào '.$this->user->name);
         $mail->assertSeeInHtml('Xin chào '.$this->user->name, false);
 
-        return $mail->hasTo($this->user->email);
+        return $mail->hasTo('preview@example.com');
     });
+});
+
+it('requires a valid test email address', function (): void {
+    Mail::fake();
+    WorkspaceMailSetting::factory()->create(['workspace_id' => $this->workspace->id]);
+
+    $this->actingAs($this->user->fresh())
+        ->post(route('app.email-campaigns.test-send'), [
+            'email' => 'not-an-email',
+            'subject' => 'Email thử',
+            'body_html' => '<p>Nội dung</p>',
+        ])
+        ->assertSessionHasErrors('email');
+
+    Mail::assertNothingSent();
 });
 
 it('requires SMTP configuration before sending a test email', function (): void {
@@ -77,6 +93,7 @@ it('requires SMTP configuration before sending a test email', function (): void 
 
     $this->actingAs($this->user->fresh())
         ->post(route('app.email-campaigns.test-send'), [
+            'email' => 'preview@example.com',
             'subject' => 'Email thử',
             'body_html' => '<p>Nội dung</p>',
         ])

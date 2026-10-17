@@ -52,6 +52,7 @@ import {
     retryFailed as campaignRetryFailed,
     send as campaignSend,
     show as campaignShow,
+    testSend as campaignTestSend,
 } from '@/routes/app/email-campaigns';
 
 interface Campaign {
@@ -95,6 +96,9 @@ const isEditOpen = ref(false);
 const isBusy = ref(false);
 const isSendConfirmationOpen = ref(false);
 const isCancelConfirmationOpen = ref(false);
+const testEmail = ref('');
+const testMailError = ref('');
+const isTestSending = ref(false);
 
 const canSend = computed(() =>
     ['draft', 'scheduled', 'paused'].includes(props.campaign.status),
@@ -138,6 +142,37 @@ const sendNow = () => post(campaignSend.url(props.campaign.id));
 const pause = () => post(campaignPause.url(props.campaign.id));
 const cancel = () => post(campaignCancel.url(props.campaign.id));
 const retryFailed = () => post(campaignRetryFailed.url(props.campaign.id));
+
+const sendTestEmail = () => {
+    testMailError.value = '';
+
+    router.post(
+        campaignTestSend.url(),
+        {
+            email: testEmail.value,
+            subject: props.campaign.subject,
+            preview_text: props.campaign.preview_text,
+            body_html: props.campaign.body_html,
+            from_name: props.campaign.from_name,
+            reply_to: props.campaign.reply_to,
+        },
+        {
+            preserveScroll: true,
+            onStart: () => {
+                isTestSending.value = true;
+            },
+            onFinish: () => {
+                isTestSending.value = false;
+            },
+            onError: (errors) => {
+                testMailError.value =
+                    errors.email ??
+                    errors.mail ??
+                    'Không gửi được email thử. Vui lòng kiểm tra cấu hình SMTP.';
+            },
+        },
+    );
+};
 
 const formatDateTime = (value: string | null): string =>
     value ? date.formatDateTime(value) : '—';
@@ -260,6 +295,40 @@ const statCards: { key: string; label: string }[] = [
                             Sửa HTML / CSS
                         </Button>
                     </div>
+                    <form
+                        class="flex flex-col gap-2 rounded-lg border bg-muted/30 p-4 sm:flex-row sm:items-end"
+                        @submit.prevent="sendTestEmail"
+                    >
+                        <div class="grid flex-1 gap-2">
+                            <label for="test-email" class="text-sm font-medium">
+                                Gửi email thử
+                            </label>
+                            <Input
+                                id="test-email"
+                                v-model="testEmail"
+                                type="email"
+                                required
+                                autocomplete="email"
+                                placeholder="Nhập email nhận thử"
+                                :disabled="isTestSending || !mailConfigured"
+                                :class="{ 'border-destructive': testMailError }"
+                            />
+                            <p v-if="testMailError" class="text-sm text-destructive">
+                                {{ testMailError }}
+                            </p>
+                            <p v-else class="text-xs text-muted-foreground">
+                                Chỉ gửi bản xem thử tới email này, không gửi cho cả danh sách.
+                            </p>
+                        </div>
+                        <Button
+                            type="submit"
+                            variant="outline"
+                            :disabled="isTestSending || !mailConfigured || !testEmail.trim()"
+                        >
+                            <IconSend class="size-4" />
+                            {{ isTestSending ? 'Đang gửi thử…' : 'Gửi thử' }}
+                        </Button>
+                    </form>
                     <iframe
                         :srcdoc="campaign.body_html"
                         sandbox

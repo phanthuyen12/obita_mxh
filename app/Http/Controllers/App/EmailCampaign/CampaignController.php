@@ -21,6 +21,7 @@ use App\Services\EmailCampaign\EmailCampaignDispatcher;
 use App\Services\Mail\WorkspaceMailerResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -184,16 +185,17 @@ class CampaignController extends Controller
         try {
             $mailer = $this->mailerResolver->resolve($workspace);
             $validated = $request->validated();
-            $campaign = new EmailCampaign($validated);
+            $testEmail = $validated['email'];
+            $campaign = new EmailCampaign(Arr::except($validated, ['email']));
             $campaign->setRelation('workspace', $workspace);
 
             $recipient = new EmailCampaignRecipient([
-                'email' => $request->user()->email,
+                'email' => $testEmail,
                 'name' => $request->user()->name,
                 'unsubscribe_token' => Str::random(48),
             ]);
 
-            $mailer->to($request->user()->email, $request->user()->name)->send(
+            $mailer->to($testEmail)->send(
                 new EmailCampaignMessage(
                     $campaign,
                     $recipient,
@@ -208,7 +210,7 @@ class CampaignController extends Controller
             return back()->withErrors(['mail' => __('Không gửi được email thử. Vui lòng kiểm tra cấu hình SMTP.')]);
         }
 
-        session()->flash('flash.banner', __('Đã gửi email thử tới :email.', ['email' => $request->user()->email]));
+        session()->flash('flash.banner', __('Đã gửi email thử tới :email.', ['email' => $testEmail]));
         session()->flash('flash.bannerStyle', 'success');
 
         return back();

@@ -19,6 +19,7 @@ class SendTestEmailCampaignRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'email' => ['required', 'email', 'max:190'],
             'subject' => ['required', 'string', 'max:200'],
             'preview_text' => ['nullable', 'string', 'max:200'],
             'body_html' => ['required', 'string', 'max:500000'],
