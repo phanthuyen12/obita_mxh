@@ -4,4 +4,5 @@ Before planning or editing, find the row whose globs match the file's path and r
 
 | Applies to | Rule file |
 | --- | --- |
+| app/{Services/Mail,Services/EmailCampaign,Jobs/EmailCampaign,Mail,Http/Controllers/App/EmailCampaign}/** | .ai/rules/email-campaign.md |
 | *.yml | .ai/rules/general.md |

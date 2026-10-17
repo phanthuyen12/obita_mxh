@@ -12,6 +12,7 @@ use App\Actions\Invite\RemoveMember;
 use App\Enums\UserWorkspace\Role as WorkspaceRole;
 use App\Http\Requests\App\Invite\CreateMemberAccountRequest;
 use App\Http\Requests\App\Invite\StoreWorkspaceInviteRequest;
+use App\Http\Requests\App\Workspace\UpdateMemberEmailPermissionRequest;
 use App\Models\Invite;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -45,6 +46,7 @@ class WorkspaceInviteController extends Controller
                     'name' => $member->name,
                     'email' => $member->email,
                     'role' => $member->pivot->role,
+                    'can_email' => (bool) $member->pivot->can_email,
                 ]),
             'owner' => [
                 'id' => $workspace->account?->owner?->id,
@@ -196,6 +198,30 @@ class WorkspaceInviteController extends Controller
         RevokeWorkspaceApiKeys::forUserUnlessAdmin($userId, $workspace, $role);
 
         session()->flash('flash.banner', __('settings.members.flash.role_updated'));
+        session()->flash('flash.bannerStyle', 'success');
+
+        return back();
+    }
+
+    /**
+     * Toggle the member's access to the bulk email / remarketing module.
+     *
+     * Admins and the account owner always have it, so this only moves the
+     * `can_email` pivot flag that gates plain members.
+     */
+    public function updateEmailPermission(
+        UpdateMemberEmailPermissionRequest $request,
+        string $userId,
+    ): RedirectResponse {
+        $workspace = $request->user()->currentWorkspace;
+
+        abort_unless($workspace->members()->whereKey($userId)->exists(), Response::HTTP_NOT_FOUND);
+
+        $workspace->members()->updateExistingPivot($userId, [
+            'can_email' => $request->boolean('can_email'),
+        ]);
+
+        session()->flash('flash.banner', __('Đã cập nhật quyền gửi email.'));
         session()->flash('flash.bannerStyle', 'success');
 
         return back();

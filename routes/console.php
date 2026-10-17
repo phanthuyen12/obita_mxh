@@ -11,6 +11,7 @@ use App\Console\Commands\CapturePostMetrics;
 use App\Console\Commands\CheckSocialConnections;
 use App\Console\Commands\CheckUpcomingPostConnections;
 use App\Console\Commands\ContentCloneDue;
+use App\Console\Commands\EmailCampaign\ProcessScheduledEmailCampaigns;
 use App\Console\Commands\ProcessScheduledBroadcastCampaigns;
 use App\Console\Commands\ProcessScheduledPosts;
 use App\Console\Commands\RecoverStuckPosts;
@@ -46,3 +47,4 @@ Schedule::command(SyncConnectedPostAnalytics::class)
 
 Schedule::command(ContentCloneDue::class)->everyMinute()->withoutOverlapping()->onOneServer();
 Schedule::command(ProcessScheduledBroadcastCampaigns::class)->everyMinute()->withoutOverlapping()->onOneServer();
+Schedule::command(ProcessScheduledEmailCampaigns::class)->everyMinute()->withoutOverlapping()->onOneServer();

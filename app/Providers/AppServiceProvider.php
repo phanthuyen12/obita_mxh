@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Events\OmnichatMessageCreated;
+use App\Listeners\SendKit\RecordEmailCampaignEvent;
 use App\Listeners\StripeEventListener;
 use App\Listeners\Webhook\DispatchOutboundMessageWebhook;
 use App\Models\AccessToken;
@@ -20,6 +21,11 @@ use App\Models\ContentCloneCampaign;
 use App\Models\ContentClonePreviewTask;
 use App\Models\ContentWorkflow;
 use App\Models\ContentWorkflowMember;
+use App\Models\EmailCampaign;
+use App\Models\EmailCampaignRecipient;
+use App\Models\EmailContact;
+use App\Models\EmailContactList;
+use App\Models\EmailSuppression;
 use App\Models\Folder;
 use App\Models\FolderPermission;
 use App\Models\Invite;
@@ -50,6 +56,7 @@ use App\Models\User;
 use App\Models\WordPressSite;
 use App\Models\Workspace;
 use App\Models\WorkspaceInvite;
+use App\Models\WorkspaceMailSetting;
 use App\Models\WorkspaceSignature;
 use App\Models\WorkspaceWebhook;
 use App\Models\WorkspaceWebhookDelivery;
@@ -85,6 +92,12 @@ use Laravel\Nightwatch\Records\CacheEvent;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\GoogleProvider;
 use PostHog\PostHog;
+use SendKit\Laravel\Events\EmailBounced;
+use SendKit\Laravel\Events\EmailClicked;
+use SendKit\Laravel\Events\EmailComplained;
+use SendKit\Laravel\Events\EmailDelivered;
+use SendKit\Laravel\Events\EmailFailed;
+use SendKit\Laravel\Events\EmailOpened;
 use SocialiteProviders\Facebook\FacebookExtendSocialite;
 use SocialiteProviders\LinkedIn\LinkedInExtendSocialite;
 use SocialiteProviders\Manager\SocialiteWasCalled;
@@ -149,6 +162,11 @@ class AppServiceProvider extends ServiceProvider
             'contentClonePreviewTask' => ContentClonePreviewTask::class,
             'contentWorkflow' => ContentWorkflow::class,
             'contentWorkflowMember' => ContentWorkflowMember::class,
+            'emailCampaign' => EmailCampaign::class,
+            'emailCampaignRecipient' => EmailCampaignRecipient::class,
+            'emailContact' => EmailContact::class,
+            'emailContactList' => EmailContactList::class,
+            'emailSuppression' => EmailSuppression::class,
             'folder' => Folder::class,
             'folderPermission' => FolderPermission::class,
             'invite' => Invite::class,
@@ -179,6 +197,7 @@ class AppServiceProvider extends ServiceProvider
             'wordPressSite' => WordPressSite::class,
             'workspace' => Workspace::class,
             'workspaceInvite' => WorkspaceInvite::class,
+            'workspaceMailSetting' => WorkspaceMailSetting::class,
             'workspaceSignature' => WorkspaceSignature::class,
             'workspaceWebhook' => WorkspaceWebhook::class,
             'workspaceWebhookDelivery' => WorkspaceWebhookDelivery::class,
@@ -188,6 +207,34 @@ class AppServiceProvider extends ServiceProvider
             OmnichatMessageCreated::class,
             DispatchOutboundMessageWebhook::class,
         );
+
+        $this->configureEmailCampaignWebhooks();
+    }
+
+    /**
+     * SendKit delivery webhooks feed campaign recipient statuses.
+     *
+     * Each SendKit event only carries an opaque payload array, so the listener
+     * is bound per event type with the type name passed along.
+     *
+     * @var array<class-string, string>
+     */
+    protected function configureEmailCampaignWebhooks(): void
+    {
+        $events = [
+            EmailDelivered::class => 'delivered',
+            EmailOpened::class => 'opened',
+            EmailClicked::class => 'clicked',
+            EmailBounced::class => 'bounced',
+            EmailComplained::class => 'complained',
+            EmailFailed::class => 'failed',
+        ];
+
+        foreach ($events as $event => $type) {
+            Event::listen($event, function (object $sendKitEvent) use ($type): void {
+                app(RecordEmailCampaignEvent::class)->handle($type, $sendKitEvent->payload);
+            });
+        }
     }
 
     protected function configurePostHog(): void

@@ -83,6 +83,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Email Campaigns (bulk / remarketing)
+    |--------------------------------------------------------------------------
+    |
+    | Contact-list imports are plain CSV/XLSX files, so they do not go through
+    | the Media allow-list. The cap below is in kilobytes, matching Laravel's
+    | `max:` file rule.
+    |
+    */
+
+    'email_campaigns' => [
+        'import_max_size_kb' => (int) env('EMAIL_CAMPAIGN_IMPORT_MAX_SIZE_KB', 20480),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Google Authentication
     |--------------------------------------------------------------------------
     |

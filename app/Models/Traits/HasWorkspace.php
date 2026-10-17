@@ -16,7 +16,7 @@ trait HasWorkspace
     public function workspaces(): BelongsToMany
     {
         return $this->belongsToMany(Workspace::class, 'user_workspace')
-            ->withPivot(['role', 'can_omnichat', 'can_content'])
+            ->withPivot(['role', 'can_omnichat', 'can_content', 'can_email'])
             ->withTimestamps();
     }
 

@@ -71,6 +71,19 @@ class WorkspacePolicy
         return $this->hasFeaturePermission($user, $workspace, 'can_omnichat');
     }
 
+    /**
+     * Bulk email / remarketing campaigns. Owners and workspace admins always
+     * qualify; everyone else needs the explicit `can_email` member permission.
+     */
+    public function manageEmailCampaign(User $user, Workspace $workspace): bool
+    {
+        if ($this->isOwnerOrWorkspaceAdmin($user, $workspace)) {
+            return true;
+        }
+
+        return $this->hasFeaturePermission($user, $workspace, 'can_email');
+    }
+
     public function assignConversations(User $user, Workspace $workspace): bool
     {
         if ($this->isOwnerOrWorkspaceAdmin($user, $workspace)) {

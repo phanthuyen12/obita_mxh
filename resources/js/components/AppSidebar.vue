@@ -15,6 +15,7 @@ import {
     IconLayoutSidebarLeftCollapse,
     IconLayoutSidebarLeftExpand,
     IconLifebuoy,
+    IconMailFast,
     IconMessages,
     IconPencil,
     IconPhoto,
@@ -73,6 +74,9 @@ import {
 import { index as postAnalytics } from '@/routes/app/post-analytics';
 import { index as postTags } from '@/routes/app/post-tags';
 import { index as signatures } from '@/routes/app/signatures';
+import { index as emailCampaigns } from '@/routes/app/email-campaigns';
+import { index as emailCampaignLists } from '@/routes/app/email-campaigns/lists';
+import { edit as emailCampaignMailSettings } from '@/routes/app/email-campaigns/mail-settings';
 import type { NavItem, User } from '@/types';
 
 interface Workspace {
@@ -103,6 +107,7 @@ const {
     canManageBilling,
     canViewContent,
     canViewOmnichat,
+    canManageEmailCampaign,
 } = useWorkspaceRole();
 const { isMobile, state, toggleSidebar } = useSidebar();
 
@@ -138,6 +143,24 @@ const omnichatNavItems = computed<NavItem[]>(() => [
             {
                 title: 'Thống kê Omnichat',
                 href: omnichatAnalytics.url(),
+            },
+        ],
+    },
+]);
+
+const emailCampaignNavItems = computed<NavItem[]>(() => [
+    {
+        title: 'Chiến dịch email',
+        href: emailCampaigns.url(),
+        icon: IconMailFast,
+        children: [
+            {
+                title: 'Danh sách email',
+                href: emailCampaignLists.url(),
+            },
+            {
+                title: 'Cấu hình gửi mail',
+                href: emailCampaignMailSettings.url(),
             },
         ],
     },
@@ -360,6 +383,13 @@ const bottomNavItems = computed(() => [
                 v-if="currentWorkspace && canViewOmnichat"
                 :items="omnichatNavItems"
                 label="Omnichat"
+            />
+
+            <!-- Email marketing -->
+            <NavMain
+                v-if="currentWorkspace && canManageEmailCampaign"
+                :items="emailCampaignNavItems"
+                label="Email marketing"
             />
 
             <!-- Content: Lịch, Bài viết, Clone, Luồng, Chữ ký, Nhãn -->

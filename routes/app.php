@@ -11,6 +11,9 @@ use App\Http\Controllers\App\BillingController;
 use App\Http\Controllers\App\ContentCloneCampaignController;
 use App\Http\Controllers\App\ContentWorkflowController;
 use App\Http\Controllers\App\DiscordController as AppDiscordController;
+use App\Http\Controllers\App\EmailCampaign\CampaignController as EmailCampaignController;
+use App\Http\Controllers\App\EmailCampaign\ContactListController as EmailContactListController;
+use App\Http\Controllers\App\EmailCampaign\MailSettingController as WorkspaceMailSettingController;
 use App\Http\Controllers\App\FolderController;
 use App\Http\Controllers\App\GiphyController;
 use App\Http\Controllers\App\LinkPreviewController;
@@ -90,6 +93,7 @@ use App\Http\Controllers\OmnichatChannelAccessController;
 use App\Http\Controllers\SocialAccountAccessController;
 use App\Http\Middleware\App\EnsureAccountReady;
 use App\Http\Middleware\App\EnsureHasWorkspace;
+use App\Http\Middleware\EnsureEmailCampaignAccess;
 use App\Http\Middleware\EnsureOmnichatAccess;
 use Illuminate\Support\Facades\Route;
 
@@ -414,6 +418,7 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
     Route::delete('settings/workspace/members/invites/{invite}', [WorkspaceInviteController::class, 'destroy'])->name('app.invites.destroy');
     Route::delete('settings/workspace/members/{user}', [WorkspaceInviteController::class, 'removeMember'])->name('app.members.remove');
     Route::put('settings/workspace/members/{user}/role', [WorkspaceInviteController::class, 'updateRole'])->name('app.members.update-role');
+    Route::put('settings/workspace/members/{user}/email-permission', [WorkspaceInviteController::class, 'updateEmailPermission'])->name('app.members.update-email-permission');
 
     // Teams
     Route::get('settings/workspace/teams', [TeamController::class, 'index'])->name('app.teams.index');
@@ -515,6 +520,29 @@ Route::middleware(['auth', EnsureAccountReady::class, EnsureHasWorkspace::class]
     Route::get('settings/account/billing', [BillingController::class, 'index'])->name('app.billing.index');
     Route::get('settings/account/billing/portal', [BillingController::class, 'portal'])->name('app.billing.portal');
     Route::post('settings/account/billing/swap-to-yearly', [BillingController::class, 'swapToYearly'])->name('app.billing.swap-to-yearly');
+
+    // Email campaigns (bulk / remarketing)
+    Route::middleware(EnsureEmailCampaignAccess::class)->group(function () {
+        Route::get('email-campaigns', [EmailCampaignController::class, 'index'])->name('app.email-campaigns.index');
+        Route::post('email-campaigns', [EmailCampaignController::class, 'store'])->name('app.email-campaigns.store');
+
+        Route::get('email-campaigns/lists', [EmailContactListController::class, 'index'])->name('app.email-campaigns.lists.index');
+        Route::post('email-campaigns/lists', [EmailContactListController::class, 'store'])->name('app.email-campaigns.lists.store');
+        Route::get('email-campaigns/lists/{list}', [EmailContactListController::class, 'show'])->name('app.email-campaigns.lists.show');
+        Route::delete('email-campaigns/lists/{list}', [EmailContactListController::class, 'destroy'])->name('app.email-campaigns.lists.destroy');
+
+        Route::get('email-campaigns/settings/mail', [WorkspaceMailSettingController::class, 'edit'])->name('app.email-campaigns.mail-settings.edit');
+        Route::put('email-campaigns/settings/mail', [WorkspaceMailSettingController::class, 'update'])->name('app.email-campaigns.mail-settings.update');
+        Route::post('email-campaigns/settings/mail/test', [WorkspaceMailSettingController::class, 'test'])->name('app.email-campaigns.mail-settings.test');
+
+        Route::get('email-campaigns/{campaign}', [EmailCampaignController::class, 'show'])->name('app.email-campaigns.show');
+        Route::put('email-campaigns/{campaign}', [EmailCampaignController::class, 'update'])->name('app.email-campaigns.update');
+        Route::delete('email-campaigns/{campaign}', [EmailCampaignController::class, 'destroy'])->name('app.email-campaigns.destroy');
+        Route::post('email-campaigns/{campaign}/send', [EmailCampaignController::class, 'send'])->name('app.email-campaigns.send');
+        Route::post('email-campaigns/{campaign}/pause', [EmailCampaignController::class, 'pause'])->name('app.email-campaigns.pause');
+        Route::post('email-campaigns/{campaign}/cancel', [EmailCampaignController::class, 'cancel'])->name('app.email-campaigns.cancel');
+        Route::post('email-campaigns/{campaign}/retry-failed', [EmailCampaignController::class, 'retryFailed'])->name('app.email-campaigns.retry-failed');
+    });
 
 });
 

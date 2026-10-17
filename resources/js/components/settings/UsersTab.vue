@@ -31,7 +31,12 @@ import {
 } from '@/components/ui/table';
 import { useWorkspaceRole } from '@/composables/useWorkspaceRole';
 import { destroy as destroyInvite } from '@/routes/app/invites';
-import { remove as removeMemberRoute, updateRole } from '@/routes/app/members';
+import { Switch } from '@/components/ui/switch';
+import {
+    remove as removeMemberRoute,
+    updateEmailPermission,
+    updateRole,
+} from '@/routes/app/members';
 import { WorkspaceRole } from '@/types/workspace-role';
 
 interface Member {
@@ -39,6 +44,7 @@ interface Member {
     name: string;
     email: string;
     role: string;
+    can_email?: boolean;
 }
 
 interface Invitation {
@@ -87,6 +93,14 @@ const handleInviteClick = () => {
     inviteDialogOpen.value = true;
 };
 
+const toggleEmailPermission = (member: Member, value: boolean) => {
+    router.put(
+        updateEmailPermission.url(member.id),
+        { can_email: value },
+        { preserveScroll: true },
+    );
+};
+
 const changeRole = (member: Member, role: string) => {
     router.put(updateRole.url(member.id), { role });
 };
@@ -117,6 +131,7 @@ const changeRole = (member: Member, role: string) => {
                     <TableHead>{{
                         $t('settings.members.invite.role')
                     }}</TableHead>
+                    <TableHead>Gửi email</TableHead>
                     <TableHead class="w-10" />
                 </TableRow>
             </TableHeader>
@@ -134,6 +149,23 @@ const changeRole = (member: Member, role: string) => {
                         >
                             {{ member.role }}
                         </Badge>
+                    </TableCell>
+                    <TableCell>
+                        <Switch
+                            v-if="
+                                canManageTeam &&
+                                member.role !== WorkspaceRole.Admin
+                            "
+                            :model-value="member.can_email === true"
+                            aria-label="Cho phép gửi email hàng loạt"
+                            @update:model-value="
+                                (value: boolean) =>
+                                    toggleEmailPermission(member, value)
+                            "
+                        />
+                        <span v-else class="text-sm text-muted-foreground">
+                            —
+                        </span>
                     </TableCell>
                     <TableCell>
                         <DropdownMenu

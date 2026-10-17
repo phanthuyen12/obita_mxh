@@ -55,5 +55,10 @@ export const useWorkspaceRole = () => {
                 isAdminOrAbove.value ||
                 currentWorkspace.value?.can_omnichat === true,
         ),
+        canManageEmailCampaign: computed(
+            () =>
+                isAdminOrAbove.value ||
+                currentWorkspace.value?.can_email === true,
+        ),
     };
 };

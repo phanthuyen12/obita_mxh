@@ -270,6 +270,24 @@ return [
             'tries' => 1,
             'nice' => 0,
         ],
+
+        // Bulk/marketing email. Kept on its own supervisor with a low process
+        // count so a large campaign cannot starve transactional queues, and
+        // with tries > 1 because SMTP failures are often transient.
+        'mail-campaign' => [
+            'connection' => 'redis',
+            'queue' => ['mail-campaign'],
+            'balance' => 'auto',
+            'autoScalingStrategy' => 'time',
+            'minProcesses' => 1,
+            'maxProcesses' => 3,
+            'timeout' => 900,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 256,
+            'tries' => 3,
+            'nice' => 0,
+        ],
     ],
 
     'environments' => [
@@ -297,6 +315,12 @@ return [
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
+
+            'mail-campaign' => [
+                'maxProcesses' => 5,
+                'balanceMaxShift' => 1,
+                'balanceCooldown' => 3,
+            ],
         ],
 
         'local' => [
@@ -313,6 +337,10 @@ return [
             ],
 
             'automations' => [
+                'maxProcesses' => 2,
+            ],
+
+            'mail-campaign' => [
                 'maxProcesses' => 2,
             ],
         ],

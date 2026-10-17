@@ -53,6 +53,7 @@
         "league/color-extractor": "^0.4.0",
         "league/flysystem-aws-s3-v3": "^3.0",
         "league/html-to-markdown": "^5.1",
+        "maatwebsite/excel": "^4.0",
         "posthog/posthog-php": "^4.1",
         "predis/predis": "^3.3",
         "sendkit/sendkit-laravel": "^1.1",

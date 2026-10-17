@@ -22,6 +22,7 @@ class AuthWorkspaceResource
             'role' => $user ? self::resolveRole($workspace, $user) : null,
             'can_content' => $user ? self::resolveFeature($workspace, $user, 'can_content') : null,
             'can_omnichat' => $user ? self::resolveFeature($workspace, $user, 'can_omnichat') : null,
+            'can_email' => $user ? self::resolveFeature($workspace, $user, 'can_email') : null,
         ];
     }
 

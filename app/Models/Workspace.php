@@ -68,7 +68,7 @@ class Workspace extends Model
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class)
-            ->withPivot(['role', 'can_omnichat', 'can_content'])
+            ->withPivot(['role', 'can_omnichat', 'can_content', 'can_email'])
             ->withTimestamps();
     }
 
