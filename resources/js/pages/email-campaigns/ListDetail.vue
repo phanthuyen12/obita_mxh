@@ -19,7 +19,6 @@ import {
 } from '@/components/ui/table';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { index as campaignsIndex } from '@/routes/app/email-campaigns';
 import { index as listsIndex, show as listShow } from '@/routes/app/email-campaigns/lists';
 
 interface ContactList {
@@ -81,30 +80,31 @@ const statusLabel = (status: string): string =>
 
     <AppLayout>
         <div class="flex h-full flex-1 flex-col gap-6 px-6 py-8">
-            <PageHeader
-                :title="list.name"
-                :description="`${list.imported_count} email hợp lệ · ${list.invalid_count} lỗi · ${list.duplicate_count} trùng`"
-            />
-
-            <div
-                class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-            >
-                <div class="flex flex-wrap gap-2">
-                    <Button as-child variant="outline">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div class="space-y-3">
+                    <Button as-child variant="ghost" size="sm" class="-ml-3">
                         <Link :href="listsIndex.url()">
                             <IconArrowLeft class="size-4" />
-                            Về danh sách
+                            Tất cả danh sách
                         </Link>
                     </Button>
-                    <Button as-child variant="outline">
-                        <Link :href="campaignsIndex.url()">Về chiến dịch</Link>
-                    </Button>
-                    <Button @click="isCreateOpen = true">
-                        <IconMail class="size-4" />
-                        Tạo chiến dịch với danh sách này
-                    </Button>
+                    <PageHeader
+                        :title="list.name"
+                        :description="`${list.imported_count} email hợp lệ · ${list.invalid_count} lỗi · ${list.duplicate_count} trùng`"
+                    />
                 </div>
+                <Button
+                    class="w-full sm:w-auto"
+                    :disabled="list.imported_count === 0"
+                    @click="isCreateOpen = true"
+                >
+                    <IconMail class="size-4" />
+                    Soạn chiến dịch
+                </Button>
+            </div>
 
+            <div class="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
+                <p class="text-sm font-medium">Người nhận trong danh sách</p>
                 <div class="relative w-full sm:w-auto">
                     <IconSearch
                         class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"

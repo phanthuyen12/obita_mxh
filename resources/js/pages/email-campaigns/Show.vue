@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, InfiniteScroll, router } from '@inertiajs/vue3';
+import { computed, ref, watch } from 'vue';
 import {
     IconAlertTriangle,
     IconPlayerPause,
@@ -7,10 +8,18 @@ import {
     IconSend,
     IconX,
 } from '@tabler/icons-vue';
-import { ref, watch } from 'vue';
-
 import CampaignFormDialog from '@/components/email-campaigns/CampaignFormDialog.vue';
 import PageHeader from '@/components/PageHeader.vue';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -84,6 +93,15 @@ const statusFilter = ref(props.filters.status);
 const searchQuery = ref(props.filters.search);
 const isEditOpen = ref(false);
 const isBusy = ref(false);
+const isSendConfirmationOpen = ref(false);
+const isCancelConfirmationOpen = ref(false);
+
+const canSend = computed(() =>
+    ['draft', 'scheduled', 'paused'].includes(props.campaign.status),
+);
+const canCancel = computed(
+    () => !['completed', 'cancelled'].includes(props.campaign.status),
+);
 
 const reload = () => {
     router.get(
@@ -170,29 +188,38 @@ const statCards: { key: string; label: string }[] = [
 
             <div class="flex flex-wrap gap-2">
                 <Button
+                    v-if="canSend"
                     :disabled="isBusy || !mailConfigured"
-                    @click="sendNow"
+                    @click="isSendConfirmationOpen = true"
                 >
                     <IconSend class="size-4" />
-                    Gửi ngay
+                    {{ campaign.status === 'paused' ? 'Tiếp tục gửi' : 'Gửi ngay' }}
                 </Button>
                 <Button
+                    v-if="campaign.status === 'sending'"
                     variant="outline"
-                    :disabled="isBusy || campaign.status !== 'sending'"
+                    :disabled="isBusy"
                     @click="pause"
                 >
                     <IconPlayerPause class="size-4" />
                     Tạm dừng
                 </Button>
                 <Button
+                    v-if="(stats.failed ?? 0) > 0"
                     variant="outline"
-                    :disabled="isBusy || (stats.failed ?? 0) === 0"
+                    :disabled="isBusy"
                     @click="retryFailed"
                 >
                     <IconRefresh class="size-4" />
                     Gửi lại email lỗi
                 </Button>
-                <Button variant="outline" :disabled="isBusy" @click="cancel">
+                <Button
+                    v-if="canCancel"
+                    variant="ghost"
+                    class="text-destructive hover:text-destructive"
+                    :disabled="isBusy"
+                    @click="isCancelConfirmationOpen = true"
+                >
                     <IconX class="size-4" />
                     Huỷ chiến dịch
                 </Button>
@@ -324,4 +351,45 @@ const statCards: { key: string; label: string }[] = [
             campaign.contact_list ? [campaign.contact_list] : []
         "
     />
+
+    <AlertDialog v-model:open="isSendConfirmationOpen">
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>
+                    {{ campaign.status === 'paused' ? 'Tiếp tục gửi chiến dịch?' : 'Bắt đầu gửi chiến dịch?' }}
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                    Email sẽ được đưa vào hàng đợi gửi tới danh sách
+                    “{{ campaign.contact_list?.name ?? 'người nhận' }}”. Bạn có thể tạm dừng khi chiến dịch đang chạy.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Để sau</AlertDialogCancel>
+                <AlertDialogAction :disabled="isBusy" @click="sendNow">
+                    {{ campaign.status === 'paused' ? 'Tiếp tục gửi' : 'Xác nhận gửi' }}
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+
+    <AlertDialog v-model:open="isCancelConfirmationOpen">
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Huỷ chiến dịch này?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Chiến dịch sẽ dừng và không thể tiếp tục gửi. Những email đã gửi sẽ không bị thu hồi.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Quay lại</AlertDialogCancel>
+                <AlertDialogAction
+                    class="bg-destructive text-white hover:bg-destructive/90"
+                    :disabled="isBusy"
+                    @click="cancel"
+                >
+                    Huỷ chiến dịch
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
 </template>
