@@ -31,6 +31,15 @@ it('lets a workspace admin open the campaign list', function (): void {
             ->where('mailConfigured', false));
 });
 
+it('provides contact lists to the email list page', function (): void {
+    $this->actingAs($this->owner->fresh())
+        ->get(route('app.email-campaigns.lists.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('email-campaigns/Lists')
+            ->has('lists.data', 0));
+});
+
 it('blocks a member without the can_email permission', function (): void {
     $member = User::factory()->create(['account_id' => $this->owner->account_id]);
     $this->workspace->members()->attach($member->id, [

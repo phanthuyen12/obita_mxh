@@ -192,13 +192,6 @@ const statCards: { key: string; label: string }[] = [
                     <IconRefresh class="size-4" />
                     Gửi lại email lỗi
                 </Button>
-                <Button
-                    variant="outline"
-                    :disabled="isBusy || campaign.status === 'sending'"
-                    @click="isEditOpen = true"
-                >
-                    Sửa nội dung
-                </Button>
                 <Button variant="outline" :disabled="isBusy" @click="cancel">
                     <IconX class="size-4" />
                     Huỷ chiến dịch
@@ -216,6 +209,44 @@ const statCards: { key: string; label: string }[] = [
                         </p>
                     </CardContent>
                 </Card>
+            </div>
+
+            <Card>
+                <CardContent class="space-y-4 p-5">
+                    <div
+                        class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between"
+                    >
+                        <div>
+                            <h2 class="text-lg font-semibold">Nội dung email</h2>
+                            <p class="text-sm text-muted-foreground">
+                                {{ campaign.subject }}
+                                <span v-if="campaign.preview_text">
+                                    · {{ campaign.preview_text }}
+                                </span>
+                            </p>
+                        </div>
+                        <Button
+                            variant="outline"
+                            :disabled="isBusy || campaign.status === 'sending'"
+                            @click="isEditOpen = true"
+                        >
+                            Sửa HTML / CSS
+                        </Button>
+                    </div>
+                    <iframe
+                        :srcdoc="campaign.body_html"
+                        sandbox
+                        title="Bản xem trước email chiến dịch"
+                        class="h-[520px] w-full rounded-lg border bg-white"
+                    />
+                </CardContent>
+            </Card>
+
+            <div class="space-y-1">
+                <h2 class="text-lg font-semibold">Nhật ký gửi email</h2>
+                <p class="text-sm text-muted-foreground">
+                    Trạng thái từng người nhận, thời điểm gửi và thông tin lỗi.
+                </p>
             </div>
 
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
